@@ -285,7 +285,6 @@ export default function Topbar({ onOpenMobileNav }) {
       <div className="position-relative hz-topbar-search" ref={searchBoxRef}>
         <div className="position-relative w-100">
           <Search size={16} className="position-absolute" style={{ left: 12, top: 10, color: 'var(--hz-text-muted)' }} />
-<<<<<<< HEAD
           <input
             type="search"
             placeholder={commandMode ? 'Type a command or search...' : 'Search employees, pages, or modules...'}
@@ -300,25 +299,6 @@ export default function Topbar({ onOpenMobileNav }) {
             aria-controls="hz-global-search-results"
             aria-autocomplete="list"
           />
-=======
-<input
-  type="search"
-  placeholder={
-    commandMode
-      ? 'Type a command or search...'
-      : 'Search employees, pages, or modules...'
-  }
-  className="form-control hz-search-input"
-  value={query}
-  onChange={(e) => setQuery(e.target.value)}
-  onFocus={() => setSearchOpen(true)}
-  onKeyDown={handleKeyDown}
-  role="combobox"
-  aria-expanded={searchOpen}
-  aria-controls="hz-global-search-results"
-  aria-autocomplete="list"
-/>
->>>>>>> origin/uiupdate
           {!query && (
             <div className="position-absolute d-none d-md-flex align-items-center gap-1" style={{ right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <kbd style={{ fontSize: 10, padding: '2px 6px', background: 'rgba(0,0,0,0.05)', borderRadius: 4, border: '1px solid rgba(0,0,0,0.1)', lineHeight: 1 }}>

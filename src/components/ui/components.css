@@ -8085,8 +8085,7 @@ button:disabled,
   .hz-table tbody td[data-label] > * { justify-self: end; max-width: 100%; }
   .hz-table tbody td[data-label]:first-child > * { justify-self: stretch; }
 }
-<<<<<<< HEAD
-=======
+
 /* ============================================================
    FINAL TOPBAR SEARCH BOX
    ============================================================ */
@@ -8907,4 +8906,181 @@ button:disabled,
 .hz-table thead th.hz-table__selection input[type="checkbox"] {
   display: block;
   margin: 0 auto !important;
+}
+/* ============================================================
+   DEVICE DETAILS - TABLE
+   ============================================================ */
+
+.hz-device-details-page .hz-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+
+/* ============================================================
+   TABLE HEADER - #0B2342
+   ============================================================ */
+
+.hz-device-details-page .hz-table thead th {
+  height: 42px !important;
+
+  padding: 0 12px !important;
+
+  background: #0B2342 !important;
+
+  color: #ffffff !important;
+
+  border-top: 1px solid #16385f !important;
+
+  border-bottom: 1px solid #06172d !important;
+
+  border-right: 1px solid rgba(255, 255, 255, 0.18) !important;
+
+  font-size: 12px !important;
+
+  font-weight: 600 !important;
+
+  text-align: center !important;
+
+  vertical-align: middle !important;
+
+  text-transform: none !important;
+
+  letter-spacing: 0 !important;
+
+  box-shadow: none !important;
+}
+
+
+/* Header text/content */
+
+.hz-device-details-page
+  .hz-table
+  .hz-table__header-content {
+  display: flex !important;
+
+  align-items: center !important;
+
+  justify-content: center !important;
+
+  width: 100% !important;
+
+  color: #ffffff !important;
+
+  text-align: center !important;
+}
+
+
+/* ============================================================
+   TABLE BODY
+   ============================================================ */
+
+.hz-device-details-page .hz-table tbody td {
+  height: 42px !important;
+
+  padding: 8px 12px !important;
+
+  background: #ffffff !important;
+
+  color: #263238 !important;
+
+  border-right: 1px solid #e2e8f0 !important;
+
+  border-bottom: 1px solid #d9e1e8 !important;
+
+  font-size: 12px !important;
+
+  vertical-align: middle !important;
+}
+
+
+/* Alternate rows */
+
+.hz-device-details-page
+  .hz-table
+  tbody
+  tr:nth-child(even)
+  td {
+  background: #f7f9fc !important;
+}
+
+
+/* Hover */
+
+.hz-device-details-page
+  .hz-table
+  tbody
+  tr:hover
+  td {
+  background: #edf4fb !important;
+}
+
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+
+.hz-session-page-btn {
+  min-width: 32px !important;
+
+  height: 30px !important;
+
+  padding: 0 9px !important;
+
+  border: 1px solid #c7d3df !important;
+
+  border-radius: 3px !important;
+
+  background: #ffffff !important;
+
+  color: #334155 !important;
+
+  font-size: 12px !important;
+
+  font-weight: 500 !important;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+
+/* Pagination hover */
+
+.hz-session-page-btn:hover:not(:disabled) {
+  background: #eef3f8 !important;
+
+  border-color: #0B2342 !important;
+
+  color: #0B2342 !important;
+}
+
+
+/* ============================================================
+   ACTIVE PAGE - #0B2342
+   ============================================================ */
+
+.hz-session-page-btn.active {
+  background: #0B2342 !important;
+
+  border-color: #0B2342 !important;
+
+  color: #ffffff !important;
+
+  font-weight: 600 !important;
+}
+
+
+/* ============================================================
+   DISABLED PAGINATION
+   ============================================================ */
+
+.hz-session-page-btn:disabled {
+  opacity: 0.45 !important;
+
+  cursor: not-allowed !important;
 }

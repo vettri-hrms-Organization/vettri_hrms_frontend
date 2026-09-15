@@ -19,11 +19,7 @@ const EMPTY_FORM = {
   departmentId: '',
   designationId: '',
   teamId: '',
-<<<<<<< HEAD
   reportingManagerId: '',
-=======
-  reportingPersonEmail: '',
->>>>>>> origin/uiupdate
   address: '',
   emergencyContactName: '',
   emergencyContactPhone: '',
@@ -37,10 +33,7 @@ export default function CreateEmployeeModal({ onClose }) {
   const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: departmentsApi.list });
   const { data: designations = [] } = useQuery({ queryKey: ['designations'], queryFn: designationsApi.list });
   const { data: teams = [] } = useQuery({ queryKey: ['teams'], queryFn: teamsApi.list });
-<<<<<<< HEAD
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => employeesApi.list() });
-=======
->>>>>>> origin/uiupdate
 
   const createEmployee = useMutation({
     mutationFn: employeesApi.create,
@@ -64,11 +57,7 @@ export default function CreateEmployeeModal({ onClose }) {
       departmentId: form.departmentId || null,
       designationId: form.designationId || null,
       teamId: form.teamId || null,
-<<<<<<< HEAD
       reportingManagerId: form.reportingManagerId || null,
-=======
-      reportingPersonEmail: form.reportingPersonEmail.trim() || null,
->>>>>>> origin/uiupdate
       dateOfBirth: form.dateOfBirth || null,
     };
     createEmployee.mutate(payload);
@@ -131,7 +120,6 @@ export default function CreateEmployeeModal({ onClose }) {
               </option>
             ))}
           </FormField>
-<<<<<<< HEAD
           <FormField as="select" col={6} label="Reporting Manager" value={form.reportingManagerId} onChange={(v) => set('reportingManagerId', v)}>
             <option value="">—</option>
             {employees.map((e) => (
@@ -140,9 +128,6 @@ export default function CreateEmployeeModal({ onClose }) {
               </option>
             ))}
           </FormField>
-=======
-          <FormField col={6} label="Reporting Person Email" type="email" value={form.reportingPersonEmail} onChange={(v) => set('reportingPersonEmail', v)} placeholder="manager@company.com" />
->>>>>>> origin/uiupdate
         </div>
 
         <SectionLabel>Emergency Contact</SectionLabel>
