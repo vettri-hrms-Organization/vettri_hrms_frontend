@@ -8085,3 +8085,827 @@ button:disabled,
   .hz-table tbody td[data-label] > * { justify-self: end; max-width: 100%; }
   .hz-table tbody td[data-label]:first-child > * { justify-self: stretch; }
 }
+<<<<<<< HEAD
+=======
+/* ============================================================
+   FINAL TOPBAR SEARCH BOX
+   ============================================================ */
+
+.hz-topbar .hz-topbar-search .hz-search-input {
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
+
+  padding-left: 42px !important;
+  padding-right: 48px !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  border-radius: 9px !important;
+
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: #ffffff !important;
+
+  font-size: 14px;
+  font-weight: 400;
+
+  outline: none !important;
+  box-shadow: none !important;
+
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+/* Normal placeholder */
+.hz-topbar .hz-topbar-search .hz-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.72) !important;
+  opacity: 1 !important;
+}
+
+/* Hover */
+.hz-topbar .hz-topbar-search .hz-search-input:hover {
+  background: rgba(255, 255, 255, 0.13) !important;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+}
+
+/* ============================================================
+   IMPORTANT: FOCUS FIX
+   Keep dark search box + white text when clicked
+   ============================================================ */
+
+.hz-topbar .hz-topbar-search .hz-search-input:focus,
+.hz-topbar .hz-topbar-search .hz-search-input:focus-visible {
+  background: rgba(255, 255, 255, 0.13) !important;
+  color: #ffffff !important;
+
+  border-color: rgba(255, 255, 255, 0.55) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.08) !important;
+
+  outline: none !important;
+}
+
+/* Keep placeholder visible correctly while focused */
+.hz-topbar .hz-topbar-search .hz-search-input:focus::placeholder {
+  color: rgba(255, 255, 255, 0.62) !important;
+  opacity: 1 !important;
+}
+
+/* Typed text */
+.hz-topbar .hz-topbar-search .hz-search-input,
+.hz-topbar .hz-topbar-search .hz-search-input:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+/* Search icon */
+.hz-topbar .hz-topbar-search > div > svg {
+  color: rgba(255, 255, 255, 0.76) !important;
+  pointer-events: none;
+}
+
+/* Remove browser search decorations */
+.hz-topbar .hz-search-input::-webkit-search-decoration,
+.hz-topbar .hz-search-input::-webkit-search-cancel-button,
+.hz-topbar .hz-search-input::-webkit-search-results-button,
+.hz-topbar .hz-search-input::-webkit-search-results-decoration {
+  display: none !important;
+}
+
+/* ============================================================
+   EMPLOYEE SEARCH INPUT
+   EmployeeList + EmployeeSalaryList
+   ============================================================ */
+
+.hz-employee-search {
+  position: relative;
+  width: 100%;
+}
+
+.hz-employee-search .hz-employee-search-icon {
+  position: absolute;
+  z-index: 2;
+  left: 13px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  color: var(--hz-text-muted) !important;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.hz-employee-search .hz-employee-search-input {
+  width: 100%;
+  min-height: 40px;
+  height: 40px;
+
+  padding-left: 40px !important;
+  padding-right: 12px !important;
+
+  background: var(--hz-bg-surface) !important;
+  color: var(--hz-text-primary) !important;
+
+  border: 1px solid var(--hz-border-strong) !important;
+  border-radius: 8px !important;
+
+  outline: none !important;
+  box-shadow: none !important;
+
+  font-size: 14px;
+  font-weight: 400;
+
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease;
+}
+
+.hz-employee-search .hz-employee-search-input::placeholder {
+  color: var(--hz-text-muted) !important;
+  opacity: 1 !important;
+}
+
+.hz-employee-search .hz-employee-search-input:hover {
+  border-color: var(--hz-border-strong) !important;
+}
+
+.hz-employee-search .hz-employee-search-input:focus,
+.hz-employee-search .hz-employee-search-input:focus-visible {
+  background: var(--hz-bg-surface) !important;
+  color: var(--hz-text-primary) !important;
+
+  border-color: var(--hz-primary-500) !important;
+
+  outline: none !important;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.10) !important;
+}
+
+.hz-employee-search .hz-employee-search-input,
+.hz-employee-search .hz-employee-search-input:focus {
+  -webkit-text-fill-color: var(--hz-text-primary) !important;
+  caret-color: var(--hz-primary-500) !important;
+}
+
+.hz-employee-search:focus-within .hz-employee-search-icon {
+  color: var(--hz-primary-500) !important;
+}
+
+/* Remove browser search decorations */
+.hz-employee-search
+  .hz-employee-search-input::-webkit-search-decoration,
+.hz-employee-search
+  .hz-employee-search-input::-webkit-search-cancel-button,
+.hz-employee-search
+  .hz-employee-search-input::-webkit-search-results-button,
+.hz-employee-search
+  .hz-employee-search-input::-webkit-search-results-decoration {
+  display: none !important;
+}
+/* ============================================================
+   EXCEL / KENDO STYLE TABLE FILTERS
+   ============================================================ */
+
+.hz-table-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* ============================================================
+   FILTER SUMMARY
+   ============================================================ */
+
+.hz-table__filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 34px;
+
+  padding: 6px 12px;
+
+  background: #f8fafc;
+  border-bottom: 1px solid #e1e7ef;
+
+  color: var(--hz-text-secondary);
+
+  font-size: 12px;
+}
+
+.hz-table__filter-summary button {
+  padding: 3px 8px;
+
+  border: 0;
+  border-radius: 4px;
+
+  background: transparent;
+  color: var(--hz-primary-600);
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.hz-table__filter-summary button:hover {
+  background: var(--hz-primary-50);
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.hz-module-page--employees .hz-table thead th {
+  position: relative;
+
+  height: 42px;
+  padding: 1.5px !important;
+
+  /* Excel-style blue gradient */
+  background: linear-gradient(
+    180deg,
+    #0b2f52 0%,
+    #11336e 50%,
+    #365f91 100%
+  ) !important;
+
+  color: #ffffff !important;
+
+  border-top: 1px solid #2f5597 !important;
+  border-bottom: 1px solid #2f5597 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.25) !important;
+
+  font-size: 12px !important;
+  font-weight: 600 !important;
+
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+
+  vertical-align: middle;
+}
+
+.hz-module-page--employees
+  .hz-table
+  thead
+  th:last-child {
+  border-right: 0 !important;
+}
+.hz-module-page--employees
+  .hz-table
+  .hz-table__header-label {
+  color: #ffffff !important;
+}
+/* ============================================================
+   HEADER CONTENT
+   ============================================================ */
+
+.hz-table__header-content {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  height: 42px;
+
+  padding: 0 8px;
+
+  gap: 6px;
+}
+
+.hz-table__header-label {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: #52657d;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   FILTER WRAPPER
+   ============================================================ */
+
+.hz-table__filter-wrapper {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  margin-left: auto;
+}
+
+/* ============================================================
+   FILTER BUTTON
+   ============================================================ */
+
+.hz-table__filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 26px;
+  height: 26px;
+
+  flex: 0 0 26px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 4px;
+
+  background: transparent;
+
+   color: rgba(255, 255, 255, 0.85) !important;
+
+  cursor: pointer;
+
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.hz-table__filter-button:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+
+.hz-table__filter-button.is-active {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.hz-table__filter-button:focus-visible {
+  outline: 2px solid var(--hz-primary-400);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   FILTERED HEADER
+   ============================================================ */
+
+.hz-table__header-cell--filtered {
+ background: #365f91 !important;
+}
+
+/* ============================================================
+   FILTER MENU
+   ============================================================ */
+
+.hz-table__filter-menu {
+  position: absolute;
+
+  z-index: 5000;
+
+  top: calc(100% + 4px);
+  right: 0;
+
+  width: 280px;
+
+  max-height: 430px;
+
+  overflow: hidden;
+
+  border: 1px solid #cfd9e5;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 12px 30px rgba(15, 35, 65, 0.16),
+    0 3px 8px rgba(15, 35, 65, 0.08);
+
+  color: var(--hz-text-primary);
+
+  text-transform: none;
+  letter-spacing: normal;
+
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* ============================================================
+   FILTER HEADER
+   ============================================================ */
+
+.hz-table__filter-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 40px;
+
+  padding: 0 10px;
+
+  border-bottom: 1px solid #e3e8ef;
+
+  background: #ffffff;
+}
+
+.hz-table__filter-menu-title {
+  color: #26364a;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hz-table__filter-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 26px;
+  height: 26px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 4px;
+
+  background: transparent;
+
+  color: #7c8da3;
+
+  cursor: pointer;
+}
+
+.hz-table__filter-close:hover {
+  background: #f0f3f7;
+  color: #26364a;
+}
+
+/* ============================================================
+   FILTER BODY
+   ============================================================ */
+
+.hz-table__filter-body {
+  padding: 10px;
+}
+
+.hz-table__filter-label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #68788c;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   SEARCH INPUT
+   ============================================================ */
+
+.hz-table__filter-search {
+  display: block;
+
+  width: 100%;
+  height: 34px;
+
+  margin-bottom: 8px;
+
+  padding: 0 9px;
+
+  border: 1px solid #cbd6e3;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: #26364a;
+
+  outline: none;
+
+  font-size: 12px;
+}
+
+.hz-table__filter-search:focus {
+  border-color: var(--hz-primary-500);
+
+  box-shadow:
+    0 0 0 2px rgba(37, 99, 235, 0.10);
+}
+
+/* ============================================================
+   OPERATOR SELECT
+   ============================================================ */
+
+.hz-table__filter-select {
+  display: block;
+
+  width: 100%;
+  height: 34px;
+
+  margin-bottom: 8px;
+
+  padding: 0 8px;
+
+  border: 1px solid #cbd6e3;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: #26364a;
+
+  outline: none;
+
+  font-size: 12px;
+}
+
+.hz-table__filter-select:focus {
+  border-color: var(--hz-primary-500);
+}
+
+/* ============================================================
+   DATE
+   ============================================================ */
+
+.hz-table__filter-date {
+  display: block;
+
+  width: 100%;
+  height: 34px;
+
+  margin-bottom: 8px;
+
+  padding: 0 8px;
+
+  border: 1px solid #cbd6e3;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: #26364a;
+
+  outline: none;
+
+  font-size: 12px;
+}
+
+.hz-table__filter-date:focus {
+  border-color: var(--hz-primary-500);
+}
+
+/* ============================================================
+   OPTIONS
+   ============================================================ */
+
+.hz-table__filter-options {
+  max-height: 220px;
+
+  overflow-y: auto;
+
+  margin: 0 -3px;
+
+  padding: 0 3px;
+}
+
+.hz-table__filter-option {
+  display: flex;
+  align-items: center;
+
+  min-height: 32px;
+
+  gap: 8px;
+
+  padding: 5px 6px;
+
+  border-radius: 4px;
+
+  cursor: pointer;
+}
+
+.hz-table__filter-option:hover {
+  background: #f3f7fb;
+}
+
+.hz-table__filter-option input {
+  width: 15px;
+  height: 15px;
+
+  margin: 0;
+
+  flex: 0 0 15px;
+
+  accent-color: var(--hz-primary-500);
+
+  cursor: pointer;
+}
+
+.hz-table__filter-option span {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: #33445a;
+
+  font-size: 12px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hz-table__filter-option--all {
+  margin-bottom: 4px;
+
+  padding-bottom: 8px;
+
+  border-bottom: 1px solid #e7ebf0;
+
+  font-weight: 600;
+}
+
+.hz-table__filter-no-results {
+  padding: 14px 6px;
+
+  color: #8a98a9;
+
+  text-align: center;
+
+  font-size: 12px;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.hz-table__filter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 7px;
+
+  padding: 9px 10px;
+
+  border-top: 1px solid #e3e8ef;
+
+  background: #fafbfd;
+}
+
+.hz-table__filter-footer button {
+  min-height: 31px;
+
+  padding: 5px 12px;
+
+  border-radius: 5px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.hz-table__filter-clear {
+  border: 1px solid #ccd6e2;
+
+  background: #ffffff;
+
+  color: #52657d;
+}
+
+.hz-table__filter-clear:hover {
+  background: #f3f6f9;
+}
+
+.hz-table__filter-apply {
+  border: 1px solid var(--hz-primary-600);
+
+  background: var(--hz-primary-600);
+
+  color: #ffffff;
+}
+
+.hz-table__filter-apply:hover {
+  filter: brightness(0.96);
+}
+
+/* ============================================================
+   TABLE BODY - EXCEL STYLE
+   ============================================================ */
+
+.hz-module-page--employees .hz-table tbody td {
+  height: 46px;
+
+  padding: 7px 10px !important;
+
+  border-bottom: 1px solid #dfe5ec !important;
+  border-right: 1px solid #edf1f5 !important;
+
+  background: #ffffff;
+
+  color: var(--hz-text-primary);
+
+  font-size: 13px;
+
+  vertical-align: middle;
+}
+
+.hz-module-page--employees
+  .hz-table
+  tbody
+  td:last-child {
+  border-right: 0 !important;
+}
+
+/* ============================================================
+   ROW HOVER
+   ============================================================ */
+
+.hz-module-page--employees
+  .hz-table
+  tbody
+  tr:hover
+  td {
+  background: #eaf2f8 !important;
+}
+
+/* ============================================================
+   NO FILTER RESULTS
+   ============================================================ */
+
+.hz-table__no-filter-results {
+  height: 160px;
+
+  text-align: center;
+
+  vertical-align: middle !important;
+}
+
+.hz-table__no-filter-results > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.hz-table__no-filter-results strong {
+  color: #52657d;
+
+  font-size: 13px;
+}
+
+.hz-table__no-filter-results span {
+  color: #8a98a9;
+
+  font-size: 12px;
+}
+
+.hz-table__no-filter-results button {
+  margin-top: 5px;
+
+  padding: 4px 10px;
+
+  border: 1px solid #ccd6e2;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: var(--hz-primary-600);
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.hz-table__no-filter-results button:hover {
+  background: var(--hz-primary-50);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 767.98px) {
+  .hz-table__filter-menu {
+    position: fixed;
+
+    top: 50%;
+    left: 50%;
+    right: auto;
+
+    width: min(300px, calc(100vw - 24px));
+
+    max-height: 80vh;
+
+    transform: translate(-50%, -50%);
+  }
+}
+/* Center header select-all checkbox */
+.hz-table thead th.hz-table__selection {
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 0 !important;
+}
+
+.hz-table thead th.hz-table__selection input[type="checkbox"] {
+  display: block;
+  margin: 0 auto !important;
+}
+>>>>>>> origin/uiupdate

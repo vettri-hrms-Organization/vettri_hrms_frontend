@@ -305,7 +305,11 @@ function JobTab({ employee }) {
           <InfoRow label="Department" value={employee.departmentName} />
           <InfoRow label="Team" value={employee.teamName} />
           <InfoRow icon={MapPin} label="Location" value={employee.address} />
+<<<<<<< HEAD
           <InfoRow icon={Users} label="Reports To" value={employee.reportingManagerName} />
+=======
+          <InfoRow icon={Users} label="Reporting Person Email" value={employee.reportingPersonEmail} />
+>>>>>>> origin/uiupdate
         </Card>
       </div>
       <div className="col-12 col-lg-6">
@@ -329,6 +333,7 @@ function HierarchyTab({ employee }) {
     <div className="row g-3">
       <div className="col-12 col-lg-6">
         <Card title="Reports To">
+<<<<<<< HEAD
           {employee.reportingManagerId ? (
             <Link to={`/employees/${employee.reportingManagerId}`} className="d-flex align-items-center gap-2 text-decoration-none">
               <Avatar name={employee.reportingManagerName} size="md" />
@@ -341,6 +346,15 @@ function HierarchyTab({ employee }) {
             </Link>
           ) : (
             <EmptyState icon={Users} title="No manager set" description="This employee doesn't have a reporting manager assigned." />
+=======
+          {employee.reportingPersonEmail ? (
+            <div className="d-flex align-items-center gap-2">
+              <Mail size={18} style={{ color: 'var(--hz-text-muted)' }} />
+              <span style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)' }}>{employee.reportingPersonEmail}</span>
+            </div>
+          ) : (
+            <EmptyState icon={Users} title="No reporting person set" description="This employee does not have a reporting person email assigned." />
+>>>>>>> origin/uiupdate
           )}
         </Card>
       </div>

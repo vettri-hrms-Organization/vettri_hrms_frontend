@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
+<<<<<<< HEAD
 import { Search, UserPlus, FileSpreadsheet, ChevronLeft, ChevronRight, X } from 'lucide-react';
+=======
+import {Search,UserPlus,FileSpreadsheet,ChevronLeft,ChevronRight,} from 'lucide-react';
+>>>>>>> origin/uiupdate
 import { employeesApi } from '../../api/endpoints/employees';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -20,6 +24,7 @@ const COLUMNS = [
     label: 'Employee',
     headerClassName: 'ps-4',
     className: 'ps-4',
+<<<<<<< HEAD
     render: (emp) => (
       <Link to={`/employees/${emp.id}`} className="d-flex align-items-center gap-2 text-decoration-none">
         <Avatar name={emp.fullName} size="sm" />
@@ -28,10 +33,40 @@ const COLUMNS = [
             {emp.fullName}
           </div>
           <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{emp.employeeCode}</div>
+=======
+
+    render: (emp) => (
+      <Link
+        to={`/employees/${emp.id}`}
+        className="d-flex align-items-center gap-2 text-decoration-none"
+      >
+        <Avatar name={emp.fullName} size="sm" />
+
+        <div>
+          <div
+            style={{
+              fontWeight: 600,
+              fontSize: 'var(--hz-text-sm)',
+              color: 'var(--hz-text-primary)',
+            }}
+          >
+            {emp.fullName}
+          </div>
+
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--hz-text-muted)',
+            }}
+          >
+            {emp.employeeCode}
+          </div>
+>>>>>>> origin/uiupdate
         </div>
       </Link>
     ),
   },
+<<<<<<< HEAD
   { key: 'department', label: 'Department', render: (emp) => emp.departmentName || '—' },
   { key: 'designation', label: 'Designation', render: (emp) => emp.designationTitle || '—' },
   { key: 'manager', label: 'Manager', render: (emp) => emp.reportingManagerName || '—' },
@@ -40,21 +75,84 @@ const COLUMNS = [
     label: 'Type',
     render: (emp) => EMPLOYMENT_TYPE_LABEL[emp.employmentType] || emp.employmentType,
   },
+=======
+
+  {
+    key: 'department',
+    label: 'Department',
+    render: (emp) =>
+      emp.departmentName || '—',
+  },
+
+  {
+    key: 'designation',
+    label: 'Designation',
+    render: (emp) =>
+      emp.designationTitle || '—',
+  },
+
+  {
+    key: 'reportingPersonEmail',
+    label: 'Reports To',
+    render: (emp) =>
+      emp.reportingPersonEmail || '—',
+  },
+
+  {
+    key: 'type',
+    label: 'Type',
+    render: (emp) =>
+      EMPLOYMENT_TYPE_LABEL[emp.employmentType] ||
+      emp.employmentType ||
+      '—',
+  },
+
+>>>>>>> origin/uiupdate
   {
     key: 'status',
     label: 'Status',
     render: (emp) => {
       const meta = statusMeta(emp.status);
+<<<<<<< HEAD
       return <StatusBadge status={emp.status} variant={meta.variant} dot>{meta.label}</StatusBadge>;
     },
   },
+=======
+
+      return (
+        <StatusBadge
+          status={emp.status}
+          variant={meta.variant}
+          dot
+        >
+          {meta.label}
+        </StatusBadge>
+      );
+    },
+  },
+
+>>>>>>> origin/uiupdate
   {
     key: 'joined',
     label: 'Joined',
     headerClassName: 'pe-4',
     className: 'pe-4',
+<<<<<<< HEAD
     render: (emp) => (emp.dateOfJoining ? new Date(emp.dateOfJoining).toLocaleDateString() : '—'),
     style: { color: 'var(--hz-text-secondary)' },
+=======
+
+    render: (emp) =>
+      emp.dateOfJoining
+        ? new Date(
+            emp.dateOfJoining
+          ).toLocaleDateString()
+        : '—',
+
+    style: {
+      color: 'var(--hz-text-secondary)',
+    },
+>>>>>>> origin/uiupdate
   },
 ];
 
@@ -69,7 +167,11 @@ export default function EmployeeList() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkStatus, setBulkStatus] = useState(null);
   const queryClient = useQueryClient();
+<<<<<<< HEAD
   const pageSize = 25;
+=======
+  const pageSize = 10;
+>>>>>>> origin/uiupdate
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['employees-paged', search, page, departmentId],
@@ -108,17 +210,35 @@ export default function EmployeeList() {
       />
 
       <FilterBar>
+<<<<<<< HEAD
         <div className="position-relative" style={{ maxWidth: 360, width: '100%' }}>
           <Search size={16} className="position-absolute" style={{ left: 12, top: 10, color: 'var(--hz-text-muted)' }} />
+=======
+        <div
+          className="position-relative hz-employee-search"
+          style={{ maxWidth: 360, width: '100%' }}
+        >
+          <Search
+            size={16}
+            className="hz-employee-search-icon"
+            aria-hidden="true"
+          />
+
+>>>>>>> origin/uiupdate
           <input
             type="search"
             placeholder="Search by name, code, or email…"
             aria-label="Search employees by name, code, or email"
+<<<<<<< HEAD
             className="form-control ps-5"
+=======
+            className="form-control hz-employee-search-input"
+>>>>>>> origin/uiupdate
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
+<<<<<<< HEAD
 
         {departmentId && (
           <div
@@ -139,6 +259,8 @@ export default function EmployeeList() {
             </button>
           </div>
         )}
+=======
+>>>>>>> origin/uiupdate
       </FilterBar>
 
       {selectedIds.size > 0 && <div className="hz-bulk-toolbar" role="toolbar" aria-label="Bulk employee actions">

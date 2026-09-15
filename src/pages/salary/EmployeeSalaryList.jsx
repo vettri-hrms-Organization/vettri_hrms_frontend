@@ -98,6 +98,7 @@ export default function EmployeeSalaryList() {
 
       <Card bodyClassName="p-3">
         <div className="row g-2 align-items-center">
+<<<<<<< HEAD
           <div className="col-12 col-md-5">
             <div className="input-group">
               <span className="input-group-text" style={{ background: 'var(--hz-gray-50)', border: '1px solid var(--hz-border)', borderRight: 'none' }}>
@@ -115,6 +116,33 @@ export default function EmployeeSalaryList() {
               />
             </div>
           </div>
+=======
+         <div className="col-12 col-md-5">
+  <div className="input-group">
+    <span
+      className="input-group-text"
+      style={{
+        background: 'var(--hz-gray-50)',
+        border: '1px solid var(--hz-border)',
+        borderRight: 'none'
+      }}
+    >
+      <Search size={15} style={{ color: 'var(--hz-text-muted)' }} />
+    </span>
+
+    <input
+      type="text"
+      className="form-control hz-employee-search-input"
+      placeholder="Search by name, code or email…"
+      value={search}
+      onChange={(e) => {
+        setSearch(e.target.value);
+        setPage(0);
+      }}
+    />
+  </div>
+</div>
+>>>>>>> origin/uiupdate
           <div className="col-6 col-md-3">
             <select
               className="form-select"
