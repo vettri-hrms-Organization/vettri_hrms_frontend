@@ -100,9 +100,8 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
         <div
           className="hz-sidebar__header d-flex align-items-center justify-content-between gap-2"
         >
-          <div className="hz-rail-brand">
-            <Logo variant="mark" tone="onDark" size={32} />
-            <span>Vettri HRMS</span>
+          <div className="hz-rail-brand" aria-label="Vettri HRMS">
+            <Logo variant="mark" tone="onDark" size={28} />
           </div>
           <button
             type="button"

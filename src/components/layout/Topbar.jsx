@@ -264,7 +264,7 @@ export default function Topbar({ onOpenMobileNav }) {
       className="hz-topbar d-flex align-items-center gap-2 px-3 px-md-4"
     >
       <div className="hz-brand-mark" aria-label="Vettri HRMS">
-        <Logo tone="onDark" size={30} />
+        <span className="hz-brand-mark__text">Vettri</span>
       </div>
 
       <button

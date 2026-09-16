@@ -1,224 +1,437 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import Logo from '../components/brand/Logo';
 import LoginBrandPanel from '../components/auth/LoginBrandPanel';
-import LoginIdentifierStep from '../components/auth/LoginIdentifierStep';
-import LoginPasswordStep from '../components/auth/LoginPasswordStep';
-import LoginSecurityIndicator from '../components/auth/LoginSecurityIndicator';
-import { mapPasswordError, mapIdentifierError } from '../utils/errorMapping';
+import { mapPasswordError } from '../utils/errorMapping';
 
-/**
- * Premium two-step VETTRI HRMS login experience
- * Step 1: Identifier (email/employee ID)
- * Step 2: Password (after identifier is confirmed)
- *
- * Architecture preserved: uses existing AuthContext.login, JWT storage, and role system
- */
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from
     ? `${location.state.from.pathname}${location.state.from.search || ''}${location.state.from.hash || ''}`
-    : '/';
+    : '/dashboard';
 
-  // Two-step flow state
-  const [step, setStep] = useState('identifier'); // 'identifier' | 'password' | 'success'
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [verifiedIdentifier, setVerifiedIdentifier] = useState(null);
 
-  /**
-   * Step 1: Handle identifier input
-   * In a real two-step system, this might call an API to verify the identifier exists
-   * For now, we proceed to password step locally (API will validate on login)
-   */
-  async function handleIdentifierContinue() {
-    if (!identifier.trim()) {
-      setError('Please enter your email or employee ID');
-      return;
-    }
-
-    // Simulate brief verification
-    setError(null);
-    setSubmitting(true);
-
-    try {
-      // In this implementation, we trust the backend login API to validate the identifier
-      // A more sophisticated implementation might call an API to pre-check the identifier
-      setVerifiedIdentifier(identifier);
-      setStep('password');
-    } catch (err) {
-      setError(mapIdentifierError(err));
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  /**
-   * Step 2: Handle password submission
-   * Calls the existing login() function with identifier + password
-   */
-  async function handlePasswordSubmit() {
-    if (!password) {
-      setError('Please enter your password');
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (!identifier.trim() || !password) {
+      setError('Please enter your email and password');
       return;
     }
 
     setError(null);
     setSubmitting(true);
-
     try {
       await login(identifier, password);
-      // Navigate after successful login
       navigate(from, { replace: true });
     } catch (err) {
       setError(mapPasswordError(err));
-      // Keep user on password step to retry
     } finally {
       setSubmitting(false);
     }
   }
 
-  /**
-   * Go back to identifier step
-   */
-  function handleBackToIdentifier() {
-    setStep('identifier');
-    setPassword('');
-    setError(null);
-    setVerifiedIdentifier(null);
-  }
-
   return (
-    <div className="vettri-login hz-auth-workspace d-flex" style={{ minHeight: '100vh', background: 'var(--hz-bg-canvas)' }}>
-      {/* Premium left brand panel - desktop only */}
+    <main className="vettri-login-shell">
       <LoginBrandPanel />
 
-      {/* Right form panel */}
-      <div
-        className="vettri-login__form-panel d-flex flex-column justify-content-center align-items-center flex-grow-1 p-4"
-        style={{ overflowY: 'auto' }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: 440,
-            marginY: 'auto',
-          }}
-        >
-          {/* Mobile logo */}
-          <div className="d-flex d-lg-none mb-5">
-            <Link to="/" className="text-decoration-none">
-              <Logo size={36} />
-            </Link>
-          </div>
+      <section className="vettri-login-card-page">
+        <div className="vettri-login-panel">
+          <form className="vettri-login-card" onSubmit={handleSubmit}>
+            <div className="vettri-login-card__body">
+              <div className="vettri-login-card__header">
+                <h1>Welcome back</h1>
+                <p>Sign in to your Vettri workspace</p>
+              </div>
 
-          {/* Step indicator or breadcrumb - subtle */}
-          {step === 'password' && (
-            <div
-              style={{
-                fontSize: 'var(--hz-text-xs)',
-                color: 'var(--hz-text-muted)',
-                marginBottom: 12,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Step 2 of 2
+              <div className="vettri-login-card__fields">
+            {error && <div className="vettri-login-card__error" role="alert">{error}</div>}
+
+            <div className="vettri-login-card__field-group">
+              <label htmlFor="login-email">Work email</label>
+              <div className="vettri-login-card__input-wrap">
+                <Mail size={17} aria-hidden="true" />
+                <input
+                  id="login-email"
+                  className="vettri-login-card__input"
+                  type="email"
+                  name="email"
+                  value={identifier}
+                  onChange={(event) => setIdentifier(event.target.value)}
+                  placeholder="you@company.com"
+                  autoComplete="username"
+                  autoFocus
+                  disabled={submitting}
+                />
+              </div>
             </div>
-          )}
 
-          {/* Smooth step transitions */}
-          <div
-            style={{
-              animation: 'fadeInSlide 300ms ease-out',
-              minHeight: '300px',
-            }}
-          >
-            {step === 'identifier' && (
-              <LoginIdentifierStep
-                identifier={identifier}
-                onIdentifierChange={setIdentifier}
-                onContinue={handleIdentifierContinue}
-                loading={submitting}
-                error={error}
+            <div className="vettri-login-card__field-group">
+              <div className="vettri-login-card__label-row">
+                <label htmlFor="login-password">Password</label>
+                <Link to="/reset-password">Forgot password?</Link>
+              </div>
+              <div className="vettri-login-card__input-wrap">
+                <Lock size={17} aria-hidden="true" />
+                <input
+                  id="login-password"
+                  className="vettri-login-card__input"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  disabled={submitting}
+                />
+                <button
+                  type="button"
+                  className="vettri-login-card__password-toggle"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </div>
+
+            <label className="vettri-login-card__remember">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={() => setRememberMe((value) => !value)}
               />
-            )}
+              <span>Remember me for 30 days</span>
+            </label>
 
-            {step === 'password' && (
-              <LoginPasswordStep
-                username={identifier}
-                userEmail={verifiedIdentifier}
-                password={password}
-                onPasswordChange={setPassword}
-                onSubmit={handlePasswordSubmit}
-                loading={submitting}
-                error={error}
-                onBack={handleBackToIdentifier}
-              />
-            )}
-          </div>
+            <button className="vettri-login-card__submit" type="submit" disabled={submitting}>
+              <span>{submitting ? 'Signing in...' : 'Sign in'}</span>
+              {!submitting && <ArrowRight size={17} />}
+            </button>
+              </div>
 
-          {/* Forgot password link - shown on both steps */}
-          {step === 'password' && (
-            <div className="text-center mt-4">
-              <Link
-                to="/reset-password"
-                className="text-decoration-none"
-                style={{
-                  fontSize: 'var(--hz-text-sm)',
-                  color: 'var(--hz-primary-600)',
-                  fontWeight: 500,
-                }}
+              <div className="vettri-login-card__divider"><span>or</span></div>
+
+              <button
+                type="button"
+                className="vettri-login-card__google"
+                disabled
+                aria-label="Continue with Google (coming soon)"
+                title="Google sign-in will be available soon"
               >
-                Forgot your password?
-              </Link>
-            </div>
-          )}
+                <span className="vettri-login-card__google-icon" aria-hidden="true">G</span>
+                <span>Continue with Google</span>
+              </button>
 
-          {/* Security indicator */}
-          <LoginSecurityIndicator />
+              <p className="vettri-login-card__signup">
+                Don&apos;t have an account? <Link to="/signup">Create your workspace</Link>
+              </p>
+            </div>
+          </form>
+
+          <footer className="vettri-login-card__footer">
+            <span>Need help? <a href="mailto:admin@vettrihrms.com">Contact support</a></span>
+            <span>© 2026 Vettri. All rights reserved.</span>
+          </footer>
         </div>
-      </div>
+      </section>
 
       <style>{`
-        @keyframes fadeInSlide {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .vettri-login {
-          font-family: var(--hz-font-sans);
-          background-color: var(--hz-bg-canvas);
-        }
-
-        .vettri-login__form-panel {
+        .vettri-login-card-page {
+          min-width: 0;
           min-height: 100vh;
-          background: linear-gradient(to bottom, var(--hz-bg-canvas), rgba(245, 248, 252, 0.5));
+          flex: 1;
+          overflow: hidden;
+          background: #fff;
+          color: #102a43;
+          font-family: var(--hz-font-sans, 'Manrope', sans-serif);
         }
 
-        @media (max-width: 992px) {
-          .vettri-login__form-panel {
-            padding: 2rem 1.5rem;
+        .vettri-login-shell {
+          min-height: 100vh;
+          display: flex;
+          background: #f4f7fb;
+        }
+
+        .vettri-login-panel { 
+          width: 100%;
+          box-sizing: border-box;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          padding: 20px clamp(20px, 3vw, 44px) 16px;
+        }
+
+        .vettri-login-card {
+          width: 100%;
+          max-width: 340px;
+          margin: auto;
+          box-sizing: border-box;
+        }
+
+        .vettri-login-card__body {
+          padding: 16px 0 12px;
+        }
+
+        .vettri-login-card__header {
+          text-align: left;
+        }
+
+        .vettri-login-card__header h1 {
+          margin: 0 0 7px;
+          color: #102a43;
+          font-size: clamp(30px, 2.5vw, 34px);
+          font-weight: 750;
+          letter-spacing: -.05em;
+          line-height: 1.2;
+        }
+
+        .vettri-login-card__header p {
+          margin: 0;
+          color: #718096;
+          font-size: 12px;
+        }
+
+        .vettri-login-card__fields {
+          display: grid;
+          gap: 9px;
+          margin-top: 20px;
+        }
+
+        .vettri-login-card__field-group {
+          display: grid;
+          gap: 8px;
+        }
+
+        .vettri-login-card__field-group label,
+        .vettri-login-card__label-row label {
+          color: #243954;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .vettri-login-card__label-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .vettri-login-card__label-row a {
+          color: #1769ff;
+          font-size: 12px;
+          text-decoration: none;
+        }
+
+        .vettri-login-card__input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          height: 44px;
+          padding: 0 13px;
+          border: 1px solid #d5dee8;
+          border-radius: 9px;
+          color: #77899e;
+          background: #fff;
+          transition: border-color .2s, box-shadow .2s;
+        }
+
+        .vettri-login-card__input-wrap:focus-within {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, .1);
+        }
+
+        .vettri-login-card__input {
+          min-width: 0;
+          width: 100%;
+          border: 0;
+          outline: 0;
+          color: #172c47;
+          background: transparent;
+          font: inherit;
+          font-size: 14px;
+        }
+
+        .vettri-login-card__input::placeholder {
+          color: #9aa8b8;
+        }
+
+        .vettri-login-card__input:-webkit-autofill,
+        .vettri-login-card__input:-webkit-autofill:hover,
+        .vettri-login-card__input:-webkit-autofill:focus {
+          -webkit-text-fill-color: #172c47;
+          -webkit-box-shadow: 0 0 0 1000px #fff inset;
+          box-shadow: 0 0 0 1000px #fff inset;
+          caret-color: #172c47;
+        }
+
+        .vettri-login-card__password-toggle {
+          display: flex;
+          flex: 0 0 auto;
+          padding: 3px;
+          border: 0;
+          color: #77899e;
+          background: transparent;
+          cursor: pointer;
+        }
+
+        .vettri-login-card__remember {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-top: -1px;
+          color: #43566d;
+          font-size: 12px;
+        }
+
+        .vettri-login-card__remember input {
+          width: 14px;
+          height: 14px;
+          margin: 0;
+          accent-color: #1769ff;
+        }
+
+        .vettri-login-card__submit,
+        .vettri-login-card__google {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 44px;
+          border-radius: 9px;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .vettri-login-card__submit {
+          gap: 10px;
+          margin-top: 5px;
+          border: 0;
+          color: #fff;
+          background: #1769ff;
+          box-shadow: 0 9px 18px rgba(23, 105, 255, .2);
+          cursor: pointer;
+          transition: background .2s, transform .2s;
+        }
+
+        .vettri-login-card__submit:hover:not(:disabled) {
+          background: #1259db;
+          transform: translateY(-1px);
+        }
+
+        .vettri-login-card__submit:disabled {
+          cursor: wait;
+          opacity: .68;
+        }
+
+        .vettri-login-card__divider {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          align-items: center;
+          gap: 12px;
+          margin: 16px 0 12px;
+          color: #8a99aa;
+          font-size: 11px;
+        }
+
+        .vettri-login-card__divider::before,
+        .vettri-login-card__divider::after {
+          content: '';
+          height: 1px;
+          border-top: 1px dashed #dbe3eb;
+        }
+
+        .vettri-login-card__google {
+          gap: 9px;
+          border: 1px solid #d5dee8;
+          color: #344a62;
+          background: #fff;
+          cursor: not-allowed;
+          opacity: .7;
+        }
+
+        .vettri-login-card__signup {
+          margin: 15px 0 0;
+          color: #718096;
+          font-size: 12px;
+          text-align: center;
+        }
+
+        .vettri-login-card__signup a {
+          color: #1769ff;
+          font-weight: 700;
+          text-decoration: none;
+        }
+
+        .vettri-login-card__google-icon {
+          display: grid;
+          place-items: center;
+          width: 20px;
+          height: 20px;
+          color: #4285f4;
+          font-family: Arial, sans-serif;
+          font-size: 17px;
+          font-weight: 800;
+        }
+
+        .vettri-login-card__error {
+          padding: 10px 12px;
+          border: 1px solid #f1caca;
+          border-radius: 8px;
+          color: #a43d3d;
+          background: #fff4f4;
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        .vettri-login-card__footer {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          width: 100%;
+          max-width: 340px;
+          margin: 0 auto;
+          box-sizing: border-box;
+          padding: 0;
+          color: #8795a6;
+          font-size: 9px;
+          line-height: 1.4;
+        }
+
+        .vettri-login-card__footer a {
+          color: #1769ff;
+          text-decoration: none;
+        }
+
+        @media (max-width: 560px) {
+          .vettri-login-shell { display: block; }
+
+          .vettri-login-card-page {
+            min-height: 100vh;
+            overflow: visible;
           }
-        }
 
-        @media (max-width: 576px) {
-          .vettri-login__form-panel {
-            padding: 1.5rem 1rem;
+          .vettri-login-panel { padding: 20px 24px 18px; }
+
+          .vettri-login-card__body { padding: 16px 0 12px; }
+
+          .vettri-login-card__footer {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
           }
         }
       `}</style>
-    </div>
+    </main>
   );
 }

@@ -2,11 +2,8 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './auth/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
-import PublicSiteLayout from './pages/landing/PublicSiteLayout';
-import Home from './pages/landing/Home';
-import About from './pages/landing/About';
-import Contact from './pages/landing/Contact';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import ActivateAccount from './pages/ActivateAccount';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
@@ -19,8 +16,6 @@ import LeaveRequests from './pages/leave/LeaveRequests';
 const JobOpenings = lazy(() => import('./pages/recruitment/JobOpenings'));
 const CandidatePipeline = lazy(() => import('./pages/recruitment/CandidatePipeline'));
 const MyInterviews = lazy(() => import('./pages/recruitment/MyInterviews'));
-import CareersList from './pages/careers/CareersList';
-import JobApply from './pages/careers/JobApply';
 const PerformanceHub = lazy(() => import('./pages/performance/PerformanceHub'));
 const Reports = lazy(() => import('./pages/reports/Reports'));
 const ExecutiveOverview = lazy(() => import('./pages/reports/ExecutiveOverview'));
@@ -55,17 +50,10 @@ const SoftwareManagement = lazy(() => import('./pages/software/SoftwareManagemen
 export default function App() {
   return (
     <Suspense fallback={<div className="p-4 text-secondary-hz">Loading...</div>}><Routes>
-      <Route element={<PublicSiteLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/careers" element={<CareersList />} />
-        <Route path="/contact" element={<Contact />} />
-      </Route>
-
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
       <Route path="/activate-account" element={<ActivateAccount />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/careers/:jobId" element={<JobApply />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
