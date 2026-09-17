@@ -44,6 +44,7 @@ import SupportInfo from './pages/SupportInfo';
 import SettingsPreferences from './pages/SettingsPreferences';
 import Welcome from './pages/Welcome';
 import Notifications from './pages/Notifications';
+import Landing from './pages/landing/Landing';
 const Requirements = lazy(() => import('./pages/Requirements'));
 const MonitoringReports = lazy(() => import('./pages/monitoring/MonitoringReports'));
 const SettingsPlatform = lazy(() => import('./pages/SettingsPlatform'));
@@ -52,6 +53,7 @@ const SoftwareManagement = lazy(() => import('./pages/software/SoftwareManagemen
 export default function App() {
   return (
     <Suspense fallback={<div className="p-4 text-secondary-hz">Loading...</div>}><Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/activate-account" element={<ActivateAccount />} />
