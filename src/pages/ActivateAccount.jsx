@@ -37,6 +37,10 @@ export default function ActivateAccount() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      setError('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
+      return;
+    }
     if (password !== confirm) {
       setError('Passwords do not match.');
       return;
@@ -46,6 +50,10 @@ export default function ActivateAccount() {
   };
 
   const failure = !token || invite.isError;
+
+  if (invite.isLoading) {
+    return <AuthPageShell><p style={{ textAlign: 'center', color: 'var(--hz-text-muted)' }}>Validating your invitation...</p></AuthPageShell>;
+  }
 
   if (done) {
     return (
@@ -95,7 +103,7 @@ export default function ActivateAccount() {
         Welcome to Vettri HRMS
       </h1>
       <p style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-muted)', marginBottom: 24 }}>
-        Create your password{invite.data?.name ? `, ${invite.data.name}` : ''}
+        Create your password{invite.data?.employeeName ? `, ${invite.data.employeeName}` : ''}
       </p>
 
       {error && (
@@ -174,7 +182,7 @@ export default function ActivateAccount() {
         </div>
 
         <Button type="submit" variant="primary" className="w-100 justify-content-center" loading={activate.isPending} disabled={activate.isPending || !password || !confirm}>
-          Activate Account
+          Create Password
         </Button>
       </form>
 
