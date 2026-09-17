@@ -222,10 +222,11 @@ function OverviewTab({ employee }) {
 
   const onboarding = inviteResult || invitation.data;
   const onboardingStatus = onboarding?.status || (accountStatus === 'ACTIVE' && !employee.linkedUserId ? 'COMPLETED' : 'NO_INVITATION');
+  const inviteUrl = onboarding?.inviteUrl;
   const copyInvite = async () => {
-    if (!inviteResult?.inviteUrl) return;
+    if (!inviteUrl) return;
     try {
-      await navigator.clipboard.writeText(inviteResult.inviteUrl);
+      await navigator.clipboard.writeText(inviteUrl);
       toast.success('Invitation link copied.');
     } catch {
       toast.error('Could not copy the invitation link.');
@@ -250,10 +251,11 @@ function OverviewTab({ employee }) {
               {onboardingStatus === 'COMPLETED' && <Badge variant="success" dot>Completed</Badge>}
               {onboardingStatus !== 'COMPLETED' && <Button size="sm" icon={Send} loading={sendInvitation.isPending || resendInvitation.isPending} onClick={() => (onboardingStatus === 'INVITATION_SENT' ? resendInvitation.mutate() : onboardingStatus === 'INVITATION_EXPIRED' ? resendInvitation.mutate() : sendInvitation.mutate())}>{onboardingStatus === 'INVITATION_SENT' ? 'Resend Invite' : onboardingStatus === 'INVITATION_EXPIRED' ? 'Generate New Invite' : 'Send Invite'}</Button>}
             </div>
-            {inviteResult?.inviteUrl && <div className="mt-3 p-3" style={{ background: 'var(--hz-gray-50)', border: '1px solid var(--hz-border)', borderRadius: 'var(--hz-radius-md)' }}>
-              <div className="text-muted-hz mb-1" style={{ fontSize: 12 }}>Employee setup link</div>
-              <div className="text-truncate" style={{ fontSize: 13, maxWidth: '100%' }}>{inviteResult.inviteUrl}</div>
-              <div className="d-flex gap-2 mt-2"><Button size="sm" variant="secondary" onClick={copyInvite}>Copy Link</Button><Button size="sm" variant="secondary" onClick={() => window.open(inviteResult.inviteUrl, '_blank', 'noopener,noreferrer')}>Open</Button></div>
+            {inviteUrl && <div className="mt-3 p-3" style={{ background: 'var(--hz-gray-50)', border: '1px solid var(--hz-border)', borderRadius: 'var(--hz-radius-md)' }}>
+              <div className="text-muted-hz mb-1" style={{ fontSize: 12 }}>Employee setup</div>
+              <div style={{ fontSize: 13, color: 'var(--hz-text-secondary)' }}>Secure invitation link generated</div>
+              <div className="text-muted-hz mt-1" style={{ fontSize: 12 }}>Expires: {onboarding?.expiresAt ? new Date(onboarding.expiresAt).toLocaleString() : 'Configured invitation expiry'}</div>
+              <div className="d-flex gap-2 mt-2"><Button size="sm" variant="secondary" onClick={copyInvite}>Copy Link</Button><Button size="sm" variant="secondary" onClick={() => window.open(inviteUrl, '_blank', 'noopener,noreferrer')}>Open</Button></div>
             </div>}
           </div>
           {(sendInvitation.isError || disableAccount.isError) && <div className="mt-3 text-danger small">{sendInvitation.error?.response?.data?.message || disableAccount.error?.response?.data?.message || 'Account action failed.'}</div>}
