@@ -24,5 +24,7 @@ export const employeesApi = {
   setBiometricMapping: (id, deviceUserId) =>
     axiosClient.patch(`/api/employees/${id}/biometric-mapping`, { deviceUserId }).then((res) => res.data),
   sendInvitation: (id) => axiosClient.post(`/api/employees/${id}/invitation`).then((res) => res.data),
+  invitationStatus: (id) => axiosClient.get(`/api/employees/${id}/invitation`).then((res) => res.data),
+  resendInvitation: (id) => axiosClient.post(`/api/employees/${id}/invitation/resend`).then((res) => res.data),
   setAccountStatus: (id, status) => axiosClient.patch(`/api/employees/${id}/account-status`, { status }).then((res) => res.data),
 };

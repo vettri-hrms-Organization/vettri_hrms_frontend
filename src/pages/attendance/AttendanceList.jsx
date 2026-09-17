@@ -124,6 +124,11 @@ function AttendanceManagement() {
               Devices
             </Button>
           </Link>
+          <Link to="/attendance/presence">
+            <Button variant="secondary" size="sm" icon={Users}>
+              Team presence
+            </Button>
+          </Link>
           <div
             className="d-inline-flex align-items-center gap-2 px-3 py-1"
             style={{

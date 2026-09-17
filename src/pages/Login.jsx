@@ -23,7 +23,7 @@ export default function Login() {
   async function handleSubmit(event) {
     event.preventDefault();
     if (!identifier.trim() || !password) {
-      setError('Please enter your email and password');
+      setError('Please enter your username or email and password');
       return;
     }
 
@@ -56,17 +56,17 @@ export default function Login() {
             {error && <div className="vettri-login-card__error" role="alert">{error}</div>}
 
             <div className="vettri-login-card__field-group">
-              <label htmlFor="login-email">Work email</label>
+                <label htmlFor="login-identifier">Username or email</label>
               <div className="vettri-login-card__input-wrap">
                 <Mail size={17} aria-hidden="true" />
                 <input
-                  id="login-email"
+                  id="login-identifier"
                   className="vettri-login-card__input"
-                  type="email"
-                  name="email"
+                  type="text"
+                  name="username"
                   value={identifier}
                   onChange={(event) => setIdentifier(event.target.value)}
-                  placeholder="you@company.com"
+                  placeholder="Username or you@company.com"
                   autoComplete="username"
                   autoFocus
                   disabled={submitting}

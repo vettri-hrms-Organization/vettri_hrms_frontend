@@ -252,7 +252,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
 
 function CreateUserModal({ onClose }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ username: '', email: '', fullName: '', temporaryPassword: '' });
+  const [form, setForm] = useState({ username: '', email: '', fullName: '', temporaryPassword: '', roleNames: [] });
   const [error, setError] = useState(null);
 
   const createUser = useMutation({
@@ -279,6 +279,18 @@ function CreateUserModal({ onClose }) {
         <FormField label="Full Name" value={form.fullName} onChange={(v) => setForm({ ...form, fullName: v })} required />
         <FormField label="Username" value={form.username} onChange={(v) => setForm({ ...form, username: v })} required />
         <FormField label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
+        <div className="mb-3">
+          <label className="form-label" htmlFor="new-user-role">Account role</label>
+          <select
+            id="new-user-role"
+            className="form-select"
+            value={form.roleNames[0] || 'EMPLOYEE'}
+            onChange={(event) => setForm({ ...form, roleNames: [event.target.value] })}
+          >
+            <option value="EMPLOYEE">Employee</option>
+            <option value="COMPANY_ADMIN">Company Admin</option>
+          </select>
+        </div>
         <FormField
           label="Temporary Password"
           type="password"
@@ -287,7 +299,7 @@ function CreateUserModal({ onClose }) {
           required
         />
         <p style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>
-          The new user will be prompted to change this password on first login. New accounts default to the Employee role.
+          The email and username can both be used to log in. The new user will be prompted to change this password on first login.
         </p>
         <div className="d-flex justify-content-end gap-2 mt-2">
           <Button variant="secondary" type="button" onClick={onClose}>

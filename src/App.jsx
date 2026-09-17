@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import ProtectedRoute from './auth/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
@@ -12,6 +12,8 @@ import EmployeeProfile from './pages/employees/EmployeeProfile';
 import EmployeeImport from './pages/employees/EmployeeImport';
 import AttendanceList from './pages/attendance/AttendanceList';
 import Devices from './pages/attendance/Devices';
+import EmployeeAttendance from './pages/attendance/EmployeeAttendance';
+import AttendancePresence from './pages/attendance/AttendancePresence';
 import LeaveRequests from './pages/leave/LeaveRequests';
 const JobOpenings = lazy(() => import('./pages/recruitment/JobOpenings'));
 const CandidatePipeline = lazy(() => import('./pages/recruitment/CandidatePipeline'));
@@ -63,7 +65,9 @@ export default function App() {
           <Route path="employees/import" element={<EmployeeImport />} />
           <Route path="employees/:id" element={<EmployeeProfile />} />
           <Route path="attendance" element={<AttendanceList />} />
+          <Route path="attendance/presence" element={<AttendancePresence />} />
           <Route path="attendance/devices" element={<Devices />} />
+          <Route path="my-attendance" element={<EmployeeAttendance />} />
           <Route path="leave" element={<LeaveRequests />} />
           <Route path="recruitment" element={<JobOpenings />} />
           <Route path="recruitment/:jobOpeningId" element={<CandidatePipeline />} />
@@ -86,7 +90,7 @@ export default function App() {
           <Route path="salary/payroll-processing" element={<PayrollProcessing />} />
           <Route path="salary/reports" element={<SalaryReports />} />
           <Route path="my-payslip" element={<SalaryDetails />} />
-          <Route path="my-profile" element={<EmployeeProfile />} />
+          <Route path="my-profile" element={<MyProfileRoute />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="reports" element={<Reports />} />
           <Route path="/requirements" element={<Requirements />} />
@@ -105,4 +109,12 @@ export default function App() {
       <Route path="*" element={<NotFound />} />
     </Routes></Suspense>
   );
+}
+
+function MyProfileRoute() {
+  const [searchParams] = useSearchParams();
+  if (searchParams.get('tab') === 'attendance') {
+    return <Navigate to="/my-attendance" replace />;
+  }
+  return <EmployeeProfile />;
 }
