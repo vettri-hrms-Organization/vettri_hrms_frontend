@@ -10,17 +10,144 @@ import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 
-function getLocation() {
+function acquireBestLocation(onProgress) {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('LOCATION_UNAVAILABLE'));
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, timestamp: Date.now(), source: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'WEB_MOBILE' : 'WEB_DESKTOP' }),
-      (error) => reject(new Error(error.code === error.PERMISSION_DENIED ? 'LOCATION_PERMISSION_REQUIRED' : error.code === error.TIMEOUT ? 'LOCATION_TIMEOUT' : 'LOCATION_UNAVAILABLE')),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-    );
+
+    const startedAt = Date.now();
+    const maxAcquisitionMs = 15000;
+    const readings = [];
+    let watchId = null;
+    let settled = false;
+
+    const finalize = (payload, error) => {
+      if (settled) return;
+      settled = true;
+      if (watchId !== null && typeof navigator.geolocation.clearWatch === 'function') {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(payload);
+    };
+
+    const buildPayload = (position) => {
+      const latitude = Number(position.coords.latitude);
+      const longitude = Number(position.coords.longitude);
+      const accuracy = Number(position.coords.accuracy);
+      const timestamp = Number(position.timestamp);
+      const payload = {
+        latitude,
+        longitude,
+        accuracy,
+        timestamp,
+        source: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'WEB_MOBILE' : 'WEB_DESKTOP',
+      };
+
+      if (import.meta.env.DEV) {
+        console.log('CHECK-IN RAW GEOLOCATION', {
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+          accuracy: payload.accuracy,
+          timestamp: payload.timestamp,
+        });
+      }
+
+      return payload;
+    };
+
+    const useBestReading = () => {
+      if (!readings.length) {
+        return null;
+      }
+      const best = readings.reduce((lowest, reading) => (reading.accuracy < lowest.accuracy ? reading : lowest), readings[0]);
+      return best;
+    };
+
+    const onSuccess = (position) => {
+      const payload = buildPayload(position);
+      if (!Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude) || !Number.isFinite(payload.accuracy) || payload.accuracy < 0) {
+        return;
+      }
+
+      readings.push(payload);
+      const bestReading = useBestReading();
+      if (import.meta.env.DEV) {
+        console.log('CHECK-IN GEOLOCATION', {
+          readings: readings.length,
+          firstAccuracy: readings[0]?.accuracy,
+          bestAccuracy: bestReading?.accuracy,
+          durationMs: Date.now() - startedAt,
+        });
+      }
+
+      if (typeof onProgress === 'function' && bestReading && bestReading.accuracy > 50) {
+        onProgress('improving');
+      }
+
+      if (bestReading && bestReading.accuracy <= 50) {
+        finalize(bestReading);
+        return;
+      }
+
+      const elapsedMs = Date.now() - startedAt;
+      if (elapsedMs >= maxAcquisitionMs) {
+        if (bestReading) {
+          finalize(bestReading);
+          return;
+        }
+        finalize(null, new Error('LOCATION_INACCURATE'));
+      }
+    };
+
+    const onError = (error) => {
+      const code = error && typeof error.code === 'number' ? error.code : null;
+      const bestReading = useBestReading();
+      if (bestReading) {
+        finalize(bestReading);
+        return;
+      }
+
+      if (code === GeolocationPositionError.PERMISSION_DENIED) {
+        finalize(null, new Error('LOCATION_PERMISSION_REQUIRED'));
+        return;
+      }
+      if (code === GeolocationPositionError.TIMEOUT) {
+        finalize(null, new Error('LOCATION_TIMEOUT'));
+        return;
+      }
+      if (code === GeolocationPositionError.POSITION_UNAVAILABLE) {
+        finalize(null, new Error('LOCATION_UNAVAILABLE'));
+        return;
+      }
+      finalize(null, new Error('LOCATION_UNAVAILABLE'));
+    };
+
+    watchId = navigator.geolocation.watchPosition(onSuccess, onError, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0,
+    });
+
+    const timeoutId = setTimeout(() => {
+      const bestReading = useBestReading();
+      if (bestReading) {
+        finalize(bestReading);
+      } else {
+        finalize(null, new Error('LOCATION_INACCURATE'));
+      }
+    }, maxAcquisitionMs);
+
+    const originalFinalize = finalize;
+    finalize = (payload, error) => {
+      clearTimeout(timeoutId);
+      originalFinalize(payload, error);
+    };
   });
 }
 
@@ -36,6 +163,7 @@ export default function EmployeeAttendance() {
   const [workDate, setWorkDate] = useState(localDate(1));
   const [reason, setReason] = useState('');
   const [message, setMessage] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('idle');
 
   const today = useQuery({ queryKey: ['attendance-today'], queryFn: attendanceApi.today });
   const locations = useQuery({ queryKey: ['attendance-office-locations'], queryFn: attendanceApi.officeLocations });
@@ -43,18 +171,32 @@ export default function EmployeeAttendance() {
 
   const checkIn = useMutation({
     mutationFn: async () => {
-      const location = mode === 'OFFICE' ? await getLocation() : {};
-      const payload = { ...location, source: location.source || 'WEB_DESKTOP', workingMode: mode, officeLocationId: locations.data?.[0]?.id };
-      if (import.meta.env.DEV) console.debug('[attendance] check-in location diagnostics', { latitude: payload.latitude, longitude: payload.longitude, accuracy: payload.accuracy, timestamp: payload.timestamp, source: payload.source });
-      return attendanceApi.checkIn(payload);
+      setLocationStatus('locating');
+      try {
+        const location = mode === 'OFFICE' ? await acquireBestLocation((status) => setLocationStatus(status)) : {};
+        setLocationStatus('verifying');
+        const payload = { ...location, source: location.source || 'WEB_DESKTOP', workingMode: mode, officeLocationId: locations.data?.[0]?.id };
+        if (import.meta.env.DEV) {
+          console.debug('[attendance] check-in location diagnostics', {
+            latitude: payload.latitude,
+            longitude: payload.longitude,
+            accuracy: payload.accuracy,
+            timestamp: payload.timestamp,
+            source: payload.source,
+          });
+        }
+        return attendanceApi.checkIn(payload);
+      } finally {
+        setLocationStatus('idle');
+      }
     },
     onSuccess: () => { setMessage({ type: 'success', text: 'You are checked in.' }); queryClient.invalidateQueries({ queryKey: ['attendance-today'] }); },
-    onError: (error) => setMessage({ type: 'error', code: error.response?.data?.code || error.message, text: locationErrorMessage(error.response?.data?.code || error.message) }),
+    onError: (error) => setMessage({ type: 'error', code: error.response?.data?.code || error.message, text: locationErrorMessage(error.response?.data?.code || error.message, error.response?.data?.accuracyMeters) }),
   });
 
   const checkOut = useMutation({
     mutationFn: async () => {
-      const location = mode === 'OFFICE' ? await getLocation() : {};
+      const location = mode === 'OFFICE' ? await acquireBestLocation() : {};
       return attendanceApi.checkOut({ ...location, source: location.source || 'WEB_DESKTOP' });
     },
     onSuccess: () => { setMessage({ type: 'success', text: 'You are checked out.' }); queryClient.invalidateQueries({ queryKey: ['attendance-today'] }); },
@@ -70,9 +212,12 @@ export default function EmployeeAttendance() {
   const session = today.data;
   const busy = checkIn.isPending || checkOut.isPending;
 
-  function locationErrorMessage(code) {
+  function locationErrorMessage(code, accuracyMeters) {
     if (code === 'LOCATION_PERMISSION_REQUIRED') return 'Location permission required. Enable location access for Vettri and try again.';
-    if (code === 'LOCATION_INACCURATE') return 'Location accuracy is too low. We could not determine your location accurately enough to verify your office check-in. Try moving near a window or enabling precise location, then try again.';
+    if (code === 'LOCATION_INACCURATE') {
+      const accuracyText = Number.isFinite(accuracyMeters) ? `${Math.round(accuracyMeters)} meters` : 'the browser reported';
+      return `Location accuracy is too low. Your device reported an accuracy of ${accuracyText}. Move near a window or enable precise location, then try again.`;
+    }
     if (code === 'OUTSIDE_GEOFENCE') return "You're outside the office area. Check-in is available when you're within the configured office area.";
     if (code === 'LOCATION_STALE') return 'Your location fix is out of date. Try again to get a fresh location.';
     if (code === 'LOCATION_TIMEOUT') return 'Location request timed out. Check your location settings and try again.';
@@ -98,7 +243,12 @@ export default function EmployeeAttendance() {
                   {session && <StatusBadge status={session.status} variant={session.status === 'CHECKED_IN' ? 'success' : 'info'} dot>{session.status.replace('_', ' ')}</StatusBadge>}
                 </div>
                 <div className="row g-3"><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check in</div><strong>{session?.checkInTime ? new Date(session.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</strong></div><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check out</div><strong>{session?.checkOutTime ? new Date(session.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</strong></div></div>
-                <div className="d-flex flex-wrap gap-2"><Button icon={LogIn} onClick={() => checkIn.mutate()} loading={checkIn.isPending} disabled={!!session || busy}>Check in</Button><Button variant="secondary" icon={LogOut} onClick={() => checkOut.mutate()} loading={checkOut.isPending} disabled={!session || busy}>Check out</Button></div>
+                <div className="d-flex flex-wrap gap-2">
+                  <Button icon={LogIn} onClick={() => checkIn.mutate()} loading={checkIn.isPending} disabled={!!session || busy}>
+                    {checkIn.isPending ? (locationStatus === 'locating' ? 'Getting your location…' : locationStatus === 'improving' ? 'Improving location accuracy…' : 'Verifying location…') : 'Check in'}
+                  </Button>
+                  <Button variant="secondary" icon={LogOut} onClick={() => checkOut.mutate()} loading={checkOut.isPending} disabled={!session || busy}>Check out</Button>
+                </div>
               </div>
             )}
           </Card>
