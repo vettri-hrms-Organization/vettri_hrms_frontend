@@ -10,9 +10,13 @@ const industries = ['Technology', 'Manufacturing', 'Retail', 'Healthcare', 'Educ
 const companySizes = ['1-25', '26-50', '51-100', '101-250', '251-500', '500+'];
 const interests = ['HR & employee management', 'Attendance & leave', 'Payroll', 'Assets', 'Devices', 'Software management', 'Remote support'];
 const planOptions = [
-  { value: 'STARTER', label: 'Starter', price: '₹2,999/mo', employeeLimit: '25 employees', deviceLimit: '2 devices' },
-  { value: 'BUSINESS', label: 'Business', price: '₹5,999/mo', employeeLimit: '100 employees', deviceLimit: '10 devices' },
-  { value: 'ENTERPRISE', label: 'Enterprise', price: '₹14,999/mo', employeeLimit: '500 employees', deviceLimit: '50 devices' },
+  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: '₹199/employee/mo', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
+];
+
+const billingCycles = [
+  { value: 'MONTHLY', label: 'Monthly', subtitle: 'Best for new teams' },
+  { value: 'QUARTERLY', label: 'Quarterly', subtitle: 'Save 5%' },
+  { value: 'ANNUAL', label: 'Annual', subtitle: 'Save 10%' },
 ];
 
 const initialForm = {
@@ -26,7 +30,9 @@ const initialForm = {
   companySize: '',
   country: 'India',
   interests: [],
-  plan: 'STARTER',
+  plan: 'VETTRI_HRMS',
+  billingCycle: 'MONTHLY',
+  employeeCount: 25,
 };
 
 function passwordScore(password) {
@@ -42,9 +48,9 @@ function passwordScore(password) {
 
 export default function Signup() {
   const [searchParams] = useSearchParams();
-  const selectedPlanFromUrl = searchParams.get('plan') || 'STARTER';
+  const selectedPlanFromUrl = searchParams.get('plan') || 'VETTRI_HRMS';
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ ...initialForm, plan: planOptions.some((option) => option.value === selectedPlanFromUrl) ? selectedPlanFromUrl : 'STARTER' });
+  const [form, setForm] = useState({ ...initialForm, plan: planOptions.some((option) => option.value === selectedPlanFromUrl) ? selectedPlanFromUrl : 'VETTRI_HRMS' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -81,7 +87,7 @@ export default function Signup() {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, plan: form.plan }),
+        body: JSON.stringify({ ...form, plan: form.plan, billingCycle: form.billingCycle, employeeCount: form.employeeCount }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.message || result.details?.[0] || 'We could not create your workspace.');
@@ -90,7 +96,7 @@ export default function Signup() {
         const orderResponse = await fetch(`${API_BASE_URL}/api/billing/create-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ companyId: result.companyId, userId: result.userId, plan: result.plan, customerName: `${form.firstName} ${form.lastName}`.trim(), customerEmail: form.email, organizationName: form.organizationName }),
+          body: JSON.stringify({ companyId: result.companyId, userId: result.userId, plan: result.plan, billingCycle: form.billingCycle, employeeCount: form.employeeCount, customerName: `${form.firstName} ${form.lastName}`.trim(), customerEmail: form.email, organizationName: form.organizationName }),
         });
         const order = await orderResponse.json().catch(() => ({}));
         if (!orderResponse.ok) throw new Error(order.message || 'We could not start payment.');
@@ -110,6 +116,8 @@ export default function Signup() {
                 companyId: result.companyId,
                 userId: result.userId,
                 plan: result.plan,
+                billingCycle: form.billingCycle,
+                employeeCount: form.employeeCount,
                 razorpayPaymentId: paymentResponse.razorpay_payment_id,
                 razorpayOrderId: paymentResponse.razorpay_order_id,
                 razorpaySignature: paymentResponse.razorpay_signature,
@@ -183,19 +191,31 @@ export default function Signup() {
             {step === 2 && <OrganizationFields form={form} errors={errors} update={update} />}
             {step === 3 && (
               <>
-                <div className="pricing-grid">
+                <div className="pricing-grid single-plan">
                   {planOptions.map((option) => (
                     <button type="button" key={option.value} className={`pricing-card ${form.plan === option.value ? 'selected' : ''}`} onClick={() => update('plan', option.value)}>
                       <div className="pricing-header">
                         <span>{option.label}</span>
-                        <strong>{option.price}</strong>
+                        <strong>₹{Math.max(1, Number(form.employeeCount || 1)) * 199}/{form.billingCycle === 'ANNUAL' ? 'year' : form.billingCycle === 'QUARTERLY' ? 'quarter' : 'month'}</strong>
                       </div>
                       <div className="pricing-meta">
-                        <span>{option.employeeLimit}</span>
-                        <span>{option.deviceLimit}</span>
+                        <span>₹199 per employee</span>
+                        <span>{form.billingCycle}</span>
                       </div>
                     </button>
                   ))}
+                </div>
+                <div className="billing-cycle-row">
+                  {billingCycles.map((cycle) => (
+                    <button type="button" key={cycle.value} className={`billing-cycle ${form.billingCycle === cycle.value ? 'selected' : ''}`} onClick={() => update('billingCycle', cycle.value)}>
+                      <strong>{cycle.label}</strong>
+                      <span>{cycle.subtitle}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="employee-count-row">
+                  <label htmlFor="employeeCount">Employee count</label>
+                  <input id="employeeCount" type="number" min="1" step="1" value={form.employeeCount} onChange={(event) => update('employeeCount', Math.max(1, Number(event.target.value) || 1))} />
                 </div>
                 <div className="signup-interests">{interests.map((interest) => { const selected = form.interests.includes(interest); return <button type="button" className={selected ? 'selected' : ''} aria-pressed={selected} key={interest} onClick={() => update('interests', selected ? form.interests.filter((item) => item !== interest) : [...form.interests, interest])}>{selected && <Check size={15} />}{interest}</button>; })}</div>
               </>
@@ -204,10 +224,10 @@ export default function Signup() {
             {errors.submit && <p className="signup-error" role="alert">{errors.submit}</p>}
             <div className="signup-actions">
               {step > 1 ? <button className="signup-back" type="button" onClick={() => setStep((current) => current - 1)} disabled={submitting}><ArrowLeft size={16} /> Back</button> : <span />}
-              {step < 3 ? <button className="signup-primary" type="button" onClick={() => validate() && setStep((current) => current + 1)}>Continue <ArrowRight size={16} /></button> : <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>{submitting ? 'Processing...' : form.plan === 'STARTER' || form.plan === 'BUSINESS' || form.plan === 'ENTERPRISE' ? `Pay ${selectedPlan.price}` : 'Create my workspace'} <ArrowRight size={16} /></button>}
+              {step < 3 ? <button className="signup-primary" type="button" onClick={() => validate() && setStep((current) => current + 1)}>Continue <ArrowRight size={16} /></button> : <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>{submitting ? 'Processing...' : form.plan === 'VETTRI_HRMS' ? `Pay ₹${Math.max(1, Number(form.employeeCount || 1)) * (form.billingCycle === 'ANNUAL' ? 199 * 12 * 0.9 : form.billingCycle === 'QUARTERLY' ? 199 * 3 : 199)}` : 'Create my workspace'} <ArrowRight size={16} /></button>}
             </div>
           </div>
-          <p className="signup-footnote"><LockKeyhole size={14} /> {form.plan === 'STARTER' || form.plan === 'BUSINESS' || form.plan === 'ENTERPRISE' ? `Selected plan: ${selectedPlan.label} • ${selectedPlan.price}` : 'Your trial starts when your workspace is created.'}</p>
+          <p className="signup-footnote"><LockKeyhole size={14} /> {form.plan === 'VETTRI_HRMS' ? `Selected plan: ${selectedPlan.label} • ${form.billingCycle} billing • ${form.employeeCount} employees` : 'Your trial starts when your workspace is created.'}</p>
         </div>
       </section>
 
