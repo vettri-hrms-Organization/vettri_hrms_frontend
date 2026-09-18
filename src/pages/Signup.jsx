@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import Logo from '../components/brand/Logo';
 import { API_BASE_URL } from '../api/axiosClient';
@@ -9,6 +9,11 @@ const steps = ['Account', 'Organization', 'Workspace'];
 const industries = ['Technology', 'Manufacturing', 'Retail', 'Healthcare', 'Education', 'Finance', 'Professional Services', 'Other'];
 const companySizes = ['1-25', '26-50', '51-100', '101-250', '251-500', '500+'];
 const interests = ['HR & employee management', 'Attendance & leave', 'Payroll', 'Assets', 'Devices', 'Software management', 'Remote support'];
+const planOptions = [
+  { value: 'STARTER', label: 'Starter', price: '₹2,999/mo', employeeLimit: '25 employees', deviceLimit: '2 devices' },
+  { value: 'BUSINESS', label: 'Business', price: '₹5,999/mo', employeeLimit: '100 employees', deviceLimit: '10 devices' },
+  { value: 'ENTERPRISE', label: 'Enterprise', price: '₹14,999/mo', employeeLimit: '500 employees', deviceLimit: '50 devices' },
+];
 
 const initialForm = {
   firstName: '',
@@ -21,6 +26,7 @@ const initialForm = {
   companySize: '',
   country: 'India',
   interests: [],
+  plan: 'STARTER',
 };
 
 function passwordScore(password) {
@@ -35,11 +41,14 @@ function passwordScore(password) {
 }
 
 export default function Signup() {
+  const [searchParams] = useSearchParams();
+  const selectedPlanFromUrl = searchParams.get('plan') || 'STARTER';
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState({ ...initialForm, plan: planOptions.some((option) => option.value === selectedPlanFromUrl) ? selectedPlanFromUrl : 'STARTER' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const selectedPlan = useMemo(() => planOptions.find((option) => option.value === form.plan) || planOptions[0], [form.plan]);
 
   const update = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -72,10 +81,72 @@ export default function Signup() {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, plan: form.plan }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.message || result.details?.[0] || 'We could not create your workspace.');
+
+      if (result.requiresPayment) {
+        const orderResponse = await fetch(`${API_BASE_URL}/api/billing/create-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ companyId: result.companyId, userId: result.userId, plan: result.plan, customerName: `${form.firstName} ${form.lastName}`.trim(), customerEmail: form.email, organizationName: form.organizationName }),
+        });
+        const order = await orderResponse.json().catch(() => ({}));
+        if (!orderResponse.ok) throw new Error(order.message || 'We could not start payment.');
+
+        const options = {
+          key: order.key,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'Vettri HRMS',
+          description: `${order.plan} plan`,
+          order_id: order.orderId,
+          handler: async function (paymentResponse) {
+            const verificationResponse = await fetch(`${API_BASE_URL}/api/billing/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                companyId: result.companyId,
+                userId: result.userId,
+                plan: result.plan,
+                razorpayPaymentId: paymentResponse.razorpay_payment_id,
+                razorpayOrderId: paymentResponse.razorpay_order_id,
+                razorpaySignature: paymentResponse.razorpay_signature,
+              }),
+            });
+            const verification = await verificationResponse.json().catch(() => ({}));
+            if (!verificationResponse.ok) throw new Error(verification.message || 'Payment verification failed.');
+
+            const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: form.email, password: form.password }),
+            });
+            const loginResult = await loginResponse.json().catch(() => ({}));
+            if (!loginResponse.ok) throw new Error(loginResult.message || 'Your subscription is active, but we could not sign you in.');
+            tokenStorage.setTokens(loginResult.accessToken || loginResult.token, loginResult.refreshToken);
+            window.location.assign('/onboarding');
+          },
+          prefill: { name: `${form.firstName} ${form.lastName}`.trim(), email: form.email },
+          theme: { color: '#2367c9' },
+        };
+
+        const razorpayScript = document.createElement('script');
+        razorpayScript.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        razorpayScript.async = true;
+        razorpayScript.onload = () => {
+          const razorpayInstance = new window.Razorpay(options);
+          razorpayInstance.open();
+          setSubmitting(false);
+        };
+        razorpayScript.onerror = () => {
+          throw new Error('Unable to load Razorpay checkout.');
+        };
+        document.body.appendChild(razorpayScript);
+        return;
+      }
+
       tokenStorage.setTokens(result.accessToken || result.token, result.refreshToken);
       window.location.assign('/onboarding');
     } catch (error) {
@@ -106,19 +177,37 @@ export default function Signup() {
             <Logo size={34} />
             <p className="signup-eyebrow light">Step 0{step}</p>
             <h2>{step === 1 ? 'Create your Vettri account' : step === 2 ? 'Tell us about your organization' : 'Set up your workspace'}</h2>
-            <p className="signup-muted">{step === 1 ? 'Start your 14-day free trial.' : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose what you would like to manage first.'}</p>
+            <p className="signup-muted">{step === 1 ? 'Start your 14-day free trial or select a paid plan.' : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose what you would like to manage first.'}</p>
 
             {step === 1 && <AccountFields form={form} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} update={update} />}
             {step === 2 && <OrganizationFields form={form} errors={errors} update={update} />}
-            {step === 3 && <div className="signup-interests">{interests.map((interest) => { const selected = form.interests.includes(interest); return <button type="button" className={selected ? 'selected' : ''} aria-pressed={selected} key={interest} onClick={() => update('interests', selected ? form.interests.filter((item) => item !== interest) : [...form.interests, interest])}>{selected && <Check size={15} />}{interest}</button>; })}</div>}
+            {step === 3 && (
+              <>
+                <div className="pricing-grid">
+                  {planOptions.map((option) => (
+                    <button type="button" key={option.value} className={`pricing-card ${form.plan === option.value ? 'selected' : ''}`} onClick={() => update('plan', option.value)}>
+                      <div className="pricing-header">
+                        <span>{option.label}</span>
+                        <strong>{option.price}</strong>
+                      </div>
+                      <div className="pricing-meta">
+                        <span>{option.employeeLimit}</span>
+                        <span>{option.deviceLimit}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="signup-interests">{interests.map((interest) => { const selected = form.interests.includes(interest); return <button type="button" className={selected ? 'selected' : ''} aria-pressed={selected} key={interest} onClick={() => update('interests', selected ? form.interests.filter((item) => item !== interest) : [...form.interests, interest])}>{selected && <Check size={15} />}{interest}</button>; })}</div>
+              </>
+            )}
 
             {errors.submit && <p className="signup-error" role="alert">{errors.submit}</p>}
             <div className="signup-actions">
               {step > 1 ? <button className="signup-back" type="button" onClick={() => setStep((current) => current - 1)} disabled={submitting}><ArrowLeft size={16} /> Back</button> : <span />}
-              {step < 3 ? <button className="signup-primary" type="button" onClick={() => validate() && setStep((current) => current + 1)}>Continue <ArrowRight size={16} /></button> : <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>{submitting ? 'Creating workspace...' : 'Create my workspace'} <ArrowRight size={16} /></button>}
+              {step < 3 ? <button className="signup-primary" type="button" onClick={() => validate() && setStep((current) => current + 1)}>Continue <ArrowRight size={16} /></button> : <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>{submitting ? 'Processing...' : form.plan === 'STARTER' || form.plan === 'BUSINESS' || form.plan === 'ENTERPRISE' ? `Pay ${selectedPlan.price}` : 'Create my workspace'} <ArrowRight size={16} /></button>}
             </div>
           </div>
-          <p className="signup-footnote"><LockKeyhole size={14} /> Your trial starts when your workspace is created.</p>
+          <p className="signup-footnote"><LockKeyhole size={14} /> {form.plan === 'STARTER' || form.plan === 'BUSINESS' || form.plan === 'ENTERPRISE' ? `Selected plan: ${selectedPlan.label} • ${selectedPlan.price}` : 'Your trial starts when your workspace is created.'}</p>
         </div>
       </section>
 
