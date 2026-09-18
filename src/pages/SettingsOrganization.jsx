@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LocateFixed, MapPin, Pencil, Plus, Search } from 'lucide-react';
 import { departmentsApi, designationsApi, teamsApi } from '../api/endpoints/organization';
@@ -242,6 +242,7 @@ function OfficeLocationsPanel() {
   const [searchMessage, setSearchMessage] = useState('');
   const [reverseGeocoding, setReverseGeocoding] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
+  const reverseRequestRef = useRef(0);
   const { data: locations, isLoading } = useQuery({ queryKey: ['attendance-office-locations'], queryFn: attendanceApi.officeLocations });
   const save = useMutation({
     mutationFn: ({ id, payload }) => id ? attendanceApi.updateOfficeLocation(id, payload) : attendanceApi.createOfficeLocation(payload),
@@ -271,7 +272,9 @@ function OfficeLocationsPanel() {
       } catch (error) {
         if (error.code !== 'ERR_CANCELED' && error.name !== 'CanceledError') {
           setSuggestions([]);
-          setSearchMessage('Location search is unavailable. Please try again or use your current location.');
+          setSearchMessage(error.response?.status === 429
+            ? 'Location search is temporarily unavailable. You can adjust the map pin manually.'
+            : 'Location search is unavailable. Please try again or use your current location.');
         }
       } finally {
         if (!controller.signal.aborted) setSearching(false);
@@ -296,17 +299,22 @@ function OfficeLocationsPanel() {
   }
 
   async function reverseGeocode(latitude, longitude) {
+    const requestId = ++reverseRequestRef.current;
     setReverseGeocoding(true);
     setLocationMessage('');
     try {
       const result = await attendanceApi.reverseGeocode(latitude, longitude);
+      if (requestId !== reverseRequestRef.current) return;
       setForm((current) => ({ ...current, ...(result ? { address: result.address || result.displayName || '', city: result.city || '', state: result.state || '', country: result.country || '' } : {}), latitude: String(latitude), longitude: String(longitude) }));
       if (!result) setLocationMessage('Address details were not found, but the selected coordinates are ready to save.');
-    } catch {
+    } catch (error) {
+      if (requestId !== reverseRequestRef.current) return;
       setForm((current) => ({ ...current, latitude: String(latitude), longitude: String(longitude) }));
-      setLocationMessage('Address lookup failed. The selected coordinates are still ready to save.');
+      setLocationMessage(error.response?.status === 429
+        ? 'Location search is temporarily unavailable. You can adjust the map pin manually.'
+        : 'Address lookup failed. The selected coordinates are still ready to save.');
     } finally {
-      setReverseGeocoding(false);
+      if (requestId === reverseRequestRef.current) setReverseGeocoding(false);
     }
   }
 

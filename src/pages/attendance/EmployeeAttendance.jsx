@@ -236,7 +236,7 @@ export default function EmployeeAttendance() {
         <div className="col-12 col-lg-7">
           <Card title="Today" subtitle={session?.attendanceDate || localDate()}>
             {today.isLoading && <SkeletonText lines={3} />}
-            {today.isError && <ErrorState description="Couldn’t load today’s attendance." onRetry={today.refetch} />}
+            {today.isError && <ErrorState description={checkIn.isSuccess ? 'Check-in succeeded, but today’s attendance could not be refreshed.' : 'Couldn’t load today’s attendance.'} onRetry={today.refetch} />}
             {!today.isLoading && !today.isError && (
               <div className="d-flex flex-column gap-4">
                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">

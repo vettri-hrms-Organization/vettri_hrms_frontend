@@ -58,6 +58,7 @@ function resolveQueue(error, token) {
 function shouldQueueForOfflineRetry(config, status) {
   if (status === 401) return false;
   if (status === 403) return false;
+  if (status === 429) return false;
   if (status === 400 || status === 404 || status === 422) return false;
   if (!config || config._queueReplayed || config._skipOfflineQueue) return false;
   return true;
@@ -67,10 +68,16 @@ axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const isAuthEndpoint = originalRequest?.url?.includes('/api/auth/');
+    const requestPath = originalRequest?.url?.split('?')[0];
+    const isAuthEndpointWithoutRefresh = [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/refresh',
+      '/api/auth/logout',
+    ].includes(requestPath);
     const status = error.response?.status;
 
-    if (status === 401 && !isAuthEndpoint && !originalRequest?._retry) {
+    if (status === 401 && !isAuthEndpointWithoutRefresh && !originalRequest?._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           pendingQueue.push({ resolve, reject });
@@ -139,18 +146,6 @@ axiosClient.interceptors.response.use(
 
     if (status === 403) {
       setConnectionState(ConnectionState.DISABLED);
-      return Promise.reject(error);
-    }
-
-    if (status === 429) {
-      setConnectionState(ConnectionState.CONNECTING);
-      const queued = queueRequestForRetry({
-        ...originalRequest,
-        _queueId: originalRequest?._queueId || `${Date.now()}-${Math.random()}`,
-      }, error);
-      if (queued) {
-        scheduleQueueFlush(axiosClient);
-      }
       return Promise.reject(error);
     }
 
