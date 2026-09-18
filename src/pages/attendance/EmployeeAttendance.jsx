@@ -21,11 +21,15 @@ function acquireBestLocation(onProgress) {
     const maxAcquisitionMs = 15000;
     const readings = [];
     let watchId = null;
+    let timeoutId = null;
     let settled = false;
 
     const finalize = (payload, error) => {
       if (settled) return;
       settled = true;
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
       if (watchId !== null && typeof navigator.geolocation.clearWatch === 'function') {
         navigator.geolocation.clearWatch(watchId);
       }
@@ -134,7 +138,7 @@ function acquireBestLocation(onProgress) {
       maximumAge: 0,
     });
 
-    const timeoutId = setTimeout(() => {
+    timeoutId = setTimeout(() => {
       const bestReading = useBestReading();
       if (bestReading) {
         finalize(bestReading);
@@ -142,12 +146,6 @@ function acquireBestLocation(onProgress) {
         finalize(null, new Error('LOCATION_INACCURATE'));
       }
     }, maxAcquisitionMs);
-
-    const originalFinalize = finalize;
-    finalize = (payload, error) => {
-      clearTimeout(timeoutId);
-      originalFinalize(payload, error);
-    };
   });
 }
 
