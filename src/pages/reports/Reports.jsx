@@ -17,6 +17,7 @@ import FilterBar from '../../components/ui/FilterBar';
 import StatCard from '../../components/ui/StatCard';
 import ChartCard from '../../components/ui/ChartCard';
 import ExportMenu from '../../components/ui/ExportMenu';
+import { toISTDateInputValue } from '../../utils/formatDateTime';
 
 const TABS = [
   { key: 'employees', label: 'Employee', icon: Users },
@@ -193,8 +194,8 @@ export default function Reports() {
 
   // Lifted up from the panels below so a saved report can restore the
   // exact filtered view (date range / year), not just which tab was open.
-  const today = new Date().toISOString().slice(0, 10);
-  const weekAgo = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+  const today = toISTDateInputValue(new Date());
+  const weekAgo = toISTDateInputValue(new Date(Date.now() - 6 * 86400000));
   const [attendanceStart, setAttendanceStart] = useState(weekAgo);
   const [attendanceEnd, setAttendanceEnd] = useState(today);
   const [leaveYear, setLeaveYear] = useState(new Date().getFullYear());

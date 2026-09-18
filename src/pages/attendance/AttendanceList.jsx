@@ -13,6 +13,7 @@ import { SkeletonText } from '../../components/ui/Skeleton';
 import PageHeader from '../../components/ui/PageHeader';
 import StatCard from '../../components/ui/StatCard';
 import { useAuth } from '../../hooks/useAuth';
+import { formatTimeIST } from '../../utils/formatDateTime';
 
 function PunchBadge({ type }) {
   return <StatusBadge status={type === 'IN' ? 'PRESENT' : type === 'OUT' ? 'COMPLETED' : type} variant={type === 'IN' ? 'success' : type === 'OUT' ? 'info' : 'neutral'} dot={false}>{type}</StatusBadge>;
@@ -209,7 +210,7 @@ function AttendanceManagement() {
                   </td>
                   <td data-label="Department" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.departmentName || '—'}</td>
                   <td data-label="Punch time" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                    {new Date(r.punchTime).toLocaleTimeString()}
+                    {formatTimeIST(r.punchTime)}
                   </td>
                   <td data-label="Type">
                     <PunchBadge type={r.punchType} />

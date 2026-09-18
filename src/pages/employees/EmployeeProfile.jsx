@@ -21,6 +21,7 @@ import { useBreadcrumbLabel } from '../../components/layout/BreadcrumbContext';
 import Tabs from '../../components/ui/Tabs';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
+import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
 
 const TABS = [
   { key: 'overview', label: 'Profile', icon: ClipboardList },
@@ -434,8 +435,8 @@ function AttendanceTab({ employee }) {
           <tbody>
             {records.map((r) => (
               <tr key={r.id}>
-                <td data-label="Date" className="ps-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{new Date(r.punchTime).toLocaleDateString()}</td>
-                <td data-label="Time" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{new Date(r.punchTime).toLocaleTimeString()}</td>
+                <td data-label="Date" className="ps-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{formatDateIST(r.punchTime)}</td>
+                <td data-label="Time" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{formatTimeIST(r.punchTime)}</td>
                 <td data-label="Type">
                   <Badge variant={r.punchType === 'IN' ? 'success' : r.punchType === 'OUT' ? 'danger' : 'neutral'}>{r.punchType}</Badge>
                 </td>

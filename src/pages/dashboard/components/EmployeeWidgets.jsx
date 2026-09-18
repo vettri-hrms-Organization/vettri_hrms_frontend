@@ -3,21 +3,23 @@ import { Link } from 'react-router-dom';
 import EmptyState from '../../../components/ui/EmptyState';
 import { SkeletonText } from '../../../components/ui/Skeleton';
 import { formatCurrency } from '../../../utils/formatCurrency';
+import { formatTimeIST, toISTDateInputValue } from '../../../utils/formatDateTime';
 
 export function EmployeeMetric({ icon: Icon, label, value, detail, tone }) {
   return <article className={`hz-dashboard__employee-metric hz-dashboard__employee-metric--${tone}`}><span className="hz-dashboard__employee-metric-icon"><Icon size={18} /></span><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></article>;
 }
 
 export function AttendanceWidget({ records, loading }) {
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = toISTDateInputValue(new Date());
   const todayRecords = records.filter((record) => record.punchTime?.slice(0, 10) === todayKey);
   const checkIn = todayRecords.find((record) => record.punchType === 'IN');
   const checkOut = todayRecords.find((record) => record.punchType === 'OUT');
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - index));
-    const key = date.toISOString().slice(0, 10);
-    return { label: date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2), active: records.some((record) => record.punchTime?.slice(0, 10) === key) };
+    const key = toISTDateInputValue(date);
+    const label = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short' }).format(date).slice(0, 2);
+    return { label, active: records.some((record) => toISTDateInputValue(record.punchTime) === key) };
   });
 
   return (
@@ -25,8 +27,8 @@ export function AttendanceWidget({ records, loading }) {
       <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Today</span><h2 id="attendance-widget-title">Attendance</h2></div><Clock3 size={19} aria-hidden="true" /></div>
       {loading ? <SkeletonText lines={4} /> : <>
         <div className="hz-attendance-widget__summary">
-          <div><strong>{checkIn ? new Date(checkIn.punchTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</strong><span>Check-in</span></div>
-          <div><strong>{checkOut ? new Date(checkOut.punchTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Working'}</strong><span>{checkOut ? 'Check-out' : 'Current status'}</span></div>
+          <div><strong>{checkIn ? formatTimeIST(checkIn.punchTime) : '--:--'}</strong><span>Check-in</span></div>
+          <div><strong>{checkOut ? formatTimeIST(checkOut.punchTime) : 'Working'}</strong><span>{checkOut ? 'Check-out' : 'Current status'}</span></div>
         </div>
         <div className="hz-attendance-widget__week" aria-label="Attendance for the last seven days">
           {days.map((day) => <span key={`${day.label}-${day.active}`} className={day.active ? 'is-present' : ''}><i />{day.label}</span>)}
