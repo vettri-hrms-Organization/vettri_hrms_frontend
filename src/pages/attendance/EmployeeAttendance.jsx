@@ -10,6 +10,9 @@ import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 
+const GOOD_ACCURACY_METERS = 100;
+const MAX_ACCEPTABLE_ACCURACY_METERS = 200;
+
 function acquireBestLocation(onProgress) {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -90,18 +93,18 @@ function acquireBestLocation(onProgress) {
         });
       }
 
-      if (typeof onProgress === 'function' && bestReading && bestReading.accuracy > 50) {
+      if (typeof onProgress === 'function' && bestReading && bestReading.accuracy > GOOD_ACCURACY_METERS) {
         onProgress('improving');
       }
 
-      if (bestReading && bestReading.accuracy <= 50) {
+      if (bestReading && bestReading.accuracy <= GOOD_ACCURACY_METERS) {
         finalize(bestReading);
         return;
       }
 
       const elapsedMs = Date.now() - startedAt;
       if (elapsedMs >= maxAcquisitionMs) {
-        if (bestReading) {
+        if (bestReading && bestReading.accuracy <= MAX_ACCEPTABLE_ACCURACY_METERS) {
           finalize(bestReading);
           return;
         }
@@ -112,7 +115,7 @@ function acquireBestLocation(onProgress) {
     const onError = (error) => {
       const code = error && typeof error.code === 'number' ? error.code : null;
       const bestReading = useBestReading();
-      if (bestReading) {
+      if (bestReading && bestReading.accuracy <= MAX_ACCEPTABLE_ACCURACY_METERS) {
         finalize(bestReading);
         return;
       }
@@ -140,7 +143,7 @@ function acquireBestLocation(onProgress) {
 
     timeoutId = setTimeout(() => {
       const bestReading = useBestReading();
-      if (bestReading) {
+      if (bestReading && bestReading.accuracy <= MAX_ACCEPTABLE_ACCURACY_METERS) {
         finalize(bestReading);
       } else {
         finalize(null, new Error('LOCATION_INACCURATE'));
