@@ -17,9 +17,9 @@ function getLocation() {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy }),
-      () => reject(new Error('LOCATION_UNAVAILABLE')),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
+      ({ coords }) => resolve({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, timestamp: Date.now(), source: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'WEB_MOBILE' : 'WEB_DESKTOP' }),
+      (error) => reject(new Error(error.code === error.PERMISSION_DENIED ? 'LOCATION_PERMISSION_REQUIRED' : error.code === error.TIMEOUT ? 'LOCATION_TIMEOUT' : 'LOCATION_UNAVAILABLE')),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   });
 }
@@ -44,16 +44,18 @@ export default function EmployeeAttendance() {
   const checkIn = useMutation({
     mutationFn: async () => {
       const location = mode === 'OFFICE' ? await getLocation() : {};
-      return attendanceApi.checkIn({ ...location, source: 'WEB', workingMode: mode, officeLocationId: locations.data?.[0]?.id });
+      const payload = { ...location, source: location.source || 'WEB_DESKTOP', workingMode: mode, officeLocationId: locations.data?.[0]?.id };
+      if (import.meta.env.DEV) console.debug('[attendance] check-in location diagnostics', { latitude: payload.latitude, longitude: payload.longitude, accuracy: payload.accuracy, timestamp: payload.timestamp, source: payload.source });
+      return attendanceApi.checkIn(payload);
     },
     onSuccess: () => { setMessage({ type: 'success', text: 'You are checked in.' }); queryClient.invalidateQueries({ queryKey: ['attendance-today'] }); },
-    onError: (error) => setMessage({ type: 'error', text: error.response?.data?.message || error.message || 'Check-in could not be completed.' }),
+    onError: (error) => setMessage({ type: 'error', code: error.response?.data?.code || error.message, text: locationErrorMessage(error.response?.data?.code || error.message) }),
   });
 
   const checkOut = useMutation({
     mutationFn: async () => {
       const location = mode === 'OFFICE' ? await getLocation() : {};
-      return attendanceApi.checkOut({ ...location, source: 'WEB' });
+      return attendanceApi.checkOut({ ...location, source: location.source || 'WEB_DESKTOP' });
     },
     onSuccess: () => { setMessage({ type: 'success', text: 'You are checked out.' }); queryClient.invalidateQueries({ queryKey: ['attendance-today'] }); },
     onError: (error) => setMessage({ type: 'error', text: error.response?.data?.message || error.message || 'Check-out could not be completed.' }),
@@ -68,11 +70,21 @@ export default function EmployeeAttendance() {
   const session = today.data;
   const busy = checkIn.isPending || checkOut.isPending;
 
+  function locationErrorMessage(code) {
+    if (code === 'LOCATION_PERMISSION_REQUIRED') return 'Location permission required. Enable location access for Vettri and try again.';
+    if (code === 'LOCATION_INACCURATE') return 'Location accuracy is too low. We could not determine your location accurately enough to verify your office check-in. Try moving near a window or enabling precise location, then try again.';
+    if (code === 'OUTSIDE_GEOFENCE') return "You're outside the office area. Check-in is available when you're within the configured office area.";
+    if (code === 'LOCATION_STALE') return 'Your location fix is out of date. Try again to get a fresh location.';
+    if (code === 'LOCATION_TIMEOUT') return 'Location request timed out. Check your location settings and try again.';
+    if (code === 'LOCATION_UNAVAILABLE') return 'Your device could not provide a location. Check your location settings and try again.';
+    return code || 'Check-in could not be completed.';
+  }
+
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
       <PageHeader eyebrow="Self service" title="My attendance" description="Check in from your browser or phone, request WFH, and see today’s status." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); wfhRequests.refetch(); }}>Refresh</Button>} />
 
-      {message && <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'} mb-0`} role="status">{message.text}</div>}
+      {message && <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'} mb-0`} role="status">{message.text}{message.type === 'error' && message.code?.startsWith('LOCATION_') && <button type="button" className="btn btn-link p-0 ms-2" onClick={() => checkIn.mutate()}>Try again</button>}</div>}
 
       <div className="row g-3">
         <div className="col-12 col-lg-7">
