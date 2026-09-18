@@ -427,7 +427,9 @@ function RolesPanel() {
   );
 }
 
-function PermissionMatrix({ permissions, selected, onToggle, readOnly }) {
+const ROLE_SCOPES = ['SELF', 'TEAM', 'DEPARTMENT', 'ORGANIZATION'];
+
+function PermissionMatrix({ permissions, selected, onToggle, scopes = {}, onScopeChange = () => {}, readOnly = false }) {
   const grouped = (permissions || []).reduce((acc, p) => {
     const module = p.module || 'General';
     (acc[module] ||= []).push(p);
@@ -454,6 +456,16 @@ function PermissionMatrix({ permissions, selected, onToggle, readOnly }) {
                   <span className="hz-permission-matrix__code">{permission.code}</span>
                   {permission.description && <span className="hz-permission-matrix__desc">{permission.description}</span>}
                 </span>
+                <select
+                  className="form-select form-select-sm ms-auto"
+                  style={{ maxWidth: 150 }}
+                  value={scopes?.[permission.code] || 'ORGANIZATION'}
+                  disabled={readOnly || !selected.has(permission.code)}
+                  onChange={(event) => onScopeChange(permission.code, event.target.value)}
+                  aria-label={`${permission.code} scope`}
+                >
+                  {ROLE_SCOPES.map((scope) => <option key={scope} value={scope}>{scope}</option>)}
+                </select>
               </label>
             ))}
           </div>
@@ -467,12 +479,13 @@ function EditPermissionsModal({ role, onClose }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [selected, setSelected] = useState(() => new Set((role.permissions || []).map((p) => p.code)));
+  const [scopes, setScopes] = useState(() => ({ ...role.scopes }));
   const readOnly = role.systemDefined;
 
   const { data: permissions, isLoading, isError } = useQuery({ queryKey: ['permissions'], queryFn: permissionsApi.list });
 
   const save = useMutation({
-    mutationFn: () => rolesApi.updatePermissions(role.id, Array.from(selected)),
+    mutationFn: () => rolesApi.updatePermissionsAndScopes(role.id, Array.from(selected), scopes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success(`Updated permissions for ${role.name}.`);
@@ -488,6 +501,10 @@ function EditPermissionsModal({ role, onClose }) {
       else next.add(code);
       return next;
     });
+  }
+
+  function changeScope(code, scope) {
+    setScopes((current) => ({ ...current, [code]: scope }));
   }
 
   return (
@@ -507,7 +524,7 @@ function EditPermissionsModal({ role, onClose }) {
       {isLoading && <SkeletonText lines={6} />}
       {isError && <ErrorState description="Couldn't load the permission list." />}
       {!isLoading && !isError && (
-        <PermissionMatrix permissions={permissions} selected={selected} onToggle={toggle} readOnly={readOnly} />
+                <PermissionMatrix permissions={permissions} selected={selected} onToggle={toggle} scopes={scopes} onScopeChange={changeScope} readOnly={readOnly} />
       )}
     </Dialog>
   );
@@ -518,12 +535,13 @@ function CreateRoleModal({ onClose }) {
   const toast = useToast();
   const [form, setForm] = useState({ name: '', description: '' });
   const [selected, setSelected] = useState(() => new Set());
+  const [scopes, setScopes] = useState({});
   const [error, setError] = useState(null);
 
   const { data: permissions, isLoading, isError } = useQuery({ queryKey: ['permissions'], queryFn: permissionsApi.list });
 
   const createRole = useMutation({
-    mutationFn: () => rolesApi.create({ name: form.name, description: form.description, permissionCodes: Array.from(selected) }),
+    mutationFn: () => rolesApi.create({ name: form.name, description: form.description, permissionCodes: Array.from(selected), permissionScopes: scopes }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success(`Created role "${form.name}".`);
@@ -539,6 +557,10 @@ function CreateRoleModal({ onClose }) {
       else next.add(code);
       return next;
     });
+  }
+
+  function changeScope(code, scope) {
+    setScopes((current) => ({ ...current, [code]: scope }));
   }
 
   function handleSubmit(e) {
@@ -568,7 +590,7 @@ function CreateRoleModal({ onClose }) {
         {isLoading && <SkeletonText lines={5} />}
         {isError && <ErrorState description="Couldn't load the permission list." />}
         {!isLoading && !isError && (
-          <PermissionMatrix permissions={permissions} selected={selected} onToggle={toggle} />
+          <PermissionMatrix permissions={permissions} selected={selected} onToggle={toggle} scopes={scopes} onScopeChange={changeScope} />
         )}
       </form>
     </Dialog>

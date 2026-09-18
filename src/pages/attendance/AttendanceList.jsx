@@ -71,8 +71,8 @@ function AttendanceExceptionsCard() {
 }
 
 export default function AttendanceList() {
-  const { hasRole } = useAuth();
-  if (hasRole('EMPLOYEE')) return <Navigate to="/my-profile?tab=attendance" replace />;
+  const { hasRole, hasPermission } = useAuth();
+  if (hasRole('EMPLOYEE') && !hasPermission('ATTENDANCE_VIEW')) return <Navigate to="/my-profile?tab=attendance" replace />;
   return <AttendanceManagement />;
 }
 

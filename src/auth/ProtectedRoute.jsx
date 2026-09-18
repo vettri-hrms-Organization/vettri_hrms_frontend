@@ -23,11 +23,11 @@ export default function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (hasRole('EMPLOYEE') && location.pathname === '/attendance') {
+  if (hasRole('EMPLOYEE') && !hasPermission('ATTENDANCE_VIEW') && location.pathname === '/attendance') {
     return <Navigate to="/my-profile?tab=attendance" replace />;
   }
 
-  if (hasRole('EMPLOYEE') && location.pathname === '/leave') {
+  if (hasRole('EMPLOYEE') && !hasPermission('LEAVE_VIEW') && !hasPermission('LEAVE_APPROVE') && location.pathname === '/leave') {
     return <Navigate to="/my-profile?tab=leave" replace />;
   }
 

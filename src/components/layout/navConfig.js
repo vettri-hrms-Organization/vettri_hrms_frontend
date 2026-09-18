@@ -238,7 +238,7 @@ export function findNavItemByPath(path) {
  *  assumed open to any authenticated user (matches today's backend reality
  *  for modules that haven't had permission codes carved out yet). */
 export function visibleNavSections(hasPermission, hasRole = () => false) {
-  if (hasRole('EMPLOYEE')) {
+  if (hasRole('EMPLOYEE') && !hasPermission('EMPLOYEE_VIEW') && !hasPermission('LEAVE_VIEW')) {
     return NAV_SECTIONS.map((section) => {
       if (section.role !== 'EMPLOYEE') return null;
       const sectionPermission = section.permission;

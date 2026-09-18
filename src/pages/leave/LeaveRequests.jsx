@@ -36,7 +36,7 @@ export default function LeaveRequests() {
   const { hasPermission, hasRole, user } = useAuth();
   const toast = useToast();
 
-  if (hasRole('EMPLOYEE')) return <EmployeeLeaveWorkspace employeeId={user?.employeeId} />;
+  if (hasRole('EMPLOYEE') && !hasPermission('LEAVE_VIEW') && !hasPermission('LEAVE_APPROVE') && !hasPermission('LEAVE_MANAGE')) return <EmployeeLeaveWorkspace employeeId={user?.employeeId} />;
   if (!hasPermission('LEAVE_APPROVE') && !hasPermission('LEAVE_MANAGE')) return <Navigate to="/my-profile?tab=leave" replace />;
 
   // A Manager (LEAVE_APPROVE without the broader LEAVE_MANAGE HR/Admin

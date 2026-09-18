@@ -5,6 +5,8 @@ export const rolesApi = {
   create: (payload) => axiosClient.post('/api/roles', payload).then((res) => res.data),
   updatePermissions: (id, permissionCodes) =>
     axiosClient.put(`/api/roles/${id}/permissions`, permissionCodes).then((res) => res.data),
+  updatePermissionsAndScopes: (id, permissionCodes, permissionScopes) =>
+    axiosClient.put(`/api/roles/${id}/permissions-scopes`, { permissionCodes, permissionScopes }).then((res) => res.data),
   remove: (id) => axiosClient.delete(`/api/roles/${id}`),
 };
 
