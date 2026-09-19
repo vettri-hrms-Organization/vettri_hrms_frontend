@@ -10,7 +10,7 @@ const industries = ['Technology', 'Manufacturing', 'Retail', 'Healthcare', 'Educ
 const companySizes = ['1-25', '26-50', '51-100', '101-250', '251-500', '500+'];
 const interests = ['HR & employee management', 'Attendance & leave', 'Payroll', 'Assets', 'Devices', 'Software management', 'Remote support'];
 const planOptions = [
-  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: '₹199/employee/mo', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
+  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: '₹99/employee/mo', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
 ];
 
 const billingCycles = [
@@ -34,6 +34,25 @@ const initialForm = {
   billingCycle: 'MONTHLY',
   employeeCount: 25,
 };
+
+const billingConfig = {
+  MONTHLY: { label: 'Monthly', rate: 99, unit: 'month', detail: '₹99 / employee / month' },
+  QUARTERLY: { label: 'Quarterly', rate: 279, unit: 'quarter', detail: '₹279 / employee / quarter' },
+  ANNUAL: { label: 'Annual', rate: 999, unit: 'year', detail: '₹999 / employee / year' },
+};
+
+const getSubscriptionTotal = (employeeCount, billingCycle) => {
+  const rate = billingConfig[billingCycle]?.rate ?? billingConfig.MONTHLY.rate;
+  return Number(employeeCount || 1) * rate;
+};
+
+const getFutureBillingText = (employeeCount, billingCycle) => {
+  const total = getSubscriptionTotal(employeeCount, billingCycle);
+  const unitLabel = billingConfig[billingCycle]?.unit ?? 'month';
+  return `₹${total.toLocaleString('en-IN')}/${unitLabel}`;
+};
+
+const getPerEmployeeRate = (billingCycle) => billingConfig[billingCycle]?.rate ?? billingConfig.MONTHLY.rate;
 
 function passwordScore(password) {
   if (!password) return 0;
@@ -172,7 +191,7 @@ export default function Signup() {
           <h1>HR meets workplace operations.</h1>
           <p className="signup-intro">Bring people, payroll, attendance, devices and software into one connected workspace.</p>
         </div>
-        <p className="signup-trial"><span /> 14-day free trial. No credit card required.</p>
+        <p className="signup-trial"><span /> Secure verification starts at ₹1.</p>
       </aside>
 
       <section className="signup-main">
@@ -185,46 +204,92 @@ export default function Signup() {
             <Logo size={34} />
             <p className="signup-eyebrow light">Step 0{step}</p>
             <h2>{step === 1 ? 'Create your Vettri account' : step === 2 ? 'Tell us about your organization' : 'Set up your workspace'}</h2>
-            <p className="signup-muted">{step === 1 ? 'Start your 14-day free trial or select a paid plan.' : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose what you would like to manage first.'}</p>
+            <p className="signup-muted">{step === 1 ? 'Begin with a secure ₹1 verification step.' : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose what you would like to manage first.'}</p>
 
             {step === 1 && <AccountFields form={form} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} update={update} />}
             {step === 2 && <OrganizationFields form={form} errors={errors} update={update} />}
             {step === 3 && (
-              <>
-                <div className="pricing-grid single-plan">
-                  {planOptions.map((option) => (
-                    <button type="button" key={option.value} className={`pricing-card ${form.plan === option.value ? 'selected' : ''}`} onClick={() => update('plan', option.value)}>
-                      <div className="pricing-header">
-                        <span>{option.label}</span>
-                        <strong>₹{Math.max(1, Number(form.employeeCount || 1)) * 199}/{form.billingCycle === 'ANNUAL' ? 'year' : form.billingCycle === 'QUARTERLY' ? 'quarter' : 'month'}</strong>
+              <div className="checkout-layout">
+                <div className="checkout-header">
+                  <p className="checkout-kicker">Step 03</p>
+                  <h3>Set up your workspace</h3>
+                  <p>Choose your billing preference and confirm your workforce size.</p>
+                </div>
+
+                <div className="checkout-card">
+                  <div className="checkout-section">
+                    <div className="section-label">Plan</div>
+                    <div className="plan-row">
+                      <div>
+                        <div className="plan-name">Vettri HRMS</div>
+                        <div className="plan-subtitle">Complete HRMS platform</div>
                       </div>
-                      <div className="pricing-meta">
-                        <span>₹199 per employee</span>
-                        <span>{form.billingCycle}</span>
+                    </div>
+                  </div>
+
+                  <div className="checkout-section">
+                    <div className="section-label">Billing</div>
+                    <div className="billing-segment" role="tablist" aria-label="Billing cycle selector">
+                      {billingCycles.map((cycle) => {
+                        const selected = form.billingCycle === cycle.value;
+                        const rate = getPerEmployeeRate(cycle.value);
+                        return (
+                          <button
+                            key={cycle.value}
+                            type="button"
+                            role="tab"
+                            aria-selected={selected}
+                            className={`billing-option ${selected ? 'selected' : ''}`}
+                            onClick={() => update('billingCycle', cycle.value)}
+                          >
+                            <span className="billing-name">{cycle.label}</span>
+                            <span className="billing-rate">₹{rate}/emp.</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="checkout-section">
+                    <div className="section-label">Employees</div>
+                    <div className="employee-selector" aria-label="Employee count selector">
+                      <button type="button" onClick={() => update('employeeCount', Math.max(1, form.employeeCount - 1))} aria-label="Decrease employee count">−</button>
+                      <div className="employee-value-wrap">
+                        <span className="employee-value">{form.employeeCount}</span>
+                        <span className="employee-caption">Active employees</span>
                       </div>
-                    </button>
-                  ))}
+                      <button type="button" onClick={() => update('employeeCount', form.employeeCount + 1)} aria-label="Increase employee count">+</button>
+                    </div>
+                  </div>
+
+                  <div className="checkout-section summary-box">
+                    <div className="summary-head">
+                      <div className="section-label">Subscription summary</div>
+                    </div>
+                    <div className="summary-row summary-row--stacked">
+                      <span>{form.employeeCount} employees</span>
+                      <span className="summary-meta">{billingConfig[form.billingCycle]?.detail}</span>
+                    </div>
+                    <div className="summary-row summary-row--total">
+                      <span>Subtotal</span>
+                      <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>
+                    </div>
+                  </div>
+
+                  <div className="checkout-section trial-box">
+                    <div className="section-label">Trial</div>
+                    <div className="trial-amount">Start with ₹1</div>
+                    <div className="trial-caption">₹1 charged today</div>
+                    <div className="trial-note">{getFutureBillingText(form.employeeCount, form.billingCycle)} after the trial</div>
+                  </div>
                 </div>
-                <div className="billing-cycle-row">
-                  {billingCycles.map((cycle) => (
-                    <button type="button" key={cycle.value} className={`billing-cycle ${form.billingCycle === cycle.value ? 'selected' : ''}`} onClick={() => update('billingCycle', cycle.value)}>
-                      <strong>{cycle.label}</strong>
-                      <span>{cycle.subtitle}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="employee-count-row">
-                  <label htmlFor="employeeCount">Employee count</label>
-                  <input id="employeeCount" type="number" min="1" step="1" value={form.employeeCount} onChange={(event) => update('employeeCount', Math.max(1, Number(event.target.value) || 1))} />
-                </div>
-                <div className="signup-interests">{interests.map((interest) => { const selected = form.interests.includes(interest); return <button type="button" className={selected ? 'selected' : ''} aria-pressed={selected} key={interest} onClick={() => update('interests', selected ? form.interests.filter((item) => item !== interest) : [...form.interests, interest])}>{selected && <Check size={15} />}{interest}</button>; })}</div>
-              </>
+              </div>
             )}
 
             {errors.submit && <p className="signup-error" role="alert">{errors.submit}</p>}
             <div className="signup-actions">
               {step > 1 ? <button className="signup-back" type="button" onClick={() => setStep((current) => current - 1)} disabled={submitting}><ArrowLeft size={16} /> Back</button> : <span />}
-              {step < 3 ? <button className="signup-primary" type="button" onClick={() => validate() && setStep((current) => current + 1)}>Continue <ArrowRight size={16} /></button> : <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>{submitting ? 'Processing...' : form.plan === 'VETTRI_HRMS' ? `Pay ₹${Math.max(1, Number(form.employeeCount || 1)) * (form.billingCycle === 'ANNUAL' ? 199 * 12 * 0.9 : form.billingCycle === 'QUARTERLY' ? 199 * 3 : 199)}` : 'Create my workspace'} <ArrowRight size={16} /></button>}
+              {step < 3 ? <button className="signup-primary" type="button" onClick={() => validate() && setStep((current) => current + 1)}>Continue <ArrowRight size={16} /></button> : <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>{submitting ? 'Processing...' : 'Start Trial — ₹1'} <ArrowRight size={16} /></button>}
             </div>
           </div>
           <p className="signup-footnote"><LockKeyhole size={14} /> {form.plan === 'VETTRI_HRMS' ? `Selected plan: ${selectedPlan.label} • ${form.billingCycle} billing • ${form.employeeCount} employees` : 'Your trial starts when your workspace is created.'}</p>
