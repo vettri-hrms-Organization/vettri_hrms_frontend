@@ -10,7 +10,7 @@ const industries = ['Technology', 'Manufacturing', 'Retail', 'Healthcare', 'Educ
 const companySizes = ['1-25', '26-50', '51-100', '101-250', '251-500', '500+'];
 const interests = ['HR & employee management', 'Attendance & leave', 'Payroll', 'Assets', 'Devices', 'Software management', 'Remote support'];
 const planOptions = [
-  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: 'â‚¹99/employee/mo', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
+  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: '\u20B999/employee/mo', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
 ];
 
 const billingCycles = [
@@ -36,9 +36,9 @@ const initialForm = {
 };
 
 const billingConfig = {
-  MONTHLY: { label: 'Monthly', rate: 99, unit: 'month', detail: 'â‚¹99 / employee / month' },
-  QUARTERLY: { label: 'Quarterly', rate: 279, unit: 'quarter', detail: 'â‚¹279 / employee / quarter' },
-  ANNUAL: { label: 'Annual', rate: 999, unit: 'year', detail: 'â‚¹999 / employee / year' },
+  MONTHLY: { label: 'Monthly', rate: 99, unit: 'month', detail: '\u20B999 / employee / month' },
+  QUARTERLY: { label: 'Quarterly', rate: 279, unit: 'quarter', detail: '\u20B9279 / employee / quarter' },
+  ANNUAL: { label: 'Annual', rate: 999, unit: 'year', detail: '\u20B9999 / employee / year' },
 };
 
 const getSubscriptionTotal = (employeeCount, billingCycle) => {
@@ -49,7 +49,7 @@ const getSubscriptionTotal = (employeeCount, billingCycle) => {
 const getFutureBillingText = (employeeCount, billingCycle) => {
   const total = getSubscriptionTotal(employeeCount, billingCycle);
   const unitLabel = billingConfig[billingCycle]?.unit ?? 'month';
-  return `â‚¹${total.toLocaleString('en-IN')}/${unitLabel}`;
+  return `\u20B9${total.toLocaleString('en-IN')}/${unitLabel}`;
 };
 
 const getPerEmployeeRate = (billingCycle) => billingConfig[billingCycle]?.rate ?? billingConfig.MONTHLY.rate;
@@ -202,7 +202,7 @@ export default function Signup() {
           </ul>
         </div>
 
-        <p className="signup-trial"><span /> Secure verification starts at â‚¹1.</p>
+        <p className="signup-trial"><span /> Secure verification starts at \u20B91.</p>
       </aside>
 
       <section className="signup-main">
@@ -225,7 +225,7 @@ export default function Signup() {
             </div>
 
             <h2>{step === 1 ? 'Create your Vettri account' : step === 2 ? 'Tell us about your organization' : 'Set up your workspace'}</h2>
-            <p className="signup-muted">{step === 1 ? 'Begin with a secure â‚¹1 verification step.' : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose your billing preference and confirm your workforce size.'}</p>
+            <p className="signup-muted">{step === 1 ? 'Begin with a secure \u20B91 verification step.' : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose your billing preference and confirm your workforce size.'}</p>
 
             {step === 1 && <AccountFields form={form} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} update={update} />}
             {step === 2 && <OrganizationFields form={form} errors={errors} update={update} />}
@@ -262,7 +262,7 @@ export default function Signup() {
                               <span className="billing-name">{cycle.label}</span>
                               {savingsLabel && <span className="billing-badge">{savingsLabel}</span>}
                             </span>
-                            <span className="billing-rate">â‚¹{rate} / employee</span>
+                            <span className="billing-rate">\u20B9{rate} / employee</span>
                             <span className="billing-meta">{cycle.value === 'MONTHLY' ? 'per month' : cycle.value === 'QUARTERLY' ? 'per quarter' : 'per year'}</span>
                           </button>
                         );
@@ -303,7 +303,7 @@ export default function Signup() {
                     </div>
 
                     <div className="summary-line summary-line--header">
-                      <span>{form.employeeCount} employees Ã— â‚¹{getPerEmployeeRate(form.billingCycle)}</span>
+                      <span>{form.employeeCount} employees \u00D7 \u20B9{getPerEmployeeRate(form.billingCycle)}</span>
                       <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>
                     </div>
 
@@ -316,7 +316,7 @@ export default function Signup() {
 
                     <div className="summary-line summary-line--muted">
                       <span>Due today</span>
-                      <strong>â‚¹1</strong>
+                      <strong>\u20B91</strong>
                     </div>
 
                     <div className="summary-line summary-line--muted">
@@ -328,10 +328,10 @@ export default function Signup() {
                   <div className="checkout-section trial-box">
                     <div className="trial-header">
                       <div className="section-head">Trial</div>
-                      <div className="trial-amount">â‚¹1</div>
+                      <div className="trial-amount">\u20B91</div>
                     </div>
-                    <p className="trial-title">Start your trial for â‚¹1</p>
-                    <p className="trial-copy">â‚¹1 charged today. Your selected subscription will be billed at {getFutureBillingText(form.employeeCount, form.billingCycle)} after the trial period.</p>
+                    <p className="trial-title">Start your trial for \u20B91</p>
+                    <p className="trial-copy">\u20B91 charged today. Your selected subscription will be billed at {getFutureBillingText(form.employeeCount, form.billingCycle)} after the trial period.</p>
                   </div>
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function Signup() {
                 </button>
               ) : (
                 <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>
-                  {submitting ? 'Starting your trial...' : 'Start trial â€” â‚¹1'}
+                  {submitting ? 'Starting your trial...' : 'Start trial \u2014 \u20B91'}
                   {!submitting && <ArrowRight size={16} />}
                   {submitting && <span className="button-spinner" aria-hidden="true" />}
                 </button>
@@ -360,11 +360,11 @@ export default function Signup() {
             </div>
 
             <div className="signup-trust">
-              <span className="trust-dot" aria-hidden="true" /> Secure checkout â€¢ Powered by Razorpay
+              <span className="trust-dot" aria-hidden="true" /> Secure checkout \u2022 Powered by Razorpay
             </div>
           </div>
 
-          <p className="signup-footnote"><LockKeyhole size={14} /> {form.plan === 'VETTRI_HRMS' ? `Selected plan: ${selectedPlan.label} â€¢ ${form.billingCycle} billing â€¢ ${form.employeeCount} employees` : 'Your trial starts when your workspace is created.'}</p>
+          <p className="signup-footnote"><LockKeyhole size={14} /> {form.plan === 'VETTRI_HRMS' ? `Selected plan: ${selectedPlan.label} \u2022 ${form.billingCycle} billing \u2022 ${form.employeeCount} employees` : 'Your trial starts when your workspace is created.'}</p>
         </div>
       </section>
 
