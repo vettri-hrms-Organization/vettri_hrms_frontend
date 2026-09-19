@@ -128,32 +128,44 @@ export default function Signup() {
           description: `${order.plan} plan`,
           order_id: order.orderId,
           handler: async function (paymentResponse) {
-            const verificationResponse = await fetch(`${API_BASE_URL}/api/billing/verify`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                companyId: result.companyId,
-                userId: result.userId,
-                plan: result.plan,
-                billingCycle: form.billingCycle,
-                employeeCount: form.employeeCount,
-                razorpayPaymentId: paymentResponse.razorpay_payment_id,
-                razorpayOrderId: paymentResponse.razorpay_order_id,
-                razorpaySignature: paymentResponse.razorpay_signature,
-              }),
-            });
-            const verification = await verificationResponse.json().catch(() => ({}));
-            if (!verificationResponse.ok) throw new Error(verification.message || 'Payment verification failed.');
+            try {
+              setSubmitting(true);
+              const verificationResponse = await fetch(`${API_BASE_URL}/api/billing/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  companyId: result.companyId,
+                  userId: result.userId,
+                  plan: result.plan,
+                  billingCycle: form.billingCycle,
+                  employeeCount: form.employeeCount,
+                  razorpayPaymentId: paymentResponse.razorpay_payment_id,
+                  razorpayOrderId: paymentResponse.razorpay_order_id,
+                  razorpaySignature: paymentResponse.razorpay_signature,
+                }),
+              });
+              const verification = await verificationResponse.json().catch(() => ({}));
+              if (!verificationResponse.ok) throw new Error(verification.message || 'Payment verification failed.');
 
-            const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username: form.email, password: form.password }),
-            });
-            const loginResult = await loginResponse.json().catch(() => ({}));
-            if (!loginResponse.ok) throw new Error(loginResult.message || 'Your subscription is active, but we could not sign you in.');
-            tokenStorage.setTokens(loginResult.accessToken || loginResult.token, loginResult.refreshToken);
-            window.location.assign('/onboarding');
+              const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: form.email, password: form.password }),
+              });
+              const loginResult = await loginResponse.json().catch(() => ({}));
+              if (!loginResponse.ok) throw new Error(loginResult.message || 'Your subscription is active, but we could not sign you in.');
+              tokenStorage.setTokens(loginResult.accessToken || loginResult.token, loginResult.refreshToken);
+              window.location.assign('/onboarding');
+            } catch (error) {
+              setErrors({ submit: error instanceof TypeError ? 'Unable to reach Vettri. Check your connection and try again.' : error.message });
+              setSubmitting(false);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setSubmitting(false);
+              setErrors({ submit: 'Payment was cancelled before completion.' });
+            },
           },
           prefill: { name: `${form.firstName} ${form.lastName}`.trim(), email: form.email },
           theme: { color: '#2367c9' },
@@ -164,11 +176,16 @@ export default function Signup() {
         razorpayScript.async = true;
         razorpayScript.onload = () => {
           const razorpayInstance = new window.Razorpay(options);
+          razorpayInstance.on('payment.failed', (response) => {
+            setErrors({ submit: response.error?.description || 'Razorpay could not complete the payment.' });
+            setSubmitting(false);
+          });
           razorpayInstance.open();
           setSubmitting(false);
         };
         razorpayScript.onerror = () => {
-          throw new Error('Unable to load Razorpay checkout.');
+          setErrors({ submit: 'Unable to load Razorpay checkout.' });
+          setSubmitting(false);
         };
         document.body.appendChild(razorpayScript);
         return;
