@@ -12,7 +12,7 @@ import {
   setConnectedStatus,
 } from '../utils/offlineRequestQueue';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://orvexa-l01t.onrender.com';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.vettrihrms.in';
 
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
