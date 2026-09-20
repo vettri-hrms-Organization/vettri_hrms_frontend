@@ -15,4 +15,5 @@ export const authApi = {
   activateAccount: (token, password) => axiosClient.post('/api/auth/activate', { token, password }).then((res) => res.data),
   requestPasswordReset: (identifier) => axiosClient.post('/api/auth/forgot-password', { identifier }),
   resetPassword: (token, password) => axiosClient.post('/api/auth/reset-password', { token, password }).then((res) => res.data),
+  verifyEmail: (token) => axiosClient.get('/api/auth/verify-email', { params: { token } }).then((res) => res.data),
 };

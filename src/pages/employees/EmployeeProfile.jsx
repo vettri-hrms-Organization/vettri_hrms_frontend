@@ -20,8 +20,6 @@ import { leaveStatusMeta } from '../leave/leaveStatusMeta';
 import { useBreadcrumbLabel } from '../../components/layout/BreadcrumbContext';
 import Tabs from '../../components/ui/Tabs';
 import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../components/ui/Toast';
-import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
 
 const TABS = [
   { key: 'overview', label: 'Profile', icon: ClipboardList },
@@ -95,13 +93,13 @@ export default function EmployeeProfile() {
         <ArrowLeft size={15} /> Back to Employees
       </Link>
 
-      <section className="hz-profile-identity-panel" aria-labelledby="employee-profile-name">
+      <Card className="hz-profile__identity-card">
         <div className="d-flex align-items-start justify-content-between flex-wrap gap-3">
           <div className="d-flex align-items-center gap-3">
             <Avatar name={employee.fullName} size="xl" />
             <div className="hz-profile__identity-copy">
               <div className="d-flex align-items-center gap-2">
-                <h1 id="employee-profile-name" style={{ fontSize: 'var(--hz-text-xl)', fontWeight: 700, margin: 0 }}>{employee.fullName}</h1>
+                <h1 style={{ fontSize: 'var(--hz-text-xl)', fontWeight: 700, margin: 0 }}>{employee.fullName}</h1>
                 <Badge variant={meta.variant} dot>
                   {meta.label}
                 </Badge>
@@ -157,7 +155,7 @@ export default function EmployeeProfile() {
           <ProfileContact icon={MapPin} label="Location" value={employee.address} />
           <ProfileContact icon={Users} label="Department" value={employee.departmentName} />
         </div>
-      </section>
+      </Card>
 
       <Tabs items={availableTabs} value={tab} onChange={changeTab} />
 
@@ -194,19 +192,10 @@ function OverviewTab({ employee }) {
   const queryClient = useQueryClient();
   const [editingBiometric, setEditingBiometric] = useState(false);
   const [pinValue, setPinValue] = useState(employee.biometricDeviceUserId || '');
-  const toast = useToast();
   const accountStatus = employee.accountStatus || (employee.linkedUserId ? 'ACTIVE' : 'INVITED');
-  const invitation = useQuery({ queryKey: ['employee-invitation', employee.id], queryFn: () => employeesApi.invitationStatus(employee.id) });
-  const [inviteResult, setInviteResult] = useState(null);
   const sendInvitation = useMutation({
     mutationFn: () => employeesApi.sendInvitation(employee.id),
-    onSuccess: (result) => { setInviteResult(result); invitation.refetch(); toast.success('Invitation created. Share the setup link with the employee.'); },
-    onError: (error) => toast.error(error.response?.data?.message || 'Could not create the invitation.'),
-  });
-  const resendInvitation = useMutation({
-    mutationFn: () => employeesApi.resendInvitation(employee.id),
-    onSuccess: (result) => { setInviteResult(result); invitation.refetch(); toast.success('A new invitation link was created.'); },
-    onError: (error) => toast.error(error.response?.data?.message || 'Could not resend the invitation.'),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employee', id] }),
   });
   const disableAccount = useMutation({
     mutationFn: () => employeesApi.setAccountStatus(employee.id, 'DISABLED'),
@@ -221,43 +210,17 @@ function OverviewTab({ employee }) {
     },
   });
 
-  const onboarding = inviteResult || invitation.data;
-  const onboardingStatus = onboarding?.status || (accountStatus === 'ACTIVE' && !employee.linkedUserId ? 'COMPLETED' : 'NO_INVITATION');
-  const inviteUrl = onboarding?.inviteUrl;
-  const copyInvite = async () => {
-    if (!inviteUrl) return;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      toast.success('Invitation link copied.');
-    } catch {
-      toast.error('Could not copy the invitation link.');
-    }
-  };
-
   return (
     <div className="row g-3">
       <div className="col-12">
         <Card title="Account" subtitle="Login access for this employee">
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div><InfoRow icon={Mail} label="Email" value={employee.email} /><InfoRow label="Employee ID" value={employee.employeeCode} /></div>
-            {accountStatus === 'ACTIVE' && <Button size="sm" variant="danger" icon={UserX} loading={disableAccount.isPending} onClick={() => disableAccount.mutate()}>Disable Account</Button>}
-          </div>
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--hz-border)' }}>
-            <div className="d-flex align-items-start justify-content-between flex-wrap gap-3">
-              <div>
-                <div className="text-muted-hz" style={{ fontSize: 12 }}>Onboarding</div>
-                <div style={{ fontWeight: 600 }}>{onboardingStatus === 'COMPLETED' ? 'Completed' : onboardingStatus === 'INVITATION_SENT' ? 'Invitation sent' : onboardingStatus === 'INVITATION_EXPIRED' ? 'Invitation expired' : 'Invitation not sent'}</div>
-                {onboarding?.expiresAt && <div className="text-muted-hz" style={{ fontSize: 12 }}>Expires: {new Date(onboarding.expiresAt).toLocaleString()}</div>}
-              </div>
-              {onboardingStatus === 'COMPLETED' && <Badge variant="success" dot>Completed</Badge>}
-              {onboardingStatus !== 'COMPLETED' && <Button size="sm" icon={Send} loading={sendInvitation.isPending || resendInvitation.isPending} onClick={() => (onboardingStatus === 'INVITATION_SENT' ? resendInvitation.mutate() : onboardingStatus === 'INVITATION_EXPIRED' ? resendInvitation.mutate() : sendInvitation.mutate())}>{onboardingStatus === 'INVITATION_SENT' ? 'Resend Invite' : onboardingStatus === 'INVITATION_EXPIRED' ? 'Generate New Invite' : 'Send Invite'}</Button>}
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <Badge variant={accountStatus === 'ACTIVE' ? 'success' : accountStatus === 'DISABLED' ? 'danger' : 'warning'} dot>{accountStatus}</Badge>
+              {accountStatus !== 'ACTIVE' && accountStatus !== 'DISABLED' && <Button size="sm" icon={Send} loading={sendInvitation.isPending} onClick={() => sendInvitation.mutate()}>{sendInvitation.isPending ? 'Sending' : 'Resend Invitation'}</Button>}
+              {accountStatus === 'ACTIVE' && <Button size="sm" variant="danger" icon={UserX} loading={disableAccount.isPending} onClick={() => disableAccount.mutate()}>Disable Account</Button>}
             </div>
-            {inviteUrl && <div className="mt-3 p-3" style={{ background: 'var(--hz-gray-50)', border: '1px solid var(--hz-border)', borderRadius: 'var(--hz-radius-md)' }}>
-              <div className="text-muted-hz mb-1" style={{ fontSize: 12 }}>Employee setup</div>
-              <div style={{ fontSize: 13, color: 'var(--hz-text-secondary)' }}>Secure invitation link generated</div>
-              <div className="text-muted-hz mt-1" style={{ fontSize: 12 }}>Expires: {onboarding?.expiresAt ? new Date(onboarding.expiresAt).toLocaleString() : 'Configured invitation expiry'}</div>
-              <div className="d-flex gap-2 mt-2"><Button size="sm" variant="secondary" onClick={copyInvite}>Copy Link</Button><Button size="sm" variant="secondary" onClick={() => window.open(inviteUrl, '_blank', 'noopener,noreferrer')}>Open</Button></div>
-            </div>}
           </div>
           {(sendInvitation.isError || disableAccount.isError) && <div className="mt-3 text-danger small">{sendInvitation.error?.response?.data?.message || disableAccount.error?.response?.data?.message || 'Account action failed.'}</div>}
         </Card>
@@ -435,13 +398,13 @@ function AttendanceTab({ employee }) {
           <tbody>
             {records.map((r) => (
               <tr key={r.id}>
-                <td data-label="Date" className="ps-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{formatDateIST(r.punchTime)}</td>
-                <td data-label="Time" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{formatTimeIST(r.punchTime)}</td>
-                <td data-label="Type">
+                <td className="ps-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{new Date(r.punchTime).toLocaleDateString()}</td>
+                <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{new Date(r.punchTime).toLocaleTimeString()}</td>
+                <td>
                   <Badge variant={r.punchType === 'IN' ? 'success' : r.punchType === 'OUT' ? 'danger' : 'neutral'}>{r.punchType}</Badge>
                 </td>
-                <td data-label="Verify mode" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.verifyMode || '—'}</td>
-                <td data-label="Device" className="pe-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.deviceName || '—'}</td>
+                <td style={{ fontSize: 'var(--hz-text-sm)' }}>{r.verifyMode || '—'}</td>
+                <td className="pe-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.deviceName || '—'}</td>
               </tr>
             ))}
           </tbody>
