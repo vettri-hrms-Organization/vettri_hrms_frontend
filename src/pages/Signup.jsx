@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LockKeyhole, Minus, Plus } from 'lucide-react';
 import Logo from '../components/brand/Logo';
 import { API_BASE_URL } from '../api/axiosClient';
 import { tokenStorage } from '../auth/tokenStorage';
@@ -10,13 +10,19 @@ const industries = ['Technology', 'Manufacturing', 'Retail', 'Healthcare', 'Educ
 const companySizes = ['1-25', '26-50', '51-100', '101-250', '251-500', '500+'];
 const interests = ['HR & employee management', 'Attendance & leave', 'Payroll', 'Assets', 'Devices', 'Software management', 'Remote support'];
 const planOptions = [
-  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: '\u20B999/employee/mo', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
+  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: '\u20B9199 / employee / month', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
 ];
+
+const billingConfig = {
+  MONTHLY: { label: 'Monthly', rate: 199, unit: 'month', detail: '\u20B9199 / employee / month', periodsPerYear: 12 },
+  QUARTERLY: { label: 'Quarterly', rate: 537, unit: 'quarter', detail: '\u20B9537 / employee / quarter', periodsPerYear: 4 },
+  ANNUAL: { label: 'Annual', rate: 2148, unit: 'year', detail: '\u20B92,148 / employee / year', periodsPerYear: 1 },
+};
 
 const billingCycles = [
   { value: 'MONTHLY', label: 'Monthly', subtitle: 'Best for new teams' },
-  { value: 'QUARTERLY', label: 'Quarterly', subtitle: 'Save 5%' },
-  { value: 'ANNUAL', label: 'Annual', subtitle: 'Save 10%' },
+  { value: 'QUARTERLY', label: 'Quarterly' },
+  { value: 'ANNUAL', label: 'Annual' },
 ];
 
 const initialForm = {
@@ -35,15 +41,9 @@ const initialForm = {
   employeeCount: 25,
 };
 
-const billingConfig = {
-  MONTHLY: { label: 'Monthly', rate: 99, unit: 'month', detail: '\u20B999 / employee / month' },
-  QUARTERLY: { label: 'Quarterly', rate: 279, unit: 'quarter', detail: '\u20B9279 / employee / quarter' },
-  ANNUAL: { label: 'Annual', rate: 999, unit: 'year', detail: '\u20B9999 / employee / year' },
-};
-
 const getSubscriptionTotal = (employeeCount, billingCycle) => {
   const rate = billingConfig[billingCycle]?.rate ?? billingConfig.MONTHLY.rate;
-  return Number(employeeCount || 1) * rate;
+  return Math.max(1, Math.floor(Number(employeeCount) || 1)) * rate;
 };
 
 const getFutureBillingText = (employeeCount, billingCycle) => {
@@ -53,6 +53,15 @@ const getFutureBillingText = (employeeCount, billingCycle) => {
 };
 
 const getPerEmployeeRate = (billingCycle) => billingConfig[billingCycle]?.rate ?? billingConfig.MONTHLY.rate;
+
+const getSavingsLabel = (billingCycle) => {
+  const config = billingConfig[billingCycle];
+  if (!config || billingCycle === 'MONTHLY') return '';
+  const monthlyBaseline = billingConfig.MONTHLY.rate * billingConfig.MONTHLY.periodsPerYear;
+  const annualizedRate = config.rate * config.periodsPerYear;
+  const savingsPercent = Math.round((1 - annualizedRate / monthlyBaseline) * 100);
+  return savingsPercent > 0 ? `Save ${savingsPercent}%` : '';
+};
 
 function passwordScore(password) {
   if (!password) return 0;
@@ -219,7 +228,7 @@ export default function Signup() {
           </ul>
         </div>
 
-        <p className="signup-trial"><span /> Secure verification starts at {'\u20B9'}1.</p>
+        <p className="signup-trial"><span /> Secure checkout for your selected plan.</p>
       </aside>
 
       <section className="signup-main">
@@ -242,7 +251,7 @@ export default function Signup() {
             </div>
 
             <h2>{step === 1 ? 'Create your Vettri account' : step === 2 ? 'Tell us about your organization' : 'Set up your workspace'}</h2>
-            <p className="signup-muted">{step === 1 ? `Begin with a secure \u20B91 verification step.` : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose your billing preference and confirm your workforce size.'}</p>
+            <p className="signup-muted">{step === 1 ? 'Begin with a secure account setup.' : step === 2 ? 'This helps us prepare the right workspace.' : 'Choose your billing preference and confirm your workforce size.'}</p>
 
             {step === 1 && <AccountFields form={form} errors={errors} showPassword={showPassword} setShowPassword={setShowPassword} update={update} />}
             {step === 2 && <OrganizationFields form={form} errors={errors} update={update} />}
@@ -264,7 +273,7 @@ export default function Signup() {
                       {billingCycles.map((cycle) => {
                         const selected = form.billingCycle === cycle.value;
                         const rate = getPerEmployeeRate(cycle.value);
-                        const savingsLabel = cycle.value === 'ANNUAL' ? 'Best value' : cycle.value === 'QUARTERLY' ? 'Save 5%' : '';
+                        const savingsLabel = getSavingsLabel(cycle.value);
 
                         return (
                           <button
@@ -279,8 +288,8 @@ export default function Signup() {
                               <span className="billing-name">{cycle.label}</span>
                               {savingsLabel && <span className="billing-badge">{savingsLabel}</span>}
                             </span>
-                            <span className="billing-rate">{'\u20B9'}{rate} / employee</span>
-                            <span className="billing-meta">{cycle.value === 'MONTHLY' ? 'per month' : cycle.value === 'QUARTERLY' ? 'per quarter' : 'per year'}</span>
+                            <span className="billing-rate">{billingConfig[cycle.value].detail}</span>
+                            <span className="billing-meta">{billingConfig[cycle.value].label}</span>
                           </button>
                         );
                       })}
@@ -297,7 +306,7 @@ export default function Signup() {
                         aria-label="Decrease employee count"
                         disabled={form.employeeCount <= 1}
                       >
-                        âˆ’
+                        <Minus size={20} strokeWidth={2.2} />
                       </button>
                       <div className="employee-value-wrap">
                         <span className="employee-value">{form.employeeCount}</span>
@@ -306,10 +315,10 @@ export default function Signup() {
                       <button
                         type="button"
                         className="employee-step"
-                        onClick={() => update('employeeCount', form.employeeCount + 1)}
+                        onClick={() => update('employeeCount', Math.max(1, Number(form.employeeCount) + 1))}
                         aria-label="Increase employee count"
                       >
-                        +
+                        <Plus size={20} strokeWidth={2.2} />
                       </button>
                     </div>
                   </div>
@@ -332,8 +341,8 @@ export default function Signup() {
                     </div>
 
                     <div className="summary-line summary-line--muted">
-                      <span>Due today</span>
-                      <strong>{'\u20B9'}1</strong>
+                      <span>Payment today</span>
+                      <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>
                     </div>
 
                     <div className="summary-line summary-line--muted">
@@ -345,10 +354,10 @@ export default function Signup() {
                   <div className="checkout-section trial-box">
                     <div className="trial-header">
                       <div className="section-head">Trial</div>
-                      <div className="trial-amount">{'\u20B9'}1</div>
+                      <div className="trial-amount">{getFutureBillingText(form.employeeCount, form.billingCycle)}</div>
                     </div>
-                    <p className="trial-title">Start your trial for {'\u20B9'}1</p>
-                    <p className="trial-copy">{'\u20B9'}1 charged today. Your selected subscription will be billed at {getFutureBillingText(form.employeeCount, form.billingCycle)} after the trial period.</p>
+                    <p className="trial-title">Start your Vettri trial</p>
+                    <p className="trial-copy">Your selected subscription will be billed at <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong> for the selected billing period.</p>
                   </div>
                 </div>
               </div>
@@ -369,8 +378,7 @@ export default function Signup() {
                 </button>
               ) : (
                 <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>
-                  {submitting ? 'Starting your trial...' : <>Start trial {'\u2014'} {'\u20B9'}1</>}
-                  {!submitting && <ArrowRight size={16} />}
+                  {submitting ? 'Starting checkout...' : <>Continue to payment <ArrowRight size={16} /></>}
                   {submitting && <span className="button-spinner" aria-hidden="true" />}
                 </button>
               )}
