@@ -228,7 +228,7 @@ export default function Signup() {
           </ul>
         </div>
 
-        <p className="signup-trial"><span /> Secure checkout for your selected plan.</p>
+        <p className="signup-trial"><span /> Start your free trial with a ₹1 verification.</p>
       </aside>
 
       <section className="signup-main">
@@ -341,8 +341,8 @@ export default function Signup() {
                     </div>
 
                     <div className="summary-line summary-line--muted">
-                      <span>Payment today</span>
-                      <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>
+                      <span>Verification today</span>
+                      <strong>₹1</strong>
                     </div>
 
                     <div className="summary-line summary-line--muted">
@@ -354,10 +354,10 @@ export default function Signup() {
                   <div className="checkout-section trial-box">
                     <div className="trial-header">
                       <div className="section-head">Trial</div>
-                      <div className="trial-amount">{getFutureBillingText(form.employeeCount, form.billingCycle)}</div>
+                      <div className="trial-amount">₹1</div>
                     </div>
                     <p className="trial-title">Start your Vettri trial</p>
-                    <p className="trial-copy">Your selected subscription will be billed at <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong> for the selected billing period.</p>
+                    <p className="trial-copy">₹1 verification today. Your free trial starts after verification. After the trial, your subscription will be billed at <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>.</p>
                   </div>
                 </div>
               </div>
@@ -378,7 +378,7 @@ export default function Signup() {
                 </button>
               ) : (
                 <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>
-                  {submitting ? 'Starting checkout...' : <>Continue to payment <ArrowRight size={16} /></>}
+                  {submitting ? 'Starting your free trial...' : <>Start free trial - ₹1 verification <ArrowRight size={16} /></>}
                   {submitting && <span className="button-spinner" aria-hidden="true" />}
                 </button>
               )}
