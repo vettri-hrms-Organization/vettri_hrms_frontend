@@ -194,7 +194,7 @@ function OverviewTab({ employee }) {
   const [pinValue, setPinValue] = useState(employee.biometricDeviceUserId || '');
   const accountStatus = employee.accountStatus || (employee.linkedUserId ? 'ACTIVE' : 'INVITED');
   const sendInvitation = useMutation({
-    mutationFn: () => employeesApi.sendInvitation(employee.id),
+    mutationFn: () => employeesApi.resendInvitation(employee.id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employee', id] }),
   });
   const disableAccount = useMutation({
