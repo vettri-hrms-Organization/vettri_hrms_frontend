@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { tokenStorage } from '../auth/tokenStorage';
 import { tenantStorage } from '../auth/tenantStorage';
+import { notifyableStatus, userFacingError } from '../utils/userFacingError';
 import {
   ConnectionState,
   flushQueuedRequests,
@@ -20,6 +21,12 @@ export const axiosClient = axios.create({
 });
 
 const isOnline = () => (typeof navigator === 'undefined' ? true : navigator.onLine);
+
+function emitApiError(detail) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('vettri:api-error', { detail }));
+  }
+}
 
 axiosClient.interceptors.request.use((config) => {
   const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData;
@@ -76,6 +83,12 @@ axiosClient.interceptors.response.use(
       '/api/auth/logout',
     ].includes(requestPath);
     const status = error.response?.status;
+    const safeMessage = userFacingError(error);
+    error.userMessage = safeMessage;
+    error.message = safeMessage;
+    if (error.response?.data && typeof error.response.data === 'object') {
+      error.response.data = { ...error.response.data, message: safeMessage };
+    }
 
     if (status === 401 && !isAuthEndpointWithoutRefresh && !originalRequest?._retry) {
       if (isRefreshing) {
@@ -106,6 +119,7 @@ axiosClient.interceptors.response.use(
         return axiosClient(originalRequest);
       } catch (refreshError) {
         resolveQueue(refreshError, null);
+        emitApiError({ message: userFacingError(refreshError), status: 401 });
         setConnectionState(ConnectionState.AUTHENTICATION_REQUIRED);
         tokenStorage.clear();
         if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
@@ -118,6 +132,7 @@ axiosClient.interceptors.response.use(
     }
 
     if (!error.response && !originalRequest?._queueReplayed) {
+      emitApiError({ message: safeMessage, status: null });
       setConnectedStatus(false);
       if (originalRequest?._skipOfflineQueue) {
         return Promise.reject(error);
@@ -133,6 +148,9 @@ axiosClient.interceptors.response.use(
     }
 
     if (shouldQueueForOfflineRetry(originalRequest, status)) {
+      if (notifyableStatus(error)) {
+        emitApiError({ message: safeMessage, status });
+      }
       setConnectionState(status === 429 ? ConnectionState.CONNECTING : status >= 500 ? ConnectionState.OFFLINE : getConnectionState());
       const queued = queueRequestForRetry({
         ...originalRequest,
@@ -145,11 +163,13 @@ axiosClient.interceptors.response.use(
     }
 
     if (status === 403) {
+      emitApiError({ message: safeMessage, status });
       setConnectionState(ConnectionState.DISABLED);
       return Promise.reject(error);
     }
 
     if (status >= 500) {
+      emitApiError({ message: safeMessage, status });
       setConnectionState(ConnectionState.OFFLINE);
       const queued = queueRequestForRetry({
         ...originalRequest,
@@ -161,6 +181,9 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (notifyableStatus(error)) {
+      emitApiError({ message: safeMessage, status });
+    }
     return Promise.reject(error);
   }
 );

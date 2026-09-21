@@ -65,8 +65,8 @@ function AccessDenied() {
         <div className="hz-state__icon-wrap" aria-hidden="true">
           <ShieldAlert size={26} />
         </div>
-        <h1 className="hz-state__title">You do not have access to this page</h1>
-        <p className="hz-state__description">Your account is signed in, but its permissions do not include this workspace. If you think this is a mistake, reach out to your workspace administrator.</p>
+        <h1 className="hz-state__title">Access Restricted</h1>
+        <p className="hz-state__description">You don't have permission to access this page or perform this action. Please contact your HR/Admin if you need access.</p>
         <div className="d-flex align-items-center justify-content-center gap-2">
           <a href="/dashboard" className="btn btn-primary">Back to dashboard</a>
           <button type="button" className="btn btn-outline-secondary" onClick={() => window.history.back()}>

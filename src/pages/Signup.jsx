@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LockKeyhole, Minus, Plus } f
 import Logo from '../components/brand/Logo';
 import { API_BASE_URL } from '../api/axiosClient';
 import { tokenStorage } from '../auth/tokenStorage';
+import { userFacingError } from '../utils/userFacingError';
 
 const steps = ['Account', 'Organization', 'Workspace'];
 const industries = ['Technology', 'Manufacturing', 'Retail', 'Healthcare', 'Education', 'Finance', 'Professional Services', 'Other'];
@@ -118,7 +119,7 @@ export default function Signup() {
         body: JSON.stringify({ ...form, plan: form.plan, billingCycle: form.billingCycle, employeeCount: form.employeeCount }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.message || result.details?.[0] || 'We could not create your workspace.');
+      if (!response.ok) throw new Error(userFacingError({ response: { status: response.status, data: result } }));
 
       if (result.requiresPayment) {
         const orderResponse = await fetch(`${API_BASE_URL}/api/billing/create-order`, {
@@ -127,7 +128,7 @@ export default function Signup() {
           body: JSON.stringify({ companyId: result.companyId, userId: result.userId, plan: result.plan, billingCycle: form.billingCycle, employeeCount: form.employeeCount, customerName: `${form.firstName} ${form.lastName}`.trim(), customerEmail: form.email, organizationName: form.organizationName }),
         });
         const order = await orderResponse.json().catch(() => ({}));
-        if (!orderResponse.ok) throw new Error(order.message || 'We could not start payment.');
+        if (!orderResponse.ok) throw new Error(userFacingError({ response: { status: orderResponse.status, data: order } }));
 
         const options = {
           key: order.key,
@@ -154,7 +155,7 @@ export default function Signup() {
                 }),
               });
               const verification = await verificationResponse.json().catch(() => ({}));
-              if (!verificationResponse.ok) throw new Error(verification.message || 'Payment verification failed.');
+              if (!verificationResponse.ok) throw new Error(userFacingError({ response: { status: verificationResponse.status, data: verification } }));
 
               const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
@@ -162,7 +163,7 @@ export default function Signup() {
                 body: JSON.stringify({ username: form.email, password: form.password }),
               });
               const loginResult = await loginResponse.json().catch(() => ({}));
-              if (!loginResponse.ok) throw new Error(loginResult.message || 'Your subscription is active, but we could not sign you in.');
+              if (!loginResponse.ok) throw new Error(userFacingError({ response: { status: loginResponse.status, data: loginResult } }));
               tokenStorage.setTokens(loginResult.accessToken || loginResult.token, loginResult.refreshToken);
               window.location.assign('/onboarding');
             } catch (error) {

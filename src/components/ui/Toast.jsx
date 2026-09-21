@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
 
 /**
@@ -34,6 +34,16 @@ export function ToastProvider({ children }) {
     },
     [dismiss]
   );
+
+  useEffect(() => {
+    function handleApiError(event) {
+      const message = event.detail?.message;
+      if (message) push(message, 'error', 6000);
+    }
+
+    window.addEventListener('vettri:api-error', handleApiError);
+    return () => window.removeEventListener('vettri:api-error', handleApiError);
+  }, [push]);
 
   const api = useMemo(
     () => ({
