@@ -191,11 +191,15 @@ function OverviewTab({ employee }) {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [editingBiometric, setEditingBiometric] = useState(false);
+  const [invitationResent, setInvitationResent] = useState(false);
   const [pinValue, setPinValue] = useState(employee.biometricDeviceUserId || '');
   const accountStatus = employee.accountStatus || (employee.linkedUserId ? 'ACTIVE' : 'INVITED');
   const sendInvitation = useMutation({
     mutationFn: () => employeesApi.resendInvitation(employee.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employee', id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee', id] });
+      setInvitationResent(true);
+    },
   });
   const disableAccount = useMutation({
     mutationFn: () => employeesApi.setAccountStatus(employee.id, 'DISABLED'),
@@ -224,6 +228,15 @@ function OverviewTab({ employee }) {
           </div>
           {(sendInvitation.isError || disableAccount.isError) && <div className="mt-3 text-danger small">{sendInvitation.error?.response?.data?.message || disableAccount.error?.response?.data?.message || 'Account action failed.'}</div>}
         </Card>
+        <Dialog
+          open={invitationResent}
+          onClose={() => setInvitationResent(false)}
+          title="Invitation Resent Successfully"
+          footer={<Button onClick={() => setInvitationResent(false)}>Done</Button>}
+          size="sm"
+        >
+          <p className="mb-0">A new invitation link has been sent to {employee.email}.</p>
+        </Dialog>
       </div>
       <div className="col-12 col-lg-6">
         <Card title="Contact">
