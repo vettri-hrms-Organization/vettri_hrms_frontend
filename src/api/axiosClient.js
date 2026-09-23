@@ -56,6 +56,41 @@ axiosClient.interceptors.request.use((config) => {
 // flight, instead of firing one refresh call per failed request.
 let isRefreshing = false;
 let pendingQueue = [];
+let sessionExpirationHandled = false;
+
+const PUBLIC_AUTH_PATHS = new Set([
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/auth/activate/inspect',
+  '/api/auth/activate',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/verify-email',
+]);
+
+export function resetSessionExpirationHandling() {
+  sessionExpirationHandled = false;
+}
+
+function isPublicAuthEndpoint(path) {
+  return PUBLIC_AUTH_PATHS.has(path);
+}
+
+function handleSessionExpiration(error) {
+  if (sessionExpirationHandled) return;
+
+  sessionExpirationHandled = true;
+  emitApiError({ message: userFacingError(error), status: 401 });
+  setConnectionState(ConnectionState.AUTHENTICATION_REQUIRED);
+  tokenStorage.clear();
+  tenantStorage.clear();
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('vettri:session-expired'));
+  }
+}
 
 function resolveQueue(error, token) {
   pendingQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)));
@@ -76,12 +111,7 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const requestPath = originalRequest?.url?.split('?')[0];
-    const isAuthEndpointWithoutRefresh = [
-      '/api/auth/login',
-      '/api/auth/register',
-      '/api/auth/refresh',
-      '/api/auth/logout',
-    ].includes(requestPath);
+    const isPublicAuthRequest = isPublicAuthEndpoint(requestPath);
     const status = error.response?.status;
     const safeMessage = userFacingError(error);
     error.userMessage = safeMessage;
@@ -90,7 +120,7 @@ axiosClient.interceptors.response.use(
       error.response.data = { ...error.response.data, message: safeMessage };
     }
 
-    if (status === 401 && !isAuthEndpointWithoutRefresh && !originalRequest?._retry) {
+    if (status === 401 && !isPublicAuthRequest && !originalRequest?._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           pendingQueue.push({ resolve, reject });
@@ -113,22 +143,23 @@ axiosClient.interceptors.response.use(
         const { data } = await axios.post(`${API_BASE_URL}/api/auth/refresh`, { refreshToken });
         const accessToken = data.accessToken || data.token;
         tokenStorage.setTokens(accessToken, data.refreshToken);
+        resetSessionExpirationHandling();
         resolveQueue(null, accessToken);
         originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axiosClient(originalRequest);
       } catch (refreshError) {
         resolveQueue(refreshError, null);
-        emitApiError({ message: userFacingError(refreshError), status: 401 });
-        setConnectionState(ConnectionState.AUTHENTICATION_REQUIRED);
-        tokenStorage.clear();
-        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-          window.location.href = '/login';
-        }
+        handleSessionExpiration(refreshError);
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
+    }
+
+    if (status === 401 && !isPublicAuthRequest) {
+      handleSessionExpiration(error);
+      return Promise.reject(error);
     }
 
     if (!error.response && !originalRequest?._queueReplayed) {

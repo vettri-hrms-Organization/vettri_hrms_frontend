@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
+import { resetSessionExpirationHandling } from '../api/axiosClient';
 import { authApi } from '../api/endpoints/auth';
 import { queryClient } from '../api/queryClient';
 import { tokenStorage } from './tokenStorage';
@@ -15,6 +16,19 @@ export function AuthProvider({ children }) {
     queryClient.clear();
     setSelectedCompanyIdState(companyId ? String(companyId) : null);
     tenantStorage.setSelectedCompanyId(companyId);
+  }, []);
+
+  useEffect(() => {
+    function handleSessionExpired() {
+      queryClient.clear();
+      tokenStorage.clear();
+      tenantStorage.clear();
+      setSelectedCompanyIdState(null);
+      setUser(null);
+    }
+
+    window.addEventListener('vettri:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('vettri:session-expired', handleSessionExpired);
   }, []);
 
   useEffect(() => {
@@ -48,6 +62,7 @@ export function AuthProvider({ children }) {
     const refreshToken = data.refreshToken || data.refreshToken;
 
     tokenStorage.setTokens(accessToken, refreshToken);
+    resetSessionExpirationHandling();
     tenantStorage.clear();
     setSelectedCompanyIdState(null);
 

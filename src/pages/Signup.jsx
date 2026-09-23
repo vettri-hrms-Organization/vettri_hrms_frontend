@@ -2,7 +2,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, Eye, EyeOff, LockKeyhole, Minus, Plus } from 'lucide-react';
 import Logo from '../components/brand/Logo';
-import { API_BASE_URL } from '../api/axiosClient';
+import { API_BASE_URL, resetSessionExpirationHandling } from '../api/axiosClient';
 import { tokenStorage } from '../auth/tokenStorage';
 import { userFacingError } from '../utils/userFacingError';
 
@@ -183,6 +183,7 @@ export default function Signup() {
               const loginResult = await loginResponse.json().catch(() => ({}));
               if (!loginResponse.ok) throw new Error(userFacingError({ response: { status: loginResponse.status, data: loginResult } }));
               tokenStorage.setTokens(loginResult.accessToken || loginResult.token, loginResult.refreshToken);
+              resetSessionExpirationHandling();
               window.location.assign('/onboarding');
             } catch (error) {
               setErrors({ submit: error instanceof TypeError ? 'Unable to reach Vettri. Check your connection and try again.' : error.message });
@@ -220,6 +221,7 @@ export default function Signup() {
       }
 
       tokenStorage.setTokens(result.accessToken || result.token, result.refreshToken);
+      resetSessionExpirationHandling();
       window.location.assign('/onboarding');
     } catch (error) {
       setErrors({ submit: error instanceof TypeError ? 'Unable to reach Vettri. Check your connection and try again.' : error.message });

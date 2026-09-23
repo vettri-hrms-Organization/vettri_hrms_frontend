@@ -1,4 +1,14 @@
-const AUTH_PATHS = ['/api/auth/login', '/api/auth/register'];
+const AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/auth/activate/inspect',
+  '/api/auth/activate',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/verify-email',
+];
 
 function requestPath(error) {
   return error?.config?.url?.split('?')[0] || '';
@@ -21,8 +31,11 @@ export function userFacingError(error) {
   }
 
   if (status === 401) {
+    if (requestPath(error) === '/api/auth/login') {
+      return 'Invalid email, employee ID, or password. Please try again.';
+    }
     return AUTH_PATHS.includes(requestPath(error))
-      ? 'Invalid email, employee ID, or password. Please try again.'
+      ? (message || 'Authentication could not be completed. Please try again.')
       : 'Session Expired: Your session has expired. Please sign in again to continue.';
   }
 
