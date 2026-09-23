@@ -41,8 +41,17 @@ export function ToastProvider({ children }) {
       if (message) push(message, 'error', 6000);
     }
 
+    function handleSessionExpired(event) {
+      const message = event.detail?.message;
+      if (message) push(message, 'error', 6000);
+    }
+
     window.addEventListener('vettri:api-error', handleApiError);
-    return () => window.removeEventListener('vettri:api-error', handleApiError);
+    window.addEventListener('vettri:session-expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('vettri:api-error', handleApiError);
+      window.removeEventListener('vettri:session-expired', handleSessionExpired);
+    };
   }, [push]);
 
   const api = useMemo(

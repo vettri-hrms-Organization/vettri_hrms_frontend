@@ -82,13 +82,14 @@ function handleSessionExpiration(error) {
   if (sessionExpirationHandled) return;
 
   sessionExpirationHandled = true;
-  emitApiError({ message: userFacingError(error), status: 401 });
   setConnectionState(ConnectionState.AUTHENTICATION_REQUIRED);
   tokenStorage.clear();
   tenantStorage.clear();
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('vettri:session-expired'));
+    window.dispatchEvent(new CustomEvent('vettri:session-expired', {
+      detail: { message: userFacingError(error) },
+    }));
   }
 }
 
