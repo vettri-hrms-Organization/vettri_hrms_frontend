@@ -86,6 +86,7 @@ export function AuthProvider({ children }) {
     }
     tokenStorage.clear();
     tenantStorage.clear();
+    resetSessionExpirationHandling();
     setSelectedCompanyIdState(null);
     setUser(null);
   }, []);

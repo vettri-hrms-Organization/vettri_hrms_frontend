@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { tokenStorage } from '../auth/tokenStorage';
 import { tenantStorage } from '../auth/tenantStorage';
+import { isPublicAuthEndpoint, isPublicAuthRoute } from '../auth/authRoutes';
 import { notifyableStatus, userFacingError } from '../utils/userFacingError';
 import {
   ConnectionState,
@@ -58,33 +59,26 @@ let isRefreshing = false;
 let pendingQueue = [];
 let sessionExpirationHandled = false;
 
-const PUBLIC_AUTH_PATHS = new Set([
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/refresh',
-  '/api/auth/logout',
-  '/api/auth/activate/inspect',
-  '/api/auth/activate',
-  '/api/auth/forgot-password',
-  '/api/auth/reset-password',
-  '/api/auth/verify-email',
-]);
-
 export function resetSessionExpirationHandling() {
   sessionExpirationHandled = false;
 }
 
-function isPublicAuthEndpoint(path) {
-  return PUBLIC_AUTH_PATHS.has(path);
+function clearAuthenticationState() {
+  tokenStorage.clear();
+  tenantStorage.clear();
 }
 
 function handleSessionExpiration(error) {
+  if (isPublicAuthRoute()) {
+    clearAuthenticationState();
+    resetSessionExpirationHandling();
+    return;
+  }
   if (sessionExpirationHandled) return;
 
   sessionExpirationHandled = true;
   setConnectionState(ConnectionState.AUTHENTICATION_REQUIRED);
-  tokenStorage.clear();
-  tenantStorage.clear();
+  clearAuthenticationState();
 
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('vettri:session-expired', {
@@ -113,12 +107,22 @@ axiosClient.interceptors.response.use(
     const originalRequest = error.config;
     const requestPath = originalRequest?.url?.split('?')[0];
     const isPublicAuthRequest = isPublicAuthEndpoint(requestPath);
+    const isPublicRoute = isPublicAuthRoute();
     const status = error.response?.status;
     const safeMessage = userFacingError(error);
     error.userMessage = safeMessage;
     error.message = safeMessage;
     if (error.response?.data && typeof error.response.data === 'object') {
       error.response.data = { ...error.response.data, message: safeMessage };
+    }
+
+    // A stale token can be present while a public auth page is bootstrapping.
+    // Clear it, but keep the page clean and let the page's own error handling
+    // decide what to show for the auth request.
+    if (status === 401 && isPublicRoute) {
+      clearAuthenticationState();
+      resetSessionExpirationHandling();
+      return Promise.reject(error);
     }
 
     if (status === 401 && !isPublicAuthRequest && !originalRequest?._retry) {

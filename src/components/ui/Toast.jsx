@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { isPublicAuthRoute } from '../../auth/authRoutes';
 
 /**
  * Minimal in-app toast system - the Salary module is the first feature
@@ -19,21 +21,28 @@ const VARIANT_COLOR = {
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const location = useLocation();
 
   const dismiss = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const push = useCallback(
-    (message, variant = 'success', duration = 4000) => {
+    (message, variant = 'success', duration = 4000, kind = 'generic') => {
       const id = Date.now() + Math.random();
-      setToasts((prev) => [...prev, { id, message, variant }]);
+      setToasts((prev) => [...prev, { id, message, variant, kind }]);
       if (duration > 0) {
         setTimeout(() => dismiss(id), duration);
       }
     },
     [dismiss]
   );
+
+  useEffect(() => {
+    if (isPublicAuthRoute(location.pathname)) {
+      setToasts((prev) => prev.filter((toast) => toast.kind !== 'session-expired'));
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     function handleApiError(event) {
@@ -43,7 +52,7 @@ export function ToastProvider({ children }) {
 
     function handleSessionExpired(event) {
       const message = event.detail?.message;
-      if (message) push(message, 'error', 6000);
+      if (message && !isPublicAuthRoute(location.pathname)) push(message, 'error', 6000, 'session-expired');
     }
 
     window.addEventListener('vettri:api-error', handleApiError);
@@ -52,7 +61,7 @@ export function ToastProvider({ children }) {
       window.removeEventListener('vettri:api-error', handleApiError);
       window.removeEventListener('vettri:session-expired', handleSessionExpired);
     };
-  }, [push]);
+  }, [location.pathname, push]);
 
   const api = useMemo(
     () => ({
