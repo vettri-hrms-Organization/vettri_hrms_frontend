@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Settings2, X } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, LifeBuoy, LogOut, Settings2, UserCircle, X } from 'lucide-react';
 import Logo from '../brand/Logo';
+import Avatar from '../ui/Avatar';
 import { NAV_SECTIONS, findNavItemByPath, visibleNavSections } from './navConfig';
 import { useNavMemory } from './NavMemoryContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,15 +10,23 @@ import { useAuth } from '../../hooks/useAuth';
 export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const location = useLocation();
   const sidebarRef = useRef(null);
-  const { hasPermission, hasRole } = useAuth();
+  const { user, logout, hasPermission, hasRole } = useAuth();
+  const navigate = useNavigate();
   const { recordVisit } = useNavMemory();
   const sections = useMemo(() => visibleNavSections(hasPermission, hasRole), [hasPermission, hasRole]);
+  const primarySections = useMemo(
+    () => sections.filter((section) => section.id !== 'administration' && !section.items.some((item) => item.to === '/support')),
+    [sections]
+  );
 
   const activeSectionId = sections.find((section) => section.items.some((item) => isNavItemActive(item, location)))?.id;
-  const [selectedSectionId, setSelectedSectionId] = useState(activeSectionId || sections[0]?.id);
+  const [selectedSectionId, setSelectedSectionId] = useState(activeSectionId || primarySections[0]?.id);
   const selectedSection = sections.find((section) => section.id === selectedSectionId) || sections[0];
   const administration = sections.find((section) => section.id === 'administration');
+  const supportSection = sections.find((section) => section.items.some((item) => item.to === '/support'));
+  const supportItem = supportSection?.items.find((item) => item.to === '/support');
   const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [flyoutTop, setFlyoutTop] = useState(12);
   const flyoutCloseTimer = useRef(null);
 
@@ -26,6 +35,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   useEffect(() => {
     if (activeSectionId) setSelectedSectionId(activeSectionId);
     setFlyoutOpen(false);
+    setProfileOpen(false);
     const matched = findNavItemByPath(location.pathname);
     if (matched) recordVisit(matched);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -35,6 +45,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
     function handleKeyDown(e) {
       if (e.key === 'Escape') {
         setFlyoutOpen(false);
+        setProfileOpen(false);
         if (mobileOpen) onCloseMobile?.();
       }
     }
@@ -52,6 +63,15 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [flyoutOpen]);
+
+  useEffect(() => {
+    if (!profileOpen) return undefined;
+    function handlePointerDown(event) {
+      if (!sidebarRef.current?.contains(event.target)) setProfileOpen(false);
+    }
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [profileOpen]);
 
   useEffect(() => () => clearTimeout(flyoutCloseTimer.current), []);
 
@@ -115,7 +135,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
         </div>
 
         <nav className="hz-icon-rail__nav flex-grow-1 overflow-auto" aria-label="Product areas">
-          {sections.map((section) => {
+          {primarySections.map((section) => {
             const Icon = section.id === 'administration' ? Settings2 : section.items[0]?.icon || LayoutDashboard;
             const isActive = activeSectionId === section.id;
             const isSelected = selectedSectionId === section.id && flyoutOpen;
@@ -147,20 +167,67 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
           })}
         </nav>
 
-        {administration && <button
-          type="button"
-          className={`hz-rail-settings ${activeSectionId === 'administration' ? 'hz-rail-item--active' : ''} ${selectedSectionId === 'administration' && flyoutOpen ? 'hz-rail-item--selected' : ''}`}
-          onClick={(event) => toggleProduct('administration', event)}
-          aria-label="Settings"
-          aria-expanded={selectedSectionId === 'administration' && flyoutOpen}
-          title="Settings"
-          onMouseEnter={(event) => {
-            keepFlyoutOpen();
-            if (window.matchMedia('(min-width: 992px)').matches) openProduct('administration', event);
-          }}
-        >
-          <Settings2 size={19} strokeWidth={1.8} />
-        </button>}
+        <div className="hz-rail-utilities">
+          {supportItem && (
+            <button
+              type="button"
+              className={`hz-rail-item hz-rail-utility ${activeSectionId === supportSection.id ? 'hz-rail-item--active' : ''}`}
+              onClick={() => { setFlyoutOpen(false); navigate(supportItem.to); }}
+              aria-label="Support"
+              title="Support"
+            >
+              <LifeBuoy size={19} strokeWidth={1.8} />
+              <span>Support</span>
+            </button>
+          )}
+          {administration && (
+            <button
+              type="button"
+              className={`hz-rail-item hz-rail-utility ${activeSectionId === 'administration' ? 'hz-rail-item--active' : ''} ${selectedSectionId === 'administration' && flyoutOpen ? 'hz-rail-item--selected' : ''}`}
+              onClick={(event) => toggleProduct('administration', event)}
+              aria-label="Settings"
+              aria-expanded={selectedSectionId === 'administration' && flyoutOpen}
+              title="Settings"
+              onMouseEnter={(event) => {
+                keepFlyoutOpen();
+                if (window.matchMedia('(min-width: 992px)').matches) openProduct('administration', event);
+              }}
+            >
+              <Settings2 size={19} strokeWidth={1.8} />
+              <span>Settings</span>
+            </button>
+          )}
+          <div className="hz-rail-profile">
+            <button
+              type="button"
+              className="hz-rail-profile__trigger"
+              onClick={() => setProfileOpen((open) => !open)}
+              aria-label="Open profile menu"
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+              title={user?.fullName || 'Profile'}
+            >
+              <Avatar name={user?.fullName} size="sm" />
+            </button>
+            {profileOpen && (
+              <div className="hz-rail-profile__menu" role="menu" aria-label="Profile menu">
+                <div className="hz-rail-profile__identity">
+                  <Avatar name={user?.fullName} size="sm" />
+                  <span><strong>{user?.fullName || 'Account'}</strong><small>{user?.roles?.[0] || 'Member'}</small></span>
+                </div>
+                <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); navigate('/my-profile'); }}>
+                  <UserCircle size={16} /> My Profile
+                </button>
+                <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); navigate('/settings/preferences'); }}>
+                  <Settings2 size={16} /> Preferences
+                </button>
+                <button type="button" role="menuitem" className="hz-rail-profile__logout" onClick={() => { setProfileOpen(false); logout(); }}>
+                  <LogOut size={16} /> Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {flyoutOpen && selectedSection && (
           <div className="hz-nav-flyout" style={{ '--hz-flyout-top': `${flyoutTop}px` }} role="navigation" aria-label={`${selectedSection.label} navigation`}>
