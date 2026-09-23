@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Bell, ChevronDown, LogOut, UserCircle, Clock3, Menu, Building2, ShieldAlert, Zap, Trash2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
 import { adminApi } from '../../api/endpoints/admin';
@@ -11,30 +11,7 @@ import { NAV_INDEX, NAV_SECTIONS } from './navConfig';
 import { useNavMemory } from './NavMemoryContext';
 import { selfServiceApi } from '../../api/endpoints/selfService';
 import { useTheme } from '../../contexts/ThemeContext';
-
-// Search history management
-const MAX_SEARCH_HISTORY = 10;
-
-function getSearchHistory() {
-  try {
-    const stored = localStorage.getItem('vettri_search_history');
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function addToSearchHistory(query) {
-  if (!query.trim()) return;
-  const history = getSearchHistory();
-  const filtered = history.filter((item) => item !== query);
-  const updated = [query, ...filtered].slice(0, MAX_SEARCH_HISTORY);
-  localStorage.setItem('vettri_search_history', JSON.stringify(updated));
-}
-
-function clearSearchHistory() {
-  localStorage.removeItem('vettri_search_history');
-}
+import CommandCenter from './CommandCenter';
 
 export default function Topbar({ onOpenMobileNav }) {
   const { user, logout, hasPermission, hasRole, selectedCompanyId, setSelectedCompanyId } = useAuth();
@@ -45,14 +22,8 @@ export default function Topbar({ onOpenMobileNav }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [commandCenterOpen, setCommandCenterOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [commandMode, setCommandMode] = useState(false);
-  const [query, setQuery] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const searchBoxRef = useRef(null);
-  const { recentPaths } = useNavMemory();
   const currentPage = useMemo(() => {
     const item = NAV_INDEX.find((entry) => {
       const [path] = entry.to.split('?');
@@ -78,149 +49,23 @@ export default function Topbar({ onOpenMobileNav }) {
     enabled: hasRole('SUPER_ADMIN'),
   });
 
-  // Load search history
-  useEffect(() => {
-    setSearchHistory(getSearchHistory());
-  }, []);
-
-  const canSearchPeople = hasPermission('EMPLOYEE_VIEW');
-  const searchableNavItems = useMemo(
-    () => NAV_INDEX.filter((item) => (!item.permission || hasPermission(item.permission)) && (!item.role || hasRole(item.role))),
-    [hasPermission, hasRole]
-  );
-
-  /**
-   * Fuzzy search scoring: higher score = better match
-   * - Exact match = 1000
-   * - Start of string match = 500
-   * - Substring match = 100
-   * - Character sequence match = 10
-   */
-  function fuzzyScore(text, query) {
-    const t = text.toLowerCase();
-    const q = query.toLowerCase();
-    
-    if (t === q) return 1000;
-    if (t.startsWith(q)) return 500;
-    if (t.includes(q)) return 100;
-    
-    let score = 0;
-    let tIdx = 0;
-    for (let i = 0; i < q.length; i++) {
-      const idx = t.indexOf(q[i], tIdx);
-      if (idx === -1) return 0;
-      score += 1;
-      tIdx = idx + 1;
-    }
-    return score;
-  }
-
-  const matchedPages = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    
-    const scored = searchableNavItems
-      .map((item) => {
-        const labelScore = fuzzyScore(item.label, q) * 1.5;
-        const sectionScore = fuzzyScore(item.section, q);
-        const totalScore = Math.max(labelScore, sectionScore);
-        return { item, score: totalScore };
-      })
-      .filter((result) => result.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6)
-      .map((result) => result.item);
-    
-    return scored.map((result) => result.item);
-  }, [query, searchableNavItems]);
-
-  // Debounced employee search - only fires once the person pauses typing,
-  // and only once there's enough to search on.
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) {
-      setDebouncedQuery('');
-      return undefined;
-    }
-    const timer = setTimeout(() => setDebouncedQuery(q), 250);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const { data: employeeResults, isFetching: employeesLoading } = useQuery({
-    queryKey: ['global-search-employees', debouncedQuery],
-    queryFn: () => employeesApi.list(debouncedQuery),
-    enabled: canSearchPeople && debouncedQuery.length >= 2,
-  });
-
-  const matchedEmployees = (employeeResults || []).slice(0, 5);
-
   const quickActions = [
     hasPermission('EMPLOYEE_CREATE') && { label: 'Open employees', description: 'Add or manage people', icon: Users, to: '/employees' },
     hasPermission('LEAVE_VIEW') && { label: 'Open leave', description: 'Review requests and balances', icon: CalendarDays, to: '/leave' },
     hasPermission('RECRUITMENT_VIEW') && { label: 'Open recruitment', description: 'Manage jobs and candidates', icon: Briefcase, to: '/recruitment' },
   ].filter(Boolean);
 
-  const recentItems = useMemo(
-    () =>
-      recentPaths
-        .map((p) => NAV_INDEX.find((item) => item.to === p))
-      .filter((item) => item && (!item.permission || hasPermission(item.permission)) && (!item.role || hasRole(item.role))),
-    [recentPaths, hasPermission, hasRole]
-  );
-
-  const flatResults = useMemo(() => {
-    if (!query.trim()) {
-      return recentItems.map((item) => ({ kind: 'page', item }));
-    }
-    return [
-      ...matchedPages.map((item) => ({ kind: 'page', item })),
-      ...matchedEmployees.map((emp) => ({ kind: 'employee', item: emp })),
-    ];
-  }, [query, matchedPages, matchedEmployees, recentItems]);
-
-  useEffect(() => setActiveIndex(0), [query]);
-
-  // Keyboard shortcut: Cmd+K / Ctrl+K to focus search, Cmd+Shift+K for command mode
+  // Global command center shortcut.
   useEffect(() => {
     function handleKeyDown(e) {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setCommandMode(true);
-        setSearchOpen(true);
-        searchBoxRef.current?.querySelector('input')?.focus();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setCommandMode(false);
-        setSearchOpen(true);
-        searchBoxRef.current?.querySelector('input')?.focus();
+        setCommandCenterOpen(true);
       }
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) {
-        setSearchOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const goTo = (result) => {
-    if (query.trim()) {
-      addToSearchHistory(query);
-      setSearchHistory(getSearchHistory());
-    }
-    setSearchOpen(false);
-    setQuery('');
-    setCommandMode(false);
-    if (result.kind === 'page') navigate(result.item.to);
-    else navigate(`/employees/${result.item.id}`);
-  };
 
   async function openMyProfile() {
     setMenuOpen(false);
@@ -243,21 +88,6 @@ export default function Topbar({ onOpenMobileNav }) {
       setProfileLoading(false);
     }
   }
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, flatResults.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && flatResults[activeIndex]) {
-      e.preventDefault();
-      goTo(flatResults[activeIndex]);
-    } else if (e.key === 'Escape') {
-      setSearchOpen(false);
-    }
-  };
 
   return (
     <header
@@ -282,36 +112,14 @@ export default function Topbar({ onOpenMobileNav }) {
         <strong>{currentPage}</strong>
       </div>
 
-      <div className="position-relative hz-topbar-search" ref={searchBoxRef}>
-        <div className="position-relative w-100">
-          <Search size={16} className="position-absolute" style={{ left: 12, top: 10, color: 'var(--hz-text-muted)' }} />
-          <input
-            type="search"
-            placeholder={commandMode ? 'Type a command or search...' : 'Search employees, pages, or modules...'}
-            className="form-control ps-5 pe-12 hz-search-input"
-            style={{ background: commandMode ? 'rgba(201,130,22,0.08)' : 'var(--hz-bg-canvas)', border: `1px solid ${commandMode ? 'var(--hz-accent-500)' : 'var(--hz-border)'}`, paddingRight: 48 }}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setSearchOpen(true)}
-            onKeyDown={handleKeyDown}
-            role="combobox"
-            aria-expanded={searchOpen}
-            aria-controls="hz-global-search-results"
-            aria-autocomplete="list"
-          />
-          {!query && (
-            <div className="position-absolute d-none d-md-flex align-items-center gap-1" style={{ right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-              <kbd style={{ fontSize: 10, padding: '2px 6px', background: 'rgba(0,0,0,0.05)', borderRadius: 4, border: '1px solid rgba(0,0,0,0.1)', lineHeight: 1 }}>
-                {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
-              </kbd>
-              <kbd style={{ fontSize: 10, padding: '2px 6px', background: 'rgba(0,0,0,0.05)', borderRadius: 4, border: '1px solid rgba(0,0,0,0.1)', lineHeight: 1 }}>
-                K
-              </kbd>
-            </div>
-          )}
-        </div>
+      <button type="button" className="hz-command-trigger" onClick={() => setCommandCenterOpen(true)} aria-label="Open command center">
+        <Search size={16} aria-hidden="true" />
+        <span>Search employees, pages, actions...</span>
+        <kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'} K</kbd>
+      </button>
+      <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} />
 
-        {searchOpen && (
+      {false && (
           <div id="hz-global-search-results" className="position-absolute hz-surface hz-search-panel" style={{ top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 20, maxHeight: '70vh', overflowY: 'auto' }}>
             {!query.trim() && recentItems.length > 0 && (
               <div className="pb-1">
@@ -425,8 +233,7 @@ export default function Topbar({ onOpenMobileNav }) {
               </div>
             )}
           </div>
-        )}
-      </div>
+      )}
 
       <div className="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
         {quickActions.length > 0 && (
