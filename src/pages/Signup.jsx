@@ -87,6 +87,8 @@ export default function Signup() {
   const [submitting, setSubmitting] = useState(false);
   const selectedPlan = useMemo(() => planOptions.find((option) => option.value === form.plan) || planOptions[0], [form.plan]);
   const isPaidPlan = ['STARTER', 'BUSINESS', 'ENTERPRISE'].includes(form.plan);
+  const isTrialSignup = form.plan === 'TRIAL';
+  const hasPaymentFlow = isTrialSignup || isPaidPlan;
 
   const update = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -130,8 +132,8 @@ export default function Signup() {
           companySize: form.companySize,
           country: form.country,
           interests: form.interests,
-          plan: isPaidPlan ? form.plan : 'TRIAL',
-          ...(isPaidPlan ? { billingCycle: form.billingCycle, employeeCount: form.employeeCount } : {}),
+          plan: form.plan,
+          ...(hasPaymentFlow ? { billingCycle: form.billingCycle, employeeCount: form.employeeCount } : {}),
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -245,7 +247,7 @@ export default function Signup() {
           </ul>
         </div>
 
-        <p className="signup-trial"><span /> Start your free trial with no payment required.</p>
+        <p className="signup-trial"><span /> Start your free trial with a ₹1 verification.</p>
       </aside>
 
       <section className="signup-main">
@@ -278,13 +280,13 @@ export default function Signup() {
                   <div className="checkout-section checkout-plan-row">
                     <div className="plan-copy">
                       <div className="plan-badge">Plan</div>
-                      <div className="plan-name">{isPaidPlan ? selectedPlan.label : 'Free trial'}</div>
-                      <div className="plan-subtitle">{isPaidPlan ? 'Complete HRMS platform' : 'Full workspace access during your trial'}</div>
+                      <div className="plan-name">{isTrialSignup ? 'Free trial' : selectedPlan.label}</div>
+                      <div className="plan-subtitle">{isTrialSignup ? '₹1 verification through Razorpay' : 'Complete HRMS platform'}</div>
                     </div>
-                    <div className="plan-chip">{isPaidPlan ? 'Paid plan' : 'No payment'}</div>
+                    <div className="plan-chip">{isTrialSignup ? '₹1 verification' : 'Paid plan'}</div>
                   </div>
 
-                  {isPaidPlan && <div className="checkout-section">
+                  {hasPaymentFlow && <div className="checkout-section">
                     <div className="section-head">Billing</div>
                     <div className="billing-segment" role="tablist" aria-label="Billing cycle selector">
                       {billingCycles.map((cycle) => {
@@ -313,7 +315,7 @@ export default function Signup() {
                     </div>
                   </div>}
 
-                  {isPaidPlan && <div className="checkout-section">
+                  {hasPaymentFlow && <div className="checkout-section">
                     <div className="section-head">Number of employees</div>
                     <div className="employee-selector" aria-label="Employee count selector">
                       <button
@@ -340,7 +342,7 @@ export default function Signup() {
                     </div>
                   </div>}
 
-                  {isPaidPlan && <div className="checkout-section summary-box">
+                  {hasPaymentFlow && <div className="checkout-section summary-box">
                     <div className="section-head summary-head">
                       <span>Subscription summary</span>
                     </div>
@@ -370,11 +372,11 @@ export default function Signup() {
 
                   <div className="checkout-section trial-box">
                     <div className="trial-header">
-                      <div className="section-head">{isPaidPlan ? 'Subscription' : 'Free trial'}</div>
-                      <div className="trial-amount">{isPaidPlan ? getFutureBillingText(form.employeeCount, form.billingCycle) : '₹0'}</div>
+                      <div className="section-head">Free trial</div>
+                      <div className="trial-amount">₹1</div>
                     </div>
                     <p className="trial-title">Start your Vettri trial</p>
-                    <p className="trial-copy">{isPaidPlan ? <>Your trial starts after signup. The selected plan will require payment before activation.</> : 'Start your free trial with no payment required. Your workspace opens immediately after signup.'}</p>
+                    <p className="trial-copy">₹1 verification today. Your free trial starts after verification. After the trial, your subscription will be billed at <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>.</p>
                   </div>
                 </div>
               </div>
@@ -395,18 +397,18 @@ export default function Signup() {
                 </button>
               ) : (
                 <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>
-                  {submitting ? (isPaidPlan ? 'Preparing secure checkout...' : 'Starting your free trial...') : <>{isPaidPlan ? `Continue with ${selectedPlan.label}` : 'Start Free Trial'} <ArrowRight size={16} /></>}
+                  {submitting ? 'Preparing secure checkout...' : <>Start free trial - ₹1 verification <ArrowRight size={16} /></>}
                   {submitting && <span className="button-spinner" aria-hidden="true" />}
                 </button>
               )}
             </div>
 
-            {isPaidPlan && <div className="signup-trust">
+            {hasPaymentFlow && <div className="signup-trust">
               <span className="trust-dot" aria-hidden="true" /> Secure checkout {'\u2022'} Powered by Razorpay
             </div>}
           </div>
 
-          <p className="signup-footnote"><LockKeyhole size={14} /> {isPaidPlan ? <>Selected plan: {selectedPlan.label} {'\u2022'} {form.billingCycle} billing {'\u2022'} {form.employeeCount} employees</> : 'Your trial starts when your workspace is created.'}</p>
+          <p className="signup-footnote"><LockKeyhole size={14} /> {hasPaymentFlow ? <>Selected plan: {isTrialSignup ? 'Starter' : selectedPlan.label} {'\u2022'} {form.billingCycle} billing {'\u2022'} {form.employeeCount} employees</> : 'Your trial starts when your workspace is created.'}</p>
         </div>
       </section>
 
