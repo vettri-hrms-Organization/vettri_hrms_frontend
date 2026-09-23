@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import LoginBrandPanel from '../components/auth/LoginBrandPanel';
 import { mapPasswordError } from '../utils/errorMapping';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from
@@ -19,6 +19,10 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  if (!isLoading && isAuthenticated) {
+    return <Navigate to={from} replace />;
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();

@@ -44,11 +44,20 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (username, password) => {
     const data = await authApi.login(username, password);
-    tokenStorage.setTokens(data.accessToken || data.token, data.refreshToken);
+    const accessToken = data.accessToken || data.token;
+    const refreshToken = data.refreshToken || data.refreshToken;
+
+    tokenStorage.setTokens(accessToken, refreshToken);
     tenantStorage.clear();
     setSelectedCompanyIdState(null);
-    setUser(data.user);
-    return data.user;
+
+    let nextUser = data.user || null;
+    if (!nextUser && accessToken) {
+      nextUser = await authApi.me();
+    }
+
+    setUser(nextUser);
+    return nextUser;
   }, []);
 
   const logout = useCallback(async () => {

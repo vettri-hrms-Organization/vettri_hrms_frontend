@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import ProtectedRoute from './auth/ProtectedRoute';
+import { useAuth } from './hooks/useAuth';
 import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -53,7 +54,7 @@ const SoftwareManagement = lazy(() => import('./pages/software/SoftwareManagemen
 export default function App() {
   return (
     <Suspense fallback={<div className="p-4 text-secondary-hz">Loading...</div>}><Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<RootRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/activate-account" element={<ActivateAccount />} />
@@ -112,6 +113,16 @@ export default function App() {
       <Route path="*" element={<NotFound />} />
     </Routes></Suspense>
   );
+}
+
+function RootRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="p-4 text-secondary-hz">Loading...</div>;
+  }
+
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 }
 
 function MyProfileRoute() {
