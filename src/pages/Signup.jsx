@@ -11,7 +11,9 @@ const industries = ['Technology', 'Manufacturing', 'Retail', 'Healthcare', 'Educ
 const companySizes = ['1-25', '26-50', '51-100', '101-250', '251-500', '500+'];
 const interests = ['HR & employee management', 'Attendance & leave', 'Payroll', 'Assets', 'Devices', 'Software management', 'Remote support'];
 const planOptions = [
-  { value: 'VETTRI_HRMS', label: 'Vettri HRMS', price: '\u20B9199 / employee / month', employeeLimit: 'Unlimited employee tiers', deviceLimit: 'Unified product' },
+  { value: 'STARTER', label: 'Starter', price: '\u20B9199 / employee / month' },
+  { value: 'BUSINESS', label: 'Business', price: '\u20B9199 / employee / month' },
+  { value: 'ENTERPRISE', label: 'Enterprise', price: '\u20B9199 / employee / month' },
 ];
 
 const billingConfig = {
@@ -37,7 +39,7 @@ const initialForm = {
   companySize: '',
   country: 'India',
   interests: [],
-  plan: 'VETTRI_HRMS',
+  plan: 'TRIAL',
   billingCycle: 'MONTHLY',
   employeeCount: 25,
 };
@@ -77,13 +79,14 @@ function passwordScore(password) {
 
 export default function Signup() {
   const [searchParams] = useSearchParams();
-  const selectedPlanFromUrl = searchParams.get('plan') || 'VETTRI_HRMS';
+  const selectedPlanFromUrl = searchParams.get('plan') || 'TRIAL';
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ ...initialForm, plan: planOptions.some((option) => option.value === selectedPlanFromUrl) ? selectedPlanFromUrl : 'VETTRI_HRMS' });
+  const [form, setForm] = useState({ ...initialForm, plan: ['TRIAL', ...planOptions.map((option) => option.value)].includes(selectedPlanFromUrl.toUpperCase()) ? selectedPlanFromUrl.toUpperCase() : 'TRIAL' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const selectedPlan = useMemo(() => planOptions.find((option) => option.value === form.plan) || planOptions[0], [form.plan]);
+  const isPaidPlan = ['STARTER', 'BUSINESS', 'ENTERPRISE'].includes(form.plan);
 
   const update = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -116,7 +119,11 @@ export default function Signup() {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, plan: form.plan, billingCycle: form.billingCycle, employeeCount: form.employeeCount }),
+        body: JSON.stringify({
+          ...form,
+          plan: isPaidPlan ? form.plan : 'TRIAL',
+          ...(isPaidPlan ? { billingCycle: form.billingCycle, employeeCount: form.employeeCount } : {}),
+        }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(userFacingError({ response: { status: response.status, data: result } }));
@@ -229,7 +236,7 @@ export default function Signup() {
           </ul>
         </div>
 
-        <p className="signup-trial"><span /> Start your free trial with a ₹1 verification.</p>
+        <p className="signup-trial"><span /> Start your free trial with no payment required.</p>
       </aside>
 
       <section className="signup-main">
@@ -262,13 +269,13 @@ export default function Signup() {
                   <div className="checkout-section checkout-plan-row">
                     <div className="plan-copy">
                       <div className="plan-badge">Plan</div>
-                      <div className="plan-name">Vettri HRMS</div>
-                      <div className="plan-subtitle">Complete HRMS platform</div>
+                      <div className="plan-name">{isPaidPlan ? selectedPlan.label : 'Free trial'}</div>
+                      <div className="plan-subtitle">{isPaidPlan ? 'Complete HRMS platform' : 'Full workspace access during your trial'}</div>
                     </div>
-                    <div className="plan-chip">All-in-one</div>
+                    <div className="plan-chip">{isPaidPlan ? 'Paid plan' : 'No payment'}</div>
                   </div>
 
-                  <div className="checkout-section">
+                  {isPaidPlan && <div className="checkout-section">
                     <div className="section-head">Billing</div>
                     <div className="billing-segment" role="tablist" aria-label="Billing cycle selector">
                       {billingCycles.map((cycle) => {
@@ -295,9 +302,9 @@ export default function Signup() {
                         );
                       })}
                     </div>
-                  </div>
+                  </div>}
 
-                  <div className="checkout-section">
+                  {isPaidPlan && <div className="checkout-section">
                     <div className="section-head">Number of employees</div>
                     <div className="employee-selector" aria-label="Employee count selector">
                       <button
@@ -322,9 +329,9 @@ export default function Signup() {
                         <Plus size={20} strokeWidth={2.2} />
                       </button>
                     </div>
-                  </div>
+                  </div>}
 
-                  <div className="checkout-section summary-box">
+                  {isPaidPlan && <div className="checkout-section summary-box">
                     <div className="section-head summary-head">
                       <span>Subscription summary</span>
                     </div>
@@ -350,15 +357,15 @@ export default function Signup() {
                       <span>After trial</span>
                       <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>
                     </div>
-                  </div>
+                  </div>}
 
                   <div className="checkout-section trial-box">
                     <div className="trial-header">
-                      <div className="section-head">Trial</div>
-                      <div className="trial-amount">₹1</div>
+                      <div className="section-head">{isPaidPlan ? 'Subscription' : 'Free trial'}</div>
+                      <div className="trial-amount">{isPaidPlan ? getFutureBillingText(form.employeeCount, form.billingCycle) : '₹0'}</div>
                     </div>
                     <p className="trial-title">Start your Vettri trial</p>
-                    <p className="trial-copy">₹1 verification today. Your free trial starts after verification. After the trial, your subscription will be billed at <strong>{getFutureBillingText(form.employeeCount, form.billingCycle)}</strong>.</p>
+                    <p className="trial-copy">{isPaidPlan ? <>Your trial starts after signup. The selected plan will require payment before activation.</> : 'Start your free trial with no payment required. Your workspace opens immediately after signup.'}</p>
                   </div>
                 </div>
               </div>
@@ -379,18 +386,18 @@ export default function Signup() {
                 </button>
               ) : (
                 <button className="signup-primary" type="button" onClick={createWorkspace} disabled={submitting}>
-                  {submitting ? 'Starting your free trial...' : <>Start free trial - ₹1 verification <ArrowRight size={16} /></>}
+                  {submitting ? (isPaidPlan ? 'Preparing secure checkout...' : 'Starting your free trial...') : <>{isPaidPlan ? `Continue with ${selectedPlan.label}` : 'Start Free Trial'} <ArrowRight size={16} /></>}
                   {submitting && <span className="button-spinner" aria-hidden="true" />}
                 </button>
               )}
             </div>
 
-            <div className="signup-trust">
+            {isPaidPlan && <div className="signup-trust">
               <span className="trust-dot" aria-hidden="true" /> Secure checkout {'\u2022'} Powered by Razorpay
-            </div>
+            </div>}
           </div>
 
-          <p className="signup-footnote"><LockKeyhole size={14} /> {form.plan === 'VETTRI_HRMS' ? <>Selected plan: {selectedPlan.label} {'\u2022'} {form.billingCycle} billing {'\u2022'} {form.employeeCount} employees</> : 'Your trial starts when your workspace is created.'}</p>
+          <p className="signup-footnote"><LockKeyhole size={14} /> {isPaidPlan ? <>Selected plan: {selectedPlan.label} {'\u2022'} {form.billingCycle} billing {'\u2022'} {form.employeeCount} employees</> : 'Your trial starts when your workspace is created.'}</p>
         </div>
       </section>
 

@@ -9,7 +9,7 @@ function rawMessage(error) {
 }
 
 function isBusinessSafe(message) {
-  return /invitation|employee.*already exists|already registered|subscription is inactive|invoice.*not found|account has been|account is already|email.*verified/i.test(message);
+  return /invitation|employee.*already exists|already registered|subscription is inactive|invoice.*not found|account has been|account is already|email.*verified|plan selection|payment.*unavailable|billing cycle|employee count/i.test(message);
 }
 
 export function userFacingError(error) {
