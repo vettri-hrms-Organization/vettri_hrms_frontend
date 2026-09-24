@@ -8090,6 +8090,33 @@ button:disabled,
 .hz-topbar .hz-icon-btn:hover { background: rgba(255, 255, 255, 0.14) !important; color: #fff !important; }
 .hz-topbar .hz-current-workspace { border-left-color: rgba(255, 255, 255, 0.2); color: #fff; }
 .hz-topbar .hz-current-workspace svg { color: #d9d0ff; }
+.hz-billing-page { gap: 20px; }
+.hz-billing-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.hz-billing-search { display: flex; align-items: center; gap: 9px; width: min(100%, 360px); padding: 9px 12px; border: 1px solid var(--hz-border); border-radius: 8px; color: var(--hz-text-muted); }
+.hz-billing-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--hz-text-primary); font-size: 13px; }
+.hz-billing-filter { width: 150px; }
+.hz-billing-invoice-link { padding: 0; border: 0; background: transparent; color: var(--hz-primary-700); font-weight: 700; cursor: pointer; }
+.hz-billing-invoice-link:hover { text-decoration: underline; }
+.hz-billing-error { padding: 16px; border: 1px solid var(--hz-danger-200); border-radius: 8px; background: var(--hz-danger-50); color: var(--hz-danger-700); font-size: 13px; }
+.hz-billing-drawer-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; justify-content: flex-end; background: rgba(15, 27, 61, 0.36); }
+.hz-billing-drawer { width: min(100%, 520px); height: 100%; overflow-y: auto; padding: 26px; background: var(--hz-bg-surface); box-shadow: -14px 0 36px rgba(15, 27, 61, 0.18); }
+.hz-billing-drawer__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--hz-border); }
+.hz-billing-drawer__header h2 { margin: 0; color: var(--hz-text-primary); font-size: 22px; }
+.hz-billing-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0; padding: 16px; border: 1px solid var(--hz-primary-100); border-radius: 10px; background: var(--hz-primary-50); }
+.hz-billing-total span, .hz-billing-detail-grid span { display: block; color: var(--hz-text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.hz-billing-total strong { display: block; margin-top: 4px; color: var(--hz-primary-800); font-size: 25px; }
+.hz-billing-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--hz-border); }
+.hz-billing-detail-grid strong { display: block; margin-top: 4px; color: var(--hz-text-primary); font-size: 13px; }
+.hz-billing-detail-section { padding: 16px 0; border-bottom: 1px solid var(--hz-border); }
+.hz-billing-detail-section h3 { margin: 0 0 7px; color: var(--hz-text-primary); font-size: 14px; }
+.hz-billing-detail-section p { margin: 0; color: var(--hz-text-secondary); font-size: 13px; line-height: 1.7; }
+.hz-billing-drawer__actions { display: flex; gap: 10px; padding-top: 22px; }
+@media (max-width: 600px) {
+  .hz-billing-toolbar { align-items: stretch; flex-direction: column; }
+  .hz-billing-search, .hz-billing-filter { width: 100%; }
+  .hz-billing-drawer { padding: 20px 16px; }
+  .hz-billing-drawer__actions { flex-direction: column; }
+}
 
 /* Keka-inspired labeled product navigation, with Vettri's permission-aware flyouts. */
 @media (min-width: 992px) {

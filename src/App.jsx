@@ -46,6 +46,7 @@ import SupportInfo from './pages/SupportInfo';
 import SettingsPreferences from './pages/SettingsPreferences';
 import Welcome from './pages/Welcome';
 import Notifications from './pages/Notifications';
+import BillingInvoices from './pages/BillingInvoices';
 const Requirements = lazy(() => import('./pages/Requirements'));
 const MonitoringReports = lazy(() => import('./pages/monitoring/MonitoringReports'));
 const SettingsPlatform = lazy(() => import('./pages/SettingsPlatform'));
@@ -96,6 +97,7 @@ export default function App() {
           <Route path="my-payslip" element={<SalaryDetails />} />
           <Route path="my-profile" element={<MyProfileRoute />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="billing/invoices" element={<BillingInvoices />} />
           <Route path="reports" element={<Reports />} />
           <Route path="/requirements" element={<Requirements />} />
           <Route path="executive" element={<ExecutiveOverview />} />

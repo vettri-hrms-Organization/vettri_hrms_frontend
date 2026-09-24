@@ -194,6 +194,15 @@ export const NAV_SECTIONS = [
     ],
   },
   {
+    id: 'billing',
+    label: 'Billing',
+    description: 'Subscription payments and invoices',
+    roles: ['COMPANY_ADMIN', 'HR_ADMIN', 'SUPER_ADMIN'],
+    collapsible: true,
+    badge: null,
+    items: [{ to: '/billing/invoices', icon: Receipt, label: 'Invoices' }],
+  },
+  {
     id: 'insights',
     label: 'Insights',
     description: 'Analytics and reporting',
@@ -243,7 +252,7 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
       if (section.role !== 'EMPLOYEE') return null;
       const sectionPermission = section.permission;
       const items = section.items.filter((item) => !item.permission || hasPermission(item.permission));
-      return (!sectionPermission || hasPermission(sectionPermission)) && items.length > 0
+      return (!sectionPermission || hasPermission(sectionPermission)) && sectionRoleVisible(section, hasRole) && items.length > 0
         ? { ...section, items }
         : null;
     }).filter(Boolean);
@@ -255,5 +264,10 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
       return (!required || hasPermission(required)) && (!item.role || hasRole(item.role));
     });
     return { ...section, items };
-  }).filter((section) => section.items.length > 0 && (!section.role || hasRole(section.role)));
+  }).filter((section) => section.items.length > 0 && sectionRoleVisible(section, hasRole));
+}
+
+function sectionRoleVisible(section, hasRole) {
+  if (Array.isArray(section.roles)) return section.roles.some((role) => hasRole(role));
+  return !section.role || hasRole(section.role);
 }
