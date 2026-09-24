@@ -19,7 +19,7 @@ function rawMessage(error) {
 }
 
 function isBusinessSafe(message) {
-  return /invitation|employee.*already exists|already registered|subscription is inactive|invoice.*not found|account has been|account is already|email.*verified|plan selection|payment.*unavailable|billing cycle|employee count/i.test(message);
+  return /invitation|employee.*already exists|already registered|subscription is inactive|invoice.*not found|account has been|account is already|email.*verified|plan selection|payment.*unavailable|billing cycle|employee count|permission|access|super admin|company admin|cannot assign|not authorized|role assignment/i.test(message);
 }
 
 export function userFacingError(error) {
@@ -40,6 +40,7 @@ export function userFacingError(error) {
   }
 
   if (status === 403) {
+    if (message && isBusinessSafe(message)) return message;
     return "Access Restricted: You don't have permission to access this page or perform this action. Please contact your HR/Admin if you need access.";
   }
 
@@ -54,6 +55,7 @@ export function userFacingError(error) {
 
   if (status === 400 || status === 422) {
     if (isBusinessSafe(message)) return message;
+    if (message) return message;
     return 'Please check the highlighted fields and try again.';
   }
 
