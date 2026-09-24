@@ -19,6 +19,19 @@ import { useToast } from '../components/ui/Toast';
 import PageHeader from '../components/ui/PageHeader';
 import ErrorBanner from '../components/ui/ErrorBanner';
 
+function roleOperationError(error) {
+  const status = error?.response?.status;
+  const backendMessage = error?.apiMessage;
+
+  if (status === 400) return backendMessage || 'The role request was invalid. Please review the selected roles and try again.';
+  if (status === 401) return error.userMessage || 'Your session has expired. Please sign in again to continue.';
+  if (status === 403) return "You don't have permission to manage this user's roles.";
+  if (status === 404) return 'User not found.';
+  if (status === 409) return backendMessage || 'The role update conflicts with the current user state.';
+  if (status >= 500) return 'Something went wrong while updating roles. Please try again.';
+  return backendMessage || error.userMessage || 'Could not update roles.';
+}
+
 export default function SettingsUsers() {
   const [tab, setTab] = useState('users');
 
@@ -170,7 +183,11 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
   const toast = useToast();
   const [selected, setSelected] = useState(() => new Set(user.roles));
 
-  const { data: roles, isLoading, isError } = useQuery({ queryKey: ['roles'], queryFn: rolesApi.list });
+  const { data: roles, isLoading, isError, error: rolesError } = useQuery({
+    queryKey: ['roles'],
+    queryFn: rolesApi.list,
+    retry: false,
+  });
 
   // No backend guard exists against this (UserService#assignRoles is an
   // unconditional overwrite) - without this check, removing SUPER_ADMIN
@@ -187,7 +204,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
       toast.success(`Updated roles for ${user.fullName}`);
       onClose();
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Could not update roles.'),
+    onError: (err) => toast.error(roleOperationError(err)),
   });
 
   function toggle(name) {
@@ -202,7 +219,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
   return (
     <Dialog open onClose={onClose} title="Edit Roles" description={user.fullName} size="sm">
       {isLoading && <SkeletonText lines={4} />}
-      {isError && <ErrorState description="Couldn't load roles." />}
+      {isError && <ErrorState description={roleOperationError(rolesError)} />}
       {!isLoading && !isError && (
         <>
           <div className="d-flex flex-column gap-2 mb-3">
@@ -240,7 +257,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
             <Button variant="secondary" type="button" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={() => save.mutate()} loading={save.isPending} disabled={wouldRemoveLastSuperAdmin}>
+            <Button onClick={() => save.mutate()} loading={save.isPending} disabled={save.isPending || wouldRemoveLastSuperAdmin}>
               Save Roles
             </Button>
           </div>

@@ -118,6 +118,7 @@ axiosClient.interceptors.response.use(
     error.userMessage = safeMessage;
     error.message = safeMessage;
     if (error.response?.data && typeof error.response.data === 'object') {
+      error.apiMessage = String(error.response.data.message || '').trim() || null;
       error.response.data = { ...error.response.data, message: safeMessage };
     }
 
