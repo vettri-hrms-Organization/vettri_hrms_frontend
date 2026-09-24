@@ -122,6 +122,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
         >
           <div className="hz-rail-brand" aria-label="Vettri HRMS">
             <Logo variant="mark" tone="onDark" size={28} />
+            <span>Vettri HRMS</span>
           </div>
           <button
             type="button"

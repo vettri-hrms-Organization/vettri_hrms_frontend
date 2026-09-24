@@ -38,9 +38,9 @@ export default function MainLayout() {
           {isDashboardContext && (
             <div className="hz-contextual-nav-wrap">
               <div className="hz-contextual-nav" aria-label="Dashboard context navigation">
-                <button type="button" aria-current={location.pathname === '/dashboard' ? 'page' : undefined} className={location.pathname === '/dashboard' ? 'active' : ''} onClick={() => navigate('/dashboard')}>Overview</button>
+                <button type="button" aria-current={location.pathname === '/dashboard' ? 'page' : undefined} className={location.pathname === '/dashboard' ? 'active' : ''} onClick={() => navigate('/dashboard')}>Dashboard</button>
                 <button type="button" aria-current={location.pathname === '/welcome' ? 'page' : undefined} className={location.pathname === '/welcome' ? 'active' : ''} onClick={() => navigate('/welcome')}>Welcome</button>
-                <button type="button" aria-current={location.pathname === '/support' ? 'page' : undefined} className={location.pathname === '/support' ? 'active' : ''} onClick={() => navigate('/support')}>Support info</button>
+                <button type="button" aria-current={location.pathname === '/support' ? 'page' : undefined} className={location.pathname === '/support' ? 'active' : ''} onClick={() => navigate('/support')}>Support Info</button>
               </div>
             </div>
           )}

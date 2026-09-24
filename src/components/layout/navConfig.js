@@ -72,7 +72,7 @@ export const NAV_SECTIONS = [
   },
   {
     id: 'employee-inbox',
-    label: 'Notifications',
+    label: 'Inbox',
     description: 'Updates and actions related to your account',
     role: 'EMPLOYEE',
     collapsible: true,

@@ -8031,6 +8031,26 @@ button:disabled,
 .hz-dashboard__section-heading h2 { font-size: 17px; }
 .hz-inline-summary__item { min-height: 56px; padding: 9px 12px; }
 .hz-inline-summary__item strong { font-size: 18px; }
+
+/* Keka-inspired labeled product navigation, with Vettri's permission-aware flyouts. */
+@media (min-width: 992px) {
+  .hz-app-shell > .hz-sidebar,
+  .hz-app-shell > .hz-icon-rail { width: 216px !important; min-width: 216px; }
+  .hz-app-shell > .hz-sidebar > div:first-child,
+  .hz-app-shell > .hz-icon-rail > div:first-child { height: 64px !important; padding: 0 16px !important; }
+  .hz-app-shell .hz-rail-brand { display: flex; align-items: center; gap: 10px; }
+  .hz-app-shell .hz-rail-brand > span { display: inline; color: #fff; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+  .hz-app-shell .hz-icon-rail__nav { align-items: stretch; gap: 3px; padding: 14px 10px; }
+  .hz-app-shell .hz-rail-item,
+  .hz-app-shell .hz-rail-settings { width: 100%; min-height: 42px; flex-direction: row; justify-content: flex-start; gap: 11px; padding: 9px 12px; border-radius: 8px; font-size: 13px; text-align: left; }
+  .hz-app-shell .hz-rail-item > span,
+  .hz-app-shell .hz-rail-settings > span { display: inline; overflow: hidden; flex: 1; text-overflow: ellipsis; white-space: nowrap; }
+  .hz-app-shell .hz-rail-item--active::before { left: -10px; top: 8px; bottom: 8px; }
+  .hz-app-shell .hz-nav-flyout { left: 216px; width: 240px; }
+  .hz-app-shell .hz-rail-utilities { padding: 10px; }
+  .hz-app-shell .hz-rail-profile { margin: 8px 0 0; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+  .hz-app-shell .hz-rail-profile__trigger { width: 100%; justify-content: flex-start; padding-left: 12px; }
+}
 .hz-filter-bar { min-height: 44px; padding: 7px 10px; }
 .hz-table thead th,
 .table thead th { height: 42px; padding-top: 9px; padding-bottom: 9px; font-size: 10px; }
