@@ -8,6 +8,7 @@ import { documentsApi, DOCUMENT_TYPE_LABEL } from '../api/endpoints/documents';
 import { employeesApi } from '../api/endpoints/employees';
 import { attendanceApi } from '../api/endpoints/attendance';
 import { employeeSalaryApi } from '../api/endpoints/salary';
+import { selfServiceApi } from '../api/endpoints/selfService';
 import Avatar from '../components/ui/Avatar';
 import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../hooks/useAuth';
@@ -20,27 +21,15 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const firstName = user?.fullName?.split(' ')[0];
 
-  // A plain EMPLOYEE (seeded with zero permissions - see DataSeeder) lands
-  // here right after login with none of EMPLOYEE_VIEW/LEAVE_VIEW/etc. Skip
-  // the org-wide queries entirely for that case rather than firing them
-  // and showing an error card as someone's first impression after signing
-  // in - see the lightweight branch in the return below.
   const canViewOrgSummary = hasPermission('EMPLOYEE_VIEW');
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: dashboardApi.summary,
     enabled: canViewOrgSummary,
   });
 
-  // Approval Queue needs LEAVE_VIEW, which not every role that can see the
-  // Dashboard has (Employee, for instance) - skip the request entirely
-  // rather than firing it and eating a 403 the person can't act on anyway.
   const canViewApprovals = hasPermission('LEAVE_VIEW') || hasPermission('LEAVE_APPROVE');
-  // LEAVE_MANAGE (HR/Admin) sees every pending request org-wide; a Manager
-  // has LEAVE_APPROVE without LEAVE_MANAGE and should only see their own
-  // direct reports' requests - Phase 1/2 flagged that this wasn't actually
-  // scoped yet. /api/dashboard/my-team is the fix for that path.
   const isTeamScoped = hasPermission('LEAVE_APPROVE') && !hasPermission('LEAVE_MANAGE');
 
   const {
@@ -70,9 +59,6 @@ export default function Dashboard() {
   const approvalQueueError = isTeamScoped ? myTeamError : pendingLeaveError;
   const refetchApprovalQueue = isTeamScoped ? refetchMyTeam : refetchPendingLeave;
 
-  // /api/documents/expiring-soon requires EMPLOYEE_MANAGE - skip the
-  // request entirely for roles that don't have it, same reasoning as the
-  // Approval Queue skipping its own query above.
   const canViewExpiringDocs = hasPermission('EMPLOYEE_MANAGE');
   const {
     data: expiringDocs,
@@ -85,9 +71,6 @@ export default function Dashboard() {
     enabled: canViewExpiringDocs,
   });
 
-  // Same source as the Employee dashboard's "Next holiday" widget - reused
-  // here so the admin view shows the org's actual next holiday instead of
-  // a permanent "no data" placeholder.
   const { data: holidaysData } = useQuery({
     queryKey: ['dashboard-holidays'],
     queryFn: holidaysApi.list,
@@ -137,55 +120,101 @@ export default function Dashboard() {
     .sort((first, second) => first.date.localeCompare(second.date))[0];
 
   const modules = [
-    { title: 'Workforce', description: 'Manage employees, profiles, and organization structure.', icon: Users, accent: 'blue', to: '/employees' },
-    { title: 'Attendance', description: 'Track attendance and view workforce records.', icon: Clock3, accent: 'green', to: '/attendance' },
-    { title: 'Leave', description: 'Manage leave and time-off workflows.', icon: CalendarOff, accent: 'orange', to: '/leave' },
-    { title: 'Payroll', description: 'Manage payroll and salary information.', icon: WalletCards, accent: 'blue', to: '/salary', permission: 'SALARY_VIEW' },
-    { title: 'Performance', description: 'Manage goals and performance reviews.', icon: TrendingUp, accent: 'violet', to: '/performance' },
-    { title: 'Reports', description: 'Access workforce and HR reports.', icon: FileText, accent: 'blue', to: '/reports', permission: 'REPORTS_VIEW' },
-    { title: 'Recruitment', description: 'Manage open roles and candidate pipelines.', icon: BriefcaseBusiness, accent: 'orange', to: '/recruitment', permission: 'RECRUITMENT_VIEW' },
-    { title: 'Settings', description: 'Configure your organization and workspace.', icon: Settings2, accent: 'green', to: '/settings/organization', permission: 'ORG_VIEW' },
+    { title: 'Workforce', description: 'Manage employees, profiles, and organization structure.', icon: Users, to: '/employees' },
+    { title: 'Attendance', description: 'Track attendance and workforce records.', icon: Clock3, to: '/attendance' },
+    { title: 'Leave', description: 'Manage leave and time-off workflows.', icon: CalendarOff, to: '/leave' },
+    { title: 'Payroll', description: 'Manage salary and payroll actions.', icon: WalletCards, to: '/salary', permission: 'SALARY_VIEW' },
+    { title: 'Performance', description: 'View goals and reviews.', icon: TrendingUp, to: '/performance' },
+    { title: 'Reports', description: 'Access workforce and HR reports.', icon: FileText, to: '/reports', permission: 'REPORTS_VIEW' },
+    { title: 'Recruitment', description: 'Manage hiring stages and candidate pipelines.', icon: BriefcaseBusiness, to: '/recruitment', permission: 'RECRUITMENT_VIEW' },
+    { title: 'Settings', description: 'Configure workspace preferences.', icon: Settings2, to: '/settings/organization', permission: 'ORG_VIEW' },
   ].filter((module) => !module.permission || hasPermission(module.permission));
 
   return (
     <div className="hz-dashboard hz-dashboard--admin">
-      <header className="hz-dashboard__welcome">
-        <div >
-          <p className="hz-dashboard__eyebrow text-black">{today}</p>
-          <h1 className="text-black">{greeting}, {firstName || 'Vikkash'}</h1>
-          <p className="text-muted">Here&apos;s what&apos;s happening across your organization today.</p>
+      <header className="hz-dashboard__hero">
+        <div className="hz-dashboard__hero-copy">
+          <p className="hz-dashboard__eyebrow">{today}</p>
+          <h1>{greeting}, {firstName || 'there'}</h1>
+          <p>Here&apos;s what&apos;s happening across your workspace today.</p>
         </div>
-        <div className="hz-dashboard__welcome-mark" aria-hidden="true"><Users size={21} /></div>
+        <div className="hz-dashboard__hero-meta">
+          <div className="hz-dashboard__hero-pill">
+            <span>Active workforce</span>
+            <strong>{data?.activeEmployees ?? '--'}</strong>
+          </div>
+          <div className="hz-dashboard__hero-badge">
+            <TrendingUp size={15} />
+            {pendingCount ? `${pendingCount} action${pendingCount === 1 ? '' : 's'} to triage` : 'Everything is current'}
+          </div>
+        </div>
       </header>
 
-      <section className="hz-dashboard__metrics" aria-labelledby="workforce-metrics-title">
-        <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">At a glance</span><h2 id="workforce-metrics-title">Workforce metrics</h2></div><Link to="/employees" className="hz-dashboard__text-link">View workforce <ArrowRight size={15} /></Link></div>
+      <section className="hz-dashboard__kpi-grid" aria-labelledby="workforce-metrics-title">
+        <div className="hz-dashboard__section-heading">
+          <div>
+            <span className="hz-dashboard__section-kicker">At a glance</span>
+            <h2 id="workforce-metrics-title">Workforce metrics</h2>
+          </div>
+          <Link to="/employees" className="hz-dashboard__text-link">View workforce <ArrowRight size={15} /></Link>
+        </div>
+
         <div className="hz-dashboard__metric-grid">
           {(data ? kpis : [
             { label: 'Total Employees', value: '--', icon: Users, accent: 'var(--hz-primary-600)' },
             { label: 'Active', value: '--', icon: UserCheck, accent: 'var(--hz-primary-600)' },
             { label: 'On Leave', value: '--', icon: CalendarOff, accent: 'var(--hz-primary-600)' },
             { label: 'Pending Actions', value: '--', icon: ClipboardCheck, accent: 'var(--hz-primary-600)' },
-          ]).map(({ label, value, icon: Icon, accent }) => <article className="hz-dashboard__metric" key={label}>
-            <div className="hz-dashboard__metric-icon" style={{ color: accent }}><Icon size={19} /></div>
-            <span>{label}</span><strong>{value}</strong>
-            <small>{label === 'Active' && data ? `${data.totalEmployees ? ((data.activeEmployees / data.totalEmployees) * 100).toFixed(1) : 0}% of workforce` : label === 'On Leave' ? (data?.onLeave ? 'Today' : 'No leave recorded today') : label === 'Pending Actions' ? (pendingCount ? 'Requires attention' : 'All caught up') : (data?.totalEmployees ? 'Current workforce' : 'No employees yet')}</small>
-          </article>)}
+          ]).map(({ label, value, icon: Icon, accent }) => (
+            <article className="hz-dashboard__metric" key={label}>
+              <div className="hz-dashboard__metric-icon" style={{ color: accent }}><Icon size={19} /></div>
+              <span>{label}</span>
+              <strong>{value}</strong>
+              <small>
+                {label === 'Active' && data
+                  ? `${data.totalEmployees ? ((data.activeEmployees / data.totalEmployees) * 100).toFixed(1) : 0}% of workforce`
+                  : label === 'On Leave'
+                    ? (data?.onLeave ? 'Today' : 'No leave recorded today')
+                    : label === 'Pending Actions'
+                      ? (pendingCount ? 'Requires attention' : 'All caught up')
+                      : (data?.totalEmployees ? 'Current workforce' : 'No employees yet')}
+              </small>
+            </article>
+          ))}
         </div>
       </section>
 
-      <div className="hz-dashboard__primary-grid">
+      <div className="hz-dashboard__overview-grid">
         <section className="hz-dashboard__surface" aria-labelledby="attention-title">
-          <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Action queue</span><h2 id="attention-title">Needs your attention</h2></div><span className="hz-dashboard__count-badge">{pendingCount} pending</span></div>
+          <div className="hz-dashboard__section-heading">
+            <div>
+              <span className="hz-dashboard__section-kicker">Action queue</span>
+              <h2 id="attention-title">Needs your attention</h2>
+            </div>
+            <span className="hz-dashboard__count-badge">{pendingCount} pending</span>
+          </div>
           <div className="hz-dashboard__attention-list">
-            {attentionItems.map(({ label, count, detail, icon: Icon, to }) => <Link to={to} className="hz-dashboard__attention-row" key={label}>
-              <span className="hz-dashboard__row-icon"><Icon size={18} /></span><span className="hz-dashboard__row-copy"><strong>{label}</strong><small>{detail}</small></span><span className={`hz-dashboard__row-count ${count === 0 ? 'is-clear' : ''}`}>{count === null ? 'View' : count}</span><ArrowRight size={16} />
-            </Link>)}
+            {attentionItems.map(({ label, count, detail, icon: Icon, to }) => (
+              <Link to={to} className="hz-dashboard__attention-row" key={label}>
+                <span className="hz-dashboard__row-icon"><Icon size={18} /></span>
+                <span className="hz-dashboard__row-copy">
+                  <strong>{label}</strong>
+                  <small>{detail}</small>
+                </span>
+                <span className={`hz-dashboard__row-count ${count === 0 ? 'is-clear' : ''}`}>{count === null ? 'View' : count}</span>
+                <ArrowRight size={16} />
+              </Link>
+            ))}
           </div>
         </section>
 
         <section className="hz-dashboard__surface" aria-labelledby="quick-actions-title">
-          <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Shortcuts</span><h2 id="quick-actions-title">Quick actions</h2></div></div>
+          <div className="hz-dashboard__section-heading">
+            <div>
+              <span className="hz-dashboard__section-kicker">Shortcuts</span>
+              <h2 id="quick-actions-title">Quick actions</h2>
+            </div>
+          </div>
           <div className="hz-dashboard__action-grid">
             <Link to="/employees"><Users size={18} /><span>Manage employees</span></Link>
             <Link to="/employees/import"><Inbox size={18} /><span>Import employees</span></Link>
@@ -196,17 +225,30 @@ export default function Dashboard() {
       </div>
 
       <section className="hz-dashboard__surface hz-dashboard__insights" aria-labelledby="insights-title">
-        <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Workforce intelligence</span><h2 id="insights-title">Workforce insights</h2></div><BarChart3 size={20} aria-hidden="true" /></div>
-        <div className="hz-dashboard__empty-inline"><BarChart3 size={22} /><div><strong>Insights will appear as your workforce grows</strong><small>Connect attendance, leave, and employee data to see trends here.</small></div></div>
+        <div className="hz-dashboard__section-heading">
+          <div>
+            <span className="hz-dashboard__section-kicker">Workforce intelligence</span>
+            <h2 id="insights-title">Workforce overview</h2>
+          </div>
+          <BarChart3 size={20} aria-hidden="true" />
+        </div>
+        <div className="hz-dashboard__empty-inline">
+          <BarChart3 size={22} />
+          <div>
+            <strong>{data ? `${data.activeEmployees} employees currently active` : 'Insights will appear as your workforce grows'}</strong>
+            <small>{data ? `On leave: ${data.onLeave}. Pending actions: ${pendingCount}.` : 'Connect attendance, leave, and employee data to see trends here.'}</small>
+          </div>
+        </div>
       </section>
 
-      <div className="hz-dashboard__secondary-grid">
-        <section className="hz-dashboard__surface hz-dashboard__updates" aria-labelledby="updates-title">
-          <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Company feed</span><h2 id="updates-title">Organization updates</h2></div></div>
-          <EmptyState icon={Sparkles} title="Company feed is coming soon" description="Posts, polls, and praise from your organization will appear here once this is turned on." />
-        </section>
+      <div className="hz-dashboard__three-col">
         <section className="hz-dashboard__surface" aria-labelledby="holiday-title">
-          <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Plan ahead</span><h2 id="holiday-title">Upcoming holiday</h2></div></div>
+          <div className="hz-dashboard__section-heading">
+            <div>
+              <span className="hz-dashboard__section-kicker">Plan ahead</span>
+              <h2 id="holiday-title">Upcoming holiday</h2>
+            </div>
+          </div>
           {nextOrgHoliday ? (
             <div className="hz-dashboard__holiday">
               <span>{new Date(`${nextOrgHoliday.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
@@ -215,24 +257,62 @@ export default function Dashboard() {
               <Link to="/reports">View holiday calendar <ArrowRight size={14} /></Link>
             </div>
           ) : (
-            <div className="hz-dashboard__holiday hz-dashboard__holiday--empty"><span>No upcoming holidays</span><strong>Holiday calendar</strong><small>Add company holidays to see them here.</small><Link to="/reports">View holiday calendar <ArrowRight size={14} /></Link></div>
+            <div className="hz-dashboard__holiday hz-dashboard__holiday--empty">
+              <span>No upcoming holidays</span>
+              <strong>Holiday calendar</strong>
+              <small>Add company holidays to see them here.</small>
+              <Link to="/reports">View calendar <ArrowRight size={14} /></Link>
+            </div>
           )}
+        </section>
+
+        <section className="hz-dashboard__surface" aria-labelledby="updates-title">
+          <div className="hz-dashboard__section-heading">
+            <div>
+              <span className="hz-dashboard__section-kicker">Company feed</span>
+              <h2 id="updates-title">Recent activity</h2>
+            </div>
+          </div>
+          <div className="hz-dashboard__mini-list">
+            <div className="hz-dashboard__mini-item">
+              <span className="hz-dashboard__mini-bullet" />
+              <div><strong>Leave review</strong><small>{pendingCount ? `${pendingCount} request${pendingCount === 1 ? '' : 's'} waiting for decision` : 'No pending leave approvals'}</small></div>
+            </div>
+            <div className="hz-dashboard__mini-item">
+              <span className="hz-dashboard__mini-bullet hz-dashboard__mini-bullet--muted" />
+              <div><strong>Documents</strong><small>{expiringCount ? `${expiringCount} items need attention` : 'No document expiries in the next 30 days'}</small></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="hz-dashboard__surface" aria-labelledby="support-strip-title">
+          <div className="hz-dashboard__section-heading">
+            <div>
+              <span className="hz-dashboard__section-kicker">Need a hand?</span>
+              <h2 id="support-strip-title">Support center</h2>
+            </div>
+          </div>
+          <div className="hz-dashboard__support-compact">
+            <p>Reach the right team for your Vettri HRMS questions.</p>
+            <Link to="/support" className="hz-dashboard__text-link">Open support info <ArrowRight size={15} /></Link>
+          </div>
         </section>
       </div>
 
       <section className="hz-dashboard__quicklinks" aria-labelledby="quicklinks-title">
-        <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Your workspace</span><h2 id="quicklinks-title">More in Vettri HRMS</h2></div></div>
-        <div className="hz-dashboard__quicklinks-row">
-          {modules.map(({ title, icon: Icon, to }) => <Link to={to} className="hz-dashboard__quicklink" key={title}>
-            <Icon size={16} /><span>{title}</span>
-          </Link>)}
+        <div className="hz-dashboard__section-heading">
+          <div>
+            <span className="hz-dashboard__section-kicker">Workspace</span>
+            <h2 id="quicklinks-title">More in Vettri HRMS</h2>
+          </div>
         </div>
-      </section>
-
-      <section className="hz-dashboard__support-strip" aria-labelledby="support-strip-title">
-        <div><span className="hz-dashboard__section-kicker">Need a hand?</span><h2 id="support-strip-title">Support information</h2><p>Reach the right team for your Vettri HRMS questions.</p></div>
-        <Link to="/support" className="hz-dashboard__text-link">View all support info <ArrowRight size={15} /></Link>
-        <LifeBuoy size={28} aria-hidden="true" />
+        <div className="hz-dashboard__quicklinks-row">
+          {modules.map(({ title, icon: Icon, to }) => (
+            <Link to={to} className="hz-dashboard__quicklink" key={title}>
+              <Icon size={16} /><span>{title}</span>
+            </Link>
+          ))}
+        </div>
       </section>
     </div>
   );
@@ -275,6 +355,11 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
     queryFn: holidaysApi.list,
     enabled: !!employeeId,
   });
+  const { data: notificationsData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: selfServiceApi.notifications,
+    enabled: !!employeeId,
+  });
 
   const attendance = Array.isArray(attendanceData) ? attendanceData : [];
   const leaveBalance = Array.isArray(leaveBalanceData) ? leaveBalanceData : [];
@@ -290,6 +375,10 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
     .sort((first, second) => first.date.localeCompare(second.date))[0];
   const pendingLeave = leaveRequests.filter((request) => request.status === 'PENDING').length;
   const totalRemainingLeave = leaveBalance.reduce((total, item) => total + (item.remainingDays || 0), 0);
+  const notifications = Array.isArray(notificationsData) ? notificationsData : [];
+  const unreadNotifications = notifications.filter((notification) => !(notification.read_at || notification.readAt)).length;
+  const currentTime = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  const nextLeaveBalance = leaveBalance[0];
 
   const services = [
     { title: 'My Profile', description: 'Keep your personal and employment details close at hand.', icon: UserCheck, to: '/my-profile' },
@@ -301,25 +390,54 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
 
   return (
     <div className="hz-dashboard hz-dashboard--employee">
-      <header className="hz-dashboard__welcome">
-        <div>
-          <p className="hz-dashboard__eyebrow">{today}</p>
-          <h1>{greeting}, {firstName || 'there'}</h1>
-          <p>Your employee workspace, shaped around the things you need most.</p>
+      <header className="hz-dashboard__hero">
+        <div className="hz-dashboard__hero-copy">
+          <p className="hz-dashboard__eyebrow">Home / Dashboard</p>
+          <h1>Welcome {firstName || 'there'}!</h1>
+          <p>Your daily workspace for attendance, time off, pay, and employee updates.</p>
         </div>
-        <div className="hz-dashboard__welcome-mark" aria-hidden="true"><UserCheck size={21} /></div>
+        <div className="hz-dashboard__hero-meta">
+          <div className="hz-dashboard__hero-pill"><span>Today</span><strong>{today}</strong></div>
+          <div className="hz-dashboard__hero-badge"><Clock3 size={15} /> {currentTime}</div>
+        </div>
       </header>
-      <section className="hz-dashboard__quick-actions" aria-labelledby="employee-quick-actions-title">
-        <div>
-          <span className="hz-dashboard__section-kicker">Shortcuts</span>
-          <h2 id="employee-quick-actions-title">Quick actions</h2>
+
+      <section className="hz-dashboard__surface hz-dashboard__quick-access" aria-labelledby="employee-quick-access-title">
+        <div className="hz-dashboard__section-heading">
+          <div><span className="hz-dashboard__section-kicker">Your day</span><h2 id="employee-quick-access-title">Quick Access</h2></div>
+          <span className="hz-dashboard__count-badge">{unreadNotifications} unread</span>
         </div>
-        <div className="hz-dashboard__quick-actions-list">
-          <Link to="/my-profile?tab=attendance"><Clock3 size={17} /> Check attendance</Link>
-          <Link to="/my-profile?tab=leave"><CalendarOff size={17} /> Apply leave</Link>
-          <Link to="/my-payslip"><WalletCards size={17} /> View payslip</Link>
-          <Link to="/my-profile?tab=documents"><FileText size={17} /> My documents</Link>
-          <Link to="/my-profile"><UserCheck size={17} /> My profile</Link>
+        <div className="hz-dashboard__quick-access-grid">
+          <Link to="/notifications" className="hz-dashboard__access-tile">
+            <span className="hz-dashboard__access-tile-icon"><Inbox size={20} /></span>
+            <span><strong>Inbox</strong><small>{unreadNotifications ? `${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}` : 'You have no pending notifications'}</small></span>
+            <ArrowRight size={16} />
+          </Link>
+          <Link to="/reports" className="hz-dashboard__access-tile">
+            <span className="hz-dashboard__access-tile-icon"><CalendarDays size={20} /></span>
+            <span><strong>Holidays</strong><small>{nextHoliday ? `${nextHoliday.name} · ${new Date(`${nextHoliday.date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'No upcoming holidays'}</small></span>
+            <ArrowRight size={16} />
+          </Link>
+          <Link to="/my-profile?tab=attendance" className="hz-dashboard__access-tile">
+            <span className="hz-dashboard__access-tile-icon"><Clock3 size={20} /></span>
+            <span><strong>Time Today</strong><small>{hasCheckedOut ? 'Attendance complete' : hasCheckedIn ? 'Currently checked in' : 'No attendance recorded yet'}</small></span>
+            <ArrowRight size={16} />
+          </Link>
+          <Link to="/my-profile?tab=leave" className="hz-dashboard__access-tile">
+            <span className="hz-dashboard__access-tile-icon"><CalendarOff size={20} /></span>
+            <span><strong>Leave Balances</strong><small>{nextLeaveBalance ? `${nextLeaveBalance.remainingDays || 0} days remaining` : `${totalRemainingLeave} days remaining`}</small></span>
+            <ArrowRight size={16} />
+          </Link>
+          <Link to="/my-profile" className="hz-dashboard__access-tile">
+            <span className="hz-dashboard__access-tile-icon"><UserCheck size={20} /></span>
+            <span><strong>My Profile</strong><small>{employee?.designationTitle || 'View your employee record'}</small></span>
+            <ArrowRight size={16} />
+          </Link>
+          <Link to="/my-payslip" className="hz-dashboard__access-tile">
+            <span className="hz-dashboard__access-tile-icon"><WalletCards size={20} /></span>
+            <span><strong>My Pay</strong><small>{salary?.currentStructure ? 'Salary details available' : 'Salary details not configured'}</small></span>
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
       <section className="hz-dashboard__employee-status-grid" aria-label="Employee overview">

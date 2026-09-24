@@ -61,6 +61,8 @@ let sessionExpirationHandled = false;
 
 export function resetSessionExpirationHandling() {
   sessionExpirationHandled = false;
+  pendingQueue = [];
+  isRefreshing = false;
 }
 
 function clearAuthenticationState() {
@@ -68,19 +70,22 @@ function clearAuthenticationState() {
   tenantStorage.clear();
 }
 
-function handleSessionExpiration(error) {
+function handleSessionExpiration(error, options = {}) {
+  const { suppressToast = false } = options;
+
   if (isPublicAuthRoute()) {
     clearAuthenticationState();
     resetSessionExpirationHandling();
     return;
   }
+
   if (sessionExpirationHandled) return;
 
   sessionExpirationHandled = true;
   setConnectionState(ConnectionState.AUTHENTICATION_REQUIRED);
   clearAuthenticationState();
 
-  if (typeof window !== 'undefined') {
+  if (!suppressToast && typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('vettri:session-expired', {
       detail: { message: userFacingError(error) },
     }));
@@ -119,7 +124,7 @@ axiosClient.interceptors.response.use(
     // A stale token can be present while a public auth page is bootstrapping.
     // Clear it, but keep the page clean and let the page's own error handling
     // decide what to show for the auth request.
-    if (status === 401 && isPublicRoute) {
+    if (status === 401 && (isPublicRoute || isPublicAuthRequest)) {
       clearAuthenticationState();
       resetSessionExpirationHandling();
       return Promise.reject(error);
@@ -155,7 +160,7 @@ axiosClient.interceptors.response.use(
         return axiosClient(originalRequest);
       } catch (refreshError) {
         resolveQueue(refreshError, null);
-        handleSessionExpiration(refreshError);
+        handleSessionExpiration(refreshError, { suppressToast: isPublicAuthRoute() || isPublicAuthEndpoint(requestPath) });
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
