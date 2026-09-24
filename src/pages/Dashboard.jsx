@@ -390,56 +390,55 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
 
   return (
     <div className="hz-dashboard hz-dashboard--employee">
-      <header className="hz-dashboard__hero">
-        <div className="hz-dashboard__hero-copy">
-          <p className="hz-dashboard__eyebrow">Home / Dashboard</p>
-          <h1>Welcome {firstName || 'there'}!</h1>
-          <p>Your daily workspace for attendance, time off, pay, and employee updates.</p>
-        </div>
-        <div className="hz-dashboard__hero-meta">
-          <div className="hz-dashboard__hero-pill"><span>Today</span><strong>{today}</strong></div>
-          <div className="hz-dashboard__hero-badge"><Clock3 size={15} /> {currentTime}</div>
-        </div>
+      <header className="hz-dashboard__keka-banner">
+        <h1>Welcome {firstName || 'there'}!</h1>
       </header>
 
-      <section className="hz-dashboard__surface hz-dashboard__quick-access" aria-labelledby="employee-quick-access-title">
-        <div className="hz-dashboard__section-heading">
-          <div><span className="hz-dashboard__section-kicker">Your day</span><h2 id="employee-quick-access-title">Quick Access</h2></div>
-          <span className="hz-dashboard__count-badge">{unreadNotifications} unread</span>
-        </div>
-        <div className="hz-dashboard__quick-access-grid">
-          <Link to="/notifications" className="hz-dashboard__access-tile">
-            <span className="hz-dashboard__access-tile-icon"><Inbox size={20} /></span>
-            <span><strong>Inbox</strong><small>{unreadNotifications ? `${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}` : 'You have no pending notifications'}</small></span>
-            <ArrowRight size={16} />
-          </Link>
-          <Link to="/reports" className="hz-dashboard__access-tile">
-            <span className="hz-dashboard__access-tile-icon"><CalendarDays size={20} /></span>
-            <span><strong>Holidays</strong><small>{nextHoliday ? `${nextHoliday.name} · ${new Date(`${nextHoliday.date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'No upcoming holidays'}</small></span>
-            <ArrowRight size={16} />
-          </Link>
-          <Link to="/my-profile?tab=attendance" className="hz-dashboard__access-tile">
-            <span className="hz-dashboard__access-tile-icon"><Clock3 size={20} /></span>
-            <span><strong>Time Today</strong><small>{hasCheckedOut ? 'Attendance complete' : hasCheckedIn ? 'Currently checked in' : 'No attendance recorded yet'}</small></span>
-            <ArrowRight size={16} />
-          </Link>
-          <Link to="/my-profile?tab=leave" className="hz-dashboard__access-tile">
-            <span className="hz-dashboard__access-tile-icon"><CalendarOff size={20} /></span>
-            <span><strong>Leave Balances</strong><small>{nextLeaveBalance ? `${nextLeaveBalance.remainingDays || 0} days remaining` : `${totalRemainingLeave} days remaining`}</small></span>
-            <ArrowRight size={16} />
-          </Link>
-          <Link to="/my-profile" className="hz-dashboard__access-tile">
-            <span className="hz-dashboard__access-tile-icon"><UserCheck size={20} /></span>
-            <span><strong>My Profile</strong><small>{employee?.designationTitle || 'View your employee record'}</small></span>
-            <ArrowRight size={16} />
-          </Link>
-          <Link to="/my-payslip" className="hz-dashboard__access-tile">
-            <span className="hz-dashboard__access-tile-icon"><WalletCards size={20} /></span>
-            <span><strong>My Pay</strong><small>{salary?.currentStructure ? 'Salary details available' : 'Salary details not configured'}</small></span>
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
+      <div className="hz-dashboard__keka-home-grid">
+        <section className="hz-dashboard__keka-quick-access" aria-labelledby="employee-quick-access-title">
+          <div className="hz-dashboard__section-heading">
+            <div><h2 id="employee-quick-access-title">Quick Access</h2></div>
+          </div>
+          <div className="hz-dashboard__keka-access-list">
+            <Link to="/notifications" className="hz-dashboard__access-tile hz-dashboard__access-tile--stacked">
+              <span className="hz-dashboard__access-tile-icon"><Inbox size={20} /></span>
+              <span><strong>Inbox</strong><small>{unreadNotifications ? `${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}` : 'Good job! You have no pending actions'}</small></span>
+              <ArrowRight size={16} />
+            </Link>
+            <Link to="/reports" className="hz-dashboard__access-tile hz-dashboard__access-tile--stacked">
+              <span className="hz-dashboard__access-tile-icon"><CalendarDays size={20} /></span>
+              <span><strong>Holidays</strong><small>{nextHoliday ? `${nextHoliday.name} · ${new Date(`${nextHoliday.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}` : 'No upcoming holidays'}</small></span>
+              <ArrowRight size={16} />
+            </Link>
+            <Link to="/my-profile?tab=attendance" className="hz-dashboard__access-tile hz-dashboard__access-tile--stacked">
+              <span className="hz-dashboard__access-tile-icon"><Clock3 size={20} /></span>
+              <span><strong>Time Today</strong><small>{currentTime} · {hasCheckedOut ? 'Attendance complete' : hasCheckedIn ? 'Currently checked in' : 'No attendance recorded yet'}</small></span>
+              <ArrowRight size={16} />
+            </Link>
+            <Link to="/my-profile?tab=leave" className="hz-dashboard__access-tile hz-dashboard__access-tile--stacked">
+              <span className="hz-dashboard__access-tile-icon"><CalendarOff size={20} /></span>
+              <span><strong>Leave Balances</strong><small>{nextLeaveBalance ? `${nextLeaveBalance.remainingDays || 0} days remaining` : `${totalRemainingLeave} days remaining`}</small></span>
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </section>
+
+        <section className="hz-dashboard__keka-feed hz-dashboard__surface" aria-labelledby="employee-feed-title">
+          <div className="hz-dashboard__feed-tabs" role="tablist" aria-label="Company feed">
+            <span className="is-active">Company updates</span>
+            <span>My activity</span>
+          </div>
+          <div className="hz-dashboard__feed-composer">
+            <p id="employee-feed-title">Stay connected with your workplace</p>
+            <small>Vettri announcements and updates will appear here when your organization publishes them.</small>
+          </div>
+          <div className="hz-dashboard__feed-empty">
+            <Inbox size={22} />
+            <strong>No announcements</strong>
+          </div>
+          <Link to="/notifications" className="hz-dashboard__text-link">View inbox <ArrowRight size={15} /></Link>
+        </section>
+      </div>
       <section className="hz-dashboard__employee-status-grid" aria-label="Employee overview">
         <EmployeeMetric icon={Clock3} label="Today" value={attendanceLoading ? '...' : hasCheckedOut ? 'Checked out' : hasCheckedIn ? 'Checked in' : 'Not recorded'} detail={hasCheckedIn ? (hasCheckedOut ? 'Attendance complete' : 'Have a productive day') : 'Your attendance status'} tone="blue" />
         <EmployeeMetric icon={CalendarOff} label="Leave balance" value={leaveLoading ? '...' : `${totalRemainingLeave} days`} detail={`${year} remaining across leave types`} tone="green" />
