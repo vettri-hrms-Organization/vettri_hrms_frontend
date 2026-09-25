@@ -11170,3 +11170,38 @@ body:has(.vettri-app-shell) #root {
 @media (prefers-reduced-motion: reduce) {
   .vettri-sidebar-shell, .vettri-nav-item, .vettri-sidebar-search, .vettri-quick-add { transition-duration: .001ms !important; }
 }
+
+
+/* ================================================================
+   VETTRI SHELL CLEANUP — one hierarchy, one scroll region
+   ================================================================ */
+.vettri-app-shell .vettri-app-shell__content { min-width: 0; min-height: 100vh; }
+.vettri-app-shell .hz-contextual-nav-wrap { display: none !important; }
+
+.vettri-sidebar { overflow: hidden; }
+.vettri-sidebar-brand,
+.vettri-workspace-switcher,
+.vettri-sidebar-search-wrap,
+.vettri-sidebar-footer { flex: 0 0 auto; }
+.vettri-sidebar-nav { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(23,32,51,.14) transparent; }
+.vettri-sidebar-nav::-webkit-scrollbar { width: 4px; }
+.vettri-sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.vettri-sidebar-nav::-webkit-scrollbar-thumb { background: rgba(23,32,51,.13); border-radius: 999px; }
+.vettri-sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,.28); }
+
+/* More of the reference navigation should fit in the panel before scrolling. */
+.vettri-nav-group { margin-bottom: 9px; }
+.vettri-nav-group-label { padding: 6px 10px 4px; font-size: 9.5px; letter-spacing: .06em; }
+.vettri-nav-item { min-height: 38px; padding: 5px 8px; gap: 9px; border-radius: 9px; font-size: 12.5px; }
+.vettri-nav-icon { width: 27px; height: 27px; flex-basis: 27px; border-radius: 8px; }
+.vettri-quick-add { min-height: 36px; margin-top: 4px; }
+
+@media (max-height: 820px) and (min-width: 992px) {
+  .vettri-sidebar-brand { min-height: 48px; padding-top: 9px; padding-bottom: 4px; }
+  .vettri-workspace-switcher { margin-top: 7px; margin-bottom: 8px; }
+  .vettri-sidebar-search-wrap { padding-bottom: 9px; }
+  .vettri-nav-group { margin-bottom: 6px; }
+  .vettri-nav-group-label { padding-top: 4px; padding-bottom: 3px; }
+  .vettri-nav-item { min-height: 35px; padding-top: 4px; padding-bottom: 4px; }
+  .vettri-nav-icon { width: 25px; height: 25px; flex-basis: 25px; }
+}

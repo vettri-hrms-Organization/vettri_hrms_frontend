@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -12,11 +12,8 @@ import { NAV_SECTIONS } from './navConfig';
 export default function MainLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, selectedCompanyId, hasRole, hasPermission } = useAuth();
   const needsWorkspace = user?.roles?.includes('SUPER_ADMIN') && !selectedCompanyId && location.pathname !== '/settings/platform';
-  const isDashboardContext = ['/dashboard', '/welcome', '/support'].includes(location.pathname);
-  const isLeaveContext = location.pathname === '/leave' || (location.pathname === '/my-profile' && searchTab(location.search) === 'leave');
 
   // Below the lg breakpoint the sidebar is an overlay drawer, not part of
   // the flex layout (see hz-sidebar-mobile-* in components.css) - close it
@@ -33,27 +30,8 @@ export default function MainLayout() {
           mobileOpen={mobileNavOpen}
           onCloseMobile={() => setMobileNavOpen(false)}
         />
-        <div className="hz-app-shell__content d-flex flex-column flex-grow-1">
+        <div className="hz-app-shell__content vettri-app-shell__content d-flex flex-column flex-grow-1">
           <Topbar onOpenMobileNav={() => setMobileNavOpen(true)} />
-          {isDashboardContext && (
-            <div className="hz-contextual-nav-wrap">
-              <div className="hz-contextual-nav" aria-label="Dashboard context navigation">
-                <button type="button" aria-current={location.pathname === '/dashboard' ? 'page' : undefined} className={location.pathname === '/dashboard' ? 'active' : ''} onClick={() => navigate('/dashboard')}>Dashboard</button>
-                <button type="button" aria-current={location.pathname === '/welcome' ? 'page' : undefined} className={location.pathname === '/welcome' ? 'active' : ''} onClick={() => navigate('/welcome')}>Welcome</button>
-                <button type="button" aria-current={location.pathname === '/support' ? 'page' : undefined} className={location.pathname === '/support' ? 'active' : ''} onClick={() => navigate('/support')}>Support Info</button>
-              </div>
-            </div>
-          )}
-          {isLeaveContext && (
-            <div className="hz-contextual-nav-wrap">
-              <div className="hz-contextual-nav" aria-label="Workforce context navigation">
-                <button type="button" onClick={() => navigate(user?.employeeId ? '/my-attendance' : '/attendance')}>Attendance</button>
-                <button type="button" className="active" aria-current="page" onClick={() => navigate('/leave')}>Leave</button>
-                {hasPermission('PERFORMANCE_VIEW') && <button type="button" onClick={() => navigate('/performance')}>Performance</button>}
-                <button type="button" onClick={() => navigate('/my-payslip')}>Pay & documents</button>
-              </div>
-            </div>
-          )}
           <main className="hz-main-content hz-page-transition flex-grow-1">
             <BreadcrumbProvider>
               <Breadcrumbs />
@@ -86,10 +64,6 @@ function SettingsWorkspace({ hasPermission, hasRole }) {
 
 function isSettingsRoute(pathname) {
   return pathname.startsWith('/settings/');
-}
-
-function searchTab(search) {
-  return new URLSearchParams(search).get('tab');
 }
 
 function WorkspaceRequired() {

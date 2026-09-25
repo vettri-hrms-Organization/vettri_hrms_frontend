@@ -72,7 +72,7 @@ export const NAV_SECTIONS = [
   },
   {
     id: 'employee-inbox',
-    label: 'Inbox',
+    label: 'Notifications',
     description: 'Updates and actions related to your account',
     role: 'EMPLOYEE',
     collapsible: true,
@@ -194,15 +194,6 @@ export const NAV_SECTIONS = [
     ],
   },
   {
-    id: 'billing',
-    label: 'Billing',
-    description: 'Subscription payments and invoices',
-    roles: ['COMPANY_ADMIN', 'HR_ADMIN', 'SUPER_ADMIN'],
-    collapsible: true,
-    badge: null,
-    items: [{ to: '/billing/invoices', icon: Receipt, label: 'Invoices' }],
-  },
-  {
     id: 'insights',
     label: 'Insights',
     description: 'Analytics and reporting',
@@ -246,23 +237,93 @@ export function findNavItemByPath(path) {
  *  check can actually reach. An item/section with no `permission` tag is
  *  assumed open to any authenticated user (matches today's backend reality
  *  for modules that haven't had permission codes carved out yet). */
-export function visibleNavSections(hasPermission, hasRole = () => false, hasEmployeeProfile = false) {
-  return NAV_SECTIONS.map((section) => {
+export function visibleNavSections(hasPermission, hasRole = () => false) {
+  const filtered = NAV_SECTIONS.map((section) => {
     const items = section.items.filter((item) => {
       const required = item.permission || section.permission;
-      return (!required || hasPermission(required)) && roleVisible(item.role, hasRole, hasEmployeeProfile);
+      return (!required || hasPermission(required)) && (!item.role || hasRole(item.role));
     });
     return { ...section, items };
-  }).filter((section) => section.items.length > 0 && sectionRoleVisible(section, hasRole, hasEmployeeProfile));
-}
+  }).filter((section) => section.items.length > 0 && (!section.role || hasRole(section.role)));
 
-function roleVisible(role, hasRole, hasEmployeeProfile) {
-  if (!role) return true;
-  if (role === 'EMPLOYEE') return hasEmployeeProfile;
-  return hasRole(role);
-}
+  const hasEmployeeHome = filtered.some((section) => section.id === 'employee-home');
+  const employeeSelfIds = new Set(['employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps']);
+  const employeeSelfItems = [];
+  let people = null;
+  let timeAndLeave = null;
 
-function sectionRoleVisible(section, hasRole, hasEmployeeProfile) {
-  if (Array.isArray(section.roles)) return section.roles.some((role) => roleVisible(role, hasRole, hasEmployeeProfile));
-  return roleVisible(section.role, hasRole, hasEmployeeProfile);
+  for (const section of filtered) {
+    // Notifications already have a dedicated topbar bell and notification center.
+    if (section.id === 'employee-inbox') continue;
+    // Home and Dashboard are the same destination; keep one sidebar entry.
+    if (section.id === 'root' && hasEmployeeHome) continue;
+
+    if (employeeSelfIds.has(section.id)) {
+      employeeSelfItems.push(...section.items);
+      continue;
+    }
+
+    if (section.id === 'organization' || section.id === 'talent') {
+      if (!people) {
+        people = {
+          id: 'people',
+          label: 'People',
+          description: 'Employees, recruitment and talent workflows',
+          collapsible: true,
+          badge: null,
+          items: [],
+        };
+      }
+      people.items.push(...section.items);
+      continue;
+    }
+
+    if (section.id === 'attendance') {
+      timeAndLeave = {
+        id: 'time-leave',
+        label: 'Time & Leave',
+        description: 'Attendance, devices and leave management',
+        collapsible: true,
+        badge: null,
+        items: [...section.items],
+      };
+      continue;
+    }
+  }
+
+  const result = [];
+  const seenDestinations = new Set();
+  const addSection = (section) => {
+    if (!section?.items?.length) return;
+    const items = section.items.filter((item) => {
+      const key = item.to;
+      if (seenDestinations.has(key)) return false;
+      seenDestinations.add(key);
+      return true;
+    });
+    if (items.length) result.push({ ...section, items });
+  };
+
+  addSection(filtered.find((section) => section.id === 'employee-home'));
+
+  if (employeeSelfItems.length) {
+    addSection({
+      id: 'my-workspace',
+      label: 'My Workspace',
+      description: 'Your profile, time, pay and employee services',
+      collapsible: true,
+      badge: null,
+      items: employeeSelfItems,
+    });
+  }
+
+  addSection(people);
+  addSection(timeAndLeave);
+
+  for (const section of filtered) {
+    if (['employee-home', 'employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps', 'employee-inbox', 'root', 'organization', 'talent', 'attendance'].includes(section.id)) continue;
+    addSection(section);
+  }
+
+  return result;
 }
