@@ -7,14 +7,14 @@
 .vettri-topbar {
   position: relative !important;
   top: auto !important;
-  margin: 0 0 12px !important;
+  margin: 0 !important;
   z-index: 20 !important;
 }
 
 /* The authenticated content should use the available workspace instead of
    imposing a narrow 1320px ceiling on wide monitors. */
 .hz-main-content {
-  padding: 0 10px 32px !important;
+  padding: 0 8px 28px !important;
   min-width: 0 !important;
 }
 
@@ -27,15 +27,15 @@
 .hz-dashboard--admin {
   width: 100%;
   max-width: none;
-  gap: 18px !important;
-  padding: 2px 4px 28px;
+  gap: 16px !important;
+  padding: 0 2px 28px;
 }
 
 /* A compact hero establishes hierarchy without wasting the first viewport. */
 .hz-dashboard__hero {
-  min-height: 126px;
+  min-height: 150px;
   margin: 0 !important;
-  padding: 22px 24px !important;
+  padding: 20px 24px !important;
   border-radius: 16px !important;
   border: 1px solid #DDE7F5 !important;
   border-left: 3px solid #2563EB !important;
@@ -47,7 +47,7 @@
 
 .hz-dashboard__hero-copy h1 {
   color: #17356F !important;
-  font-size: clamp(27px, 2.35vw, 34px) !important;
+  font-size: clamp(28px, 2.15vw, 34px) !important;
   line-height: 1.05 !important;
 }
 
@@ -58,18 +58,18 @@
 }
 
 .hz-dashboard__hero-meta {
-  gap: 8px !important;
+  gap: 10px !important;
 }
 
 .hz-dashboard__hero-pill {
-  min-width: 144px !important;
-  padding: 9px 12px !important;
+  min-width: 136px !important;
+  padding: 8px 12px !important;
   border-radius: 11px !important;
   background: rgba(255,255,255,.82) !important;
 }
 
 .hz-dashboard__hero-pill strong {
-  font-size: 21px !important;
+  font-size: 22px !important;
 }
 
 /* Metrics should follow immediately; don't create a second large visual gap. */
@@ -78,7 +78,7 @@
 }
 
 .hz-dashboard__section-heading {
-  margin-bottom: 9px !important;
+  margin-bottom: 8px !important;
 }
 
 .hz-dashboard__section-heading h2 {
@@ -97,8 +97,8 @@
 }
 
 .hz-dashboard__metric {
-  min-height: 126px !important;
-  padding: 18px 20px !important;
+  min-height: 122px !important;
+  padding: 16px 20px !important;
   border: 0 !important;
   border-right: 1px solid #E6EBF2 !important;
   border-radius: 0 !important;
@@ -108,7 +108,7 @@
 
 .hz-dashboard__metric:last-child { border-right: 0 !important; }
 .hz-dashboard__metric:hover { transform: none !important; background: #FCFDFF !important; }
-.hz-dashboard__metric-icon { margin-bottom: 12px !important; }
+.hz-dashboard__metric-icon { margin-bottom: 10px !important; }
 .hz-dashboard__metric > span { font-size: 12.5px !important; }
 .hz-dashboard__metric strong { font-size: 28px !important; }
 .hz-dashboard__metric small { font-size: 10.5px !important; }
@@ -118,7 +118,7 @@
 .hz-dashboard__overview-grid {
   width: 100%;
   grid-template-columns: minmax(0, 1.55fr) minmax(320px, .75fr) !important;
-  gap: 18px !important;
+  gap: 16px !important;
   margin: 0 !important;
 }
 
@@ -135,15 +135,15 @@
 
 .hz-dashboard__overview-grid .hz-dashboard__surface:first-child,
 .hz-dashboard__overview-grid .hz-dashboard__surface:last-child {
-  min-height: 250px;
+  min-height: 226px;
 }
 
 .hz-dashboard__action-grid a {
-  min-height: 49px !important;
+  min-height: 46px !important;
 }
 
 .hz-dashboard__action-grid a:hover {
-  padding-left: 5px !important;
+  padding-left: 4px !important;
   background: #F7FAFF !important;
 }
 
@@ -156,7 +156,7 @@
 
 .hz-dashboard__three-col {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 18px !important;
+  gap: 16px !important;
   margin: 0 !important;
 }
 
@@ -172,8 +172,8 @@
 }
 
 @media (min-width: 1600px) {
-  .hz-dashboard--admin { padding-left: 6px; padding-right: 6px; }
-  .hz-dashboard__metric { min-height: 132px !important; }
+  .hz-dashboard--admin { padding-left: 4px; padding-right: 4px; }
+  .hz-dashboard__metric { min-height: 126px !important; }
 }
 
 @media (max-width: 1100px) {
@@ -194,4 +194,50 @@
   .hz-dashboard__hero { padding: 18px !important; }
   .hz-dashboard__hero-meta { width: 100%; flex-direction: row; align-items: center !important; flex-wrap: wrap; }
   .hz-dashboard__hero-pill { min-width: 132px !important; }
+}
+
+
+/* Final composition guardrails — keep the first viewport intentional. */
+.hz-main-content {
+  box-sizing: border-box;
+}
+
+.hz-dashboard--admin > * {
+  min-width: 0;
+}
+
+.hz-dashboard__hero-copy {
+  min-width: 0;
+}
+
+.hz-dashboard__hero-copy h1,
+.hz-dashboard__hero-copy p {
+  margin-left: 0 !important;
+}
+
+.hz-dashboard__hero-meta {
+  align-self: center;
+}
+
+@media (min-width: 1200px) {
+  .hz-dashboard--admin {
+    gap: 16px !important;
+  }
+}
+
+@media (max-height: 800px) and (min-width: 992px) {
+  .hz-dashboard__hero {
+    min-height: 136px;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+  }
+  .hz-dashboard__metric {
+    min-height: 112px !important;
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+  }
+  .hz-dashboard__overview-grid .hz-dashboard__surface:first-child,
+  .hz-dashboard__overview-grid .hz-dashboard__surface:last-child {
+    min-height: 210px;
+  }
 }
