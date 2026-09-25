@@ -344,6 +344,9 @@ body {
 
 /* ============================== SIDEBAR ============================= */
 .vettri-sidebar-shell {
+  position: sticky;
+  top: 12px;
+  align-self: flex-start;
   flex: 0 0 var(--vettri-sidebar-width) !important;
   width: var(--vettri-sidebar-width) !important;
   min-width: var(--vettri-sidebar-width) !important;
