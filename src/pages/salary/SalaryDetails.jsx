@@ -30,7 +30,7 @@ export default function SalaryDetails() {
   const employeeId = routeEmployeeId || user?.employeeId;
   const canManage = hasPermission('SALARY_MANAGE');
   const canViewList = hasPermission('SALARY_VIEW');
-  const isEmployee = hasRole('EMPLOYEE');
+  const isEmployee = !!user?.employeeId;
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({

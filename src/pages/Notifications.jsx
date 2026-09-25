@@ -9,9 +9,9 @@ import { selfServiceApi } from '../api/endpoints/selfService';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Notifications() {
-  const { user, hasRole } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isEmployeeUser = hasRole('EMPLOYEE');
+  const isEmployeeUser = !!user?.employeeId;
   const { data: notifications, isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: selfServiceApi.notifications,

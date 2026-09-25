@@ -246,28 +246,23 @@ export function findNavItemByPath(path) {
  *  check can actually reach. An item/section with no `permission` tag is
  *  assumed open to any authenticated user (matches today's backend reality
  *  for modules that haven't had permission codes carved out yet). */
-export function visibleNavSections(hasPermission, hasRole = () => false) {
-  if (hasRole('EMPLOYEE') && !hasPermission('EMPLOYEE_VIEW') && !hasPermission('LEAVE_VIEW')) {
-    return NAV_SECTIONS.map((section) => {
-      if (section.role !== 'EMPLOYEE') return null;
-      const sectionPermission = section.permission;
-      const items = section.items.filter((item) => !item.permission || hasPermission(item.permission));
-      return (!sectionPermission || hasPermission(sectionPermission)) && sectionRoleVisible(section, hasRole) && items.length > 0
-        ? { ...section, items }
-        : null;
-    }).filter(Boolean);
-  }
-
+export function visibleNavSections(hasPermission, hasRole = () => false, hasEmployeeProfile = false) {
   return NAV_SECTIONS.map((section) => {
     const items = section.items.filter((item) => {
       const required = item.permission || section.permission;
-      return (!required || hasPermission(required)) && (!item.role || hasRole(item.role));
+      return (!required || hasPermission(required)) && roleVisible(item.role, hasRole, hasEmployeeProfile);
     });
     return { ...section, items };
-  }).filter((section) => section.items.length > 0 && sectionRoleVisible(section, hasRole));
+  }).filter((section) => section.items.length > 0 && sectionRoleVisible(section, hasRole, hasEmployeeProfile));
 }
 
-function sectionRoleVisible(section, hasRole) {
-  if (Array.isArray(section.roles)) return section.roles.some((role) => hasRole(role));
-  return !section.role || hasRole(section.role);
+function roleVisible(role, hasRole, hasEmployeeProfile) {
+  if (!role) return true;
+  if (role === 'EMPLOYEE') return hasEmployeeProfile;
+  return hasRole(role);
+}
+
+function sectionRoleVisible(section, hasRole, hasEmployeeProfile) {
+  if (Array.isArray(section.roles)) return section.roles.some((role) => roleVisible(role, hasRole, hasEmployeeProfile));
+  return roleVisible(section.role, hasRole, hasEmployeeProfile);
 }

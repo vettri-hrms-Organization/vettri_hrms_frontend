@@ -31,7 +31,7 @@ export default function Topbar({ onOpenMobileNav }) {
     });
     return item?.label || 'Workspace';
   }, [location.pathname]);
-  const isEmployeeUser = hasRole('EMPLOYEE');
+  const isEmployeeUser = !!user?.employeeId;
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
     queryFn: selfServiceApi.notifications,

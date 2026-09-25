@@ -23,11 +23,11 @@ export default function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (hasRole('EMPLOYEE') && !hasPermission('ATTENDANCE_VIEW') && location.pathname === '/attendance') {
+  if (user?.employeeId && !hasPermission('ATTENDANCE_VIEW') && location.pathname === '/attendance') {
     return <Navigate to="/my-profile?tab=attendance" replace />;
   }
 
-  if (hasRole('EMPLOYEE') && !hasPermission('LEAVE_VIEW') && !hasPermission('LEAVE_APPROVE') && location.pathname === '/leave') {
+  if (user?.employeeId && !hasPermission('LEAVE_VIEW') && !hasPermission('LEAVE_APPROVE') && location.pathname === '/leave') {
     return <Navigate to="/my-profile?tab=leave" replace />;
   }
 
@@ -47,7 +47,8 @@ export default function ProtectedRoute({ allowedRoles }) {
   const requiredPermission = matchedItem?.permission;
   const requiredRole = matchedItem?.role;
 
-  if (requiredRole && !hasAnyRole([requiredRole])) {
+  const hasRequiredEmployeeProfile = requiredRole === 'EMPLOYEE' && !!user?.employeeId;
+  if (requiredRole && !hasRequiredEmployeeProfile && !hasAnyRole([requiredRole])) {
     return <AccessDenied />;
   }
 

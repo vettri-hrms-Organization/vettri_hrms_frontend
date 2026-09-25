@@ -47,7 +47,7 @@ export default function MainLayout() {
           {isLeaveContext && (
             <div className="hz-contextual-nav-wrap">
               <div className="hz-contextual-nav" aria-label="Workforce context navigation">
-                <button type="button" onClick={() => navigate(hasRole('EMPLOYEE') ? '/my-attendance' : '/attendance')}>Attendance</button>
+                <button type="button" onClick={() => navigate(user?.employeeId ? '/my-attendance' : '/attendance')}>Attendance</button>
                 <button type="button" className="active" aria-current="page" onClick={() => navigate('/leave')}>Leave</button>
                 {hasPermission('PERFORMANCE_VIEW') && <button type="button" onClick={() => navigate('/performance')}>Performance</button>}
                 <button type="button" onClick={() => navigate('/my-payslip')}>Pay & documents</button>

@@ -36,7 +36,7 @@ export default function EmployeeProfile() {
   const { id } = useParams();
   const { user, hasRole } = useAuth();
   const employeeId = id || user?.employeeId;
-  const isEmployee = hasRole('EMPLOYEE');
+  const isEmployee = !!user?.employeeId;
   const availableTabs = isEmployee ? TABS.filter((item) => EMPLOYEE_TAB_KEYS.includes(item.key)) : TABS;
   const availableTabKeys = isEmployee ? EMPLOYEE_TAB_KEYS : VALID_TAB_KEYS;
   const [searchParams, setSearchParams] = useSearchParams();

@@ -13,7 +13,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const { user, logout, hasPermission, hasRole } = useAuth();
   const navigate = useNavigate();
   const { recordVisit } = useNavMemory();
-  const sections = useMemo(() => visibleNavSections(hasPermission, hasRole), [hasPermission, hasRole]);
+  const sections = useMemo(() => visibleNavSections(hasPermission, hasRole, !!user?.employeeId), [hasPermission, hasRole, user?.employeeId]);
   const primarySections = useMemo(
     () => sections.filter((section) => section.id !== 'administration' && !section.items.some((item) => item.to === '/support')),
     [sections]
