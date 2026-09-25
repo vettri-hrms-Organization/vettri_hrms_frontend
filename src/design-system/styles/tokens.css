@@ -30,7 +30,7 @@
   --vettri-transition-fast: 120ms ease;
   --vettri-transition-base: 200ms ease;
    --vettri-sidebar-rail-width: 66px;
-   --vettri-topbar-height: 54px;
+   --vettri-topbar-height: 58px;
    --vettri-content-max-width: 1400px;
 
   /* ---- Brand palette ---- */
@@ -167,8 +167,8 @@
   --hz-gradient-surface: #eff6ff;
 
   /* ---- Layout ---- */
-  --hz-sidebar-width: 264px;
-  --hz-sidebar-width-collapsed: 76px;
+  --hz-sidebar-width: 248px;
+  --hz-sidebar-width-collapsed: 72px;
   --hz-rail-width: 72px;
    --hz-topbar-height: var(--vettri-topbar-height);
   --hz-page-padding: 18px;

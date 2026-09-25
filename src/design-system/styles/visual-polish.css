@@ -498,3 +498,550 @@
     max-height: 100vh !important;
   }
 }
+
+/* ========================================================================
+   VETTRI SALES-READY SHELL — FINAL DESIGN ENGINEERING PASS
+   Intent: calm, premium, compact, highly scannable enterprise SaaS UI.
+   This layer intentionally favors hierarchy and usable screen area over
+   decorative chrome. It does not change routing, APIs, permissions or data.
+   ======================================================================== */
+:root {
+  --vettri-shell-sidebar-width: 248px;
+  --vettri-shell-sidebar-collapsed-width: 72px;
+  --vettri-shell-gap: 14px;
+  --vettri-shell-canvas: #f2f5fa;
+  --vettri-shell-blue: #2563eb;
+  --vettri-shell-blue-dark: #1e40af;
+  --vettri-shell-navy: #0f1b3d;
+  --vettri-shell-line: rgba(15, 27, 61, .075);
+  --vettri-shell-muted: #6b7a90;
+  --vettri-shell-shadow: 0 14px 38px rgba(15, 27, 61, .075), 0 2px 8px rgba(15, 27, 61, .035);
+}
+
+/* Quiet canvas: the product should feel like a workspace, not a page of cards. */
+body {
+  background: var(--vettri-shell-canvas);
+}
+
+.vettri-app-shell {
+  position: relative;
+  gap: var(--vettri-shell-gap) !important;
+  padding: 14px 14px 14px 16px !important;
+  background:
+    radial-gradient(520px 320px at 12% 0%, rgba(37,99,235,.055), transparent 72%),
+    radial-gradient(460px 300px at 96% 12%, rgba(249,115,22,.025), transparent 72%),
+    var(--vettri-shell-canvas) !important;
+}
+
+.vettri-sidebar-shell {
+  flex: 0 0 var(--vettri-shell-sidebar-width) !important;
+  width: var(--vettri-shell-sidebar-width) !important;
+  min-width: var(--vettri-shell-sidebar-width) !important;
+  max-width: var(--vettri-shell-sidebar-width) !important;
+  height: calc(100vh - 28px) !important;
+  max-height: calc(100vh - 28px) !important;
+}
+
+.vettri-sidebar-shell.is-collapsed {
+  flex-basis: var(--vettri-shell-sidebar-collapsed-width) !important;
+  width: var(--vettri-shell-sidebar-collapsed-width) !important;
+  min-width: var(--vettri-shell-sidebar-collapsed-width) !important;
+  max-width: var(--vettri-shell-sidebar-collapsed-width) !important;
+}
+
+.vettri-sidebar {
+  position: relative;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 12px 9px 9px !important;
+  border: 1px solid rgba(148,163,184,.20) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.91) 0%, rgba(248,250,253,.82) 100%) !important;
+  box-shadow: var(--vettri-shell-shadow) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+}
+
+/* A tiny highlight line gives the glass shell a crafted edge without looking flashy. */
+.vettri-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.92);
+}
+
+.vettri-sidebar-brand {
+  position: relative;
+  min-height: 38px !important;
+  margin: 0 2px 6px !important;
+  padding: 0 7px 0 !important;
+}
+
+.vettri-sidebar-brand > span {
+  color: var(--vettri-shell-navy) !important;
+  font-size: 17px !important;
+  font-weight: 750 !important;
+  letter-spacing: -.035em !important;
+}
+
+.vettri-sidebar-brand .hz-logo-mark,
+.vettri-sidebar-brand svg {
+  filter: drop-shadow(0 3px 6px rgba(37,99,235,.12));
+}
+
+.vettri-workspace-switcher {
+  position: relative;
+  min-height: 47px !important;
+  margin: 2px 1px 7px !important;
+  padding: 6px 7px !important;
+  border: 1px solid rgba(37,99,235,.10) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, rgba(239,246,255,.92), rgba(255,255,255,.72)) !important;
+  box-shadow: 0 2px 8px rgba(15,27,61,.025) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.vettri-workspace-switcher:hover {
+  border-color: rgba(37,99,235,.20) !important;
+  box-shadow: 0 5px 14px rgba(37,99,235,.075) !important;
+  transform: translateY(-1px);
+}
+
+.vettri-workspace-mark {
+  width: 31px !important;
+  height: 31px !important;
+  min-width: 31px !important;
+  border-radius: 9px !important;
+  background: linear-gradient(145deg, #2563eb, #1e40af) !important;
+  box-shadow: 0 5px 12px rgba(37,99,235,.18) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.vettri-workspace-copy strong {
+  color: #1d2b44 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.vettri-workspace-copy small {
+  color: #8390a4 !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+}
+
+.vettri-workspace-chevron {
+  color: #8090a7 !important;
+}
+
+.vettri-sidebar-search-wrap {
+  margin: 0 1px 8px !important;
+}
+
+.vettri-sidebar-search {
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 9px !important;
+  border: 1px solid rgba(148,163,184,.24) !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,.78) !important;
+  color: #64748b !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.vettri-sidebar-search:hover {
+  border-color: rgba(37,99,235,.18) !important;
+  background: #fff !important;
+}
+
+.vettri-sidebar-search:focus-visible {
+  outline: 0;
+  border-color: rgba(37,99,235,.42) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.08) !important;
+}
+
+.vettri-sidebar-search kbd {
+  min-width: 44px;
+  border: 1px solid #e1e7ef !important;
+  border-radius: 6px !important;
+  background: #f6f8fb !important;
+  color: #77859a !important;
+  font-size: 8.5px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+.vettri-sidebar-nav {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 1px 1px 2px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(100,116,139,.22) transparent !important;
+}
+
+.vettri-sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vettri-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(100,116,139,.20);
+  border-radius: 999px;
+}
+
+.vettri-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vettri-nav-group {
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+}
+
+.vettri-nav-group + .vettri-nav-group {
+  padding-top: 3px !important;
+}
+
+.vettri-nav-group-label {
+  margin: 0 4px !important;
+  padding: 5px 7px 4px !important;
+  color: #98a4b6 !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: .10em !important;
+  line-height: 1.1 !important;
+}
+
+.vettri-nav-item {
+  position: relative;
+  min-height: 33px !important;
+  height: 33px !important;
+  margin: 1px 0 !important;
+  padding: 3px 7px !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  color: #56667e !important;
+  gap: 8px !important;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.vettri-nav-item:hover {
+  color: #243653 !important;
+  background: rgba(37,99,235,.055) !important;
+  border-color: rgba(37,99,235,.065) !important;
+  transform: translateX(1px);
+}
+
+.vettri-nav-item.is-active {
+  color: #fff !important;
+  border-color: rgba(37,99,235,.55) !important;
+  background: linear-gradient(135deg, #2f6df0 0%, #2457c9 100%) !important;
+  box-shadow: 0 5px 13px rgba(37,99,235,.17), inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+
+.vettri-nav-item.is-active::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  top: 9px;
+  width: 4px;
+  height: 15px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.72);
+}
+
+.vettri-nav-icon {
+  width: 27px !important;
+  height: 27px !important;
+  min-width: 27px !important;
+  border-radius: 8px !important;
+  color: #4f6da8 !important;
+  background: rgba(235,242,255,.88) !important;
+  transition: color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.vettri-nav-item:hover .vettri-nav-icon {
+  color: #2563eb !important;
+  background: #e7efff !important;
+}
+
+.vettri-nav-item.is-active .vettri-nav-icon {
+  color: #fff !important;
+  background: rgba(255,255,255,.14) !important;
+}
+
+.vettri-nav-label {
+  font-size: 11.5px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+}
+
+.vettri-nav-badge {
+  margin-left: auto !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  border-radius: 6px !important;
+  background: #eef3fb !important;
+  color: #64748b !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+}
+
+.vettri-nav-item.is-active .vettri-nav-badge {
+  color: #1e40af !important;
+  background: rgba(255,255,255,.88) !important;
+}
+
+.vettri-quick-add {
+  min-height: 32px !important;
+  height: 32px !important;
+  margin: 5px 1px 1px !important;
+  padding: 3px 8px !important;
+  border: 1px dashed rgba(37,99,235,.28) !important;
+  border-radius: 9px !important;
+  background: rgba(239,246,255,.46) !important;
+  color: #315cae !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.vettri-quick-add:hover {
+  background: rgba(239,246,255,.90) !important;
+  border-color: rgba(37,99,235,.48) !important;
+  transform: translateY(-1px);
+}
+
+.vettri-sidebar-footer {
+  flex: 0 0 auto !important;
+  margin-top: 5px !important;
+  padding-top: 7px !important;
+  border-top: 1px solid rgba(148,163,184,.15) !important;
+}
+
+.vettri-user-card {
+  min-height: 45px !important;
+  padding: 4px 5px !important;
+  border: 1px solid transparent !important;
+  border-radius: 11px !important;
+  background: rgba(255,255,255,.42) !important;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.vettri-user-card:hover {
+  background: rgba(255,255,255,.80) !important;
+  border-color: rgba(148,163,184,.16) !important;
+}
+
+.vettri-user-meta strong {
+  color: #263650 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+
+.vettri-user-meta small {
+  color: #8491a4 !important;
+  font-size: 8.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .02em;
+}
+
+.vettri-user-bell {
+  width: 27px !important;
+  height: 27px !important;
+  border-radius: 8px !important;
+  color: #718097 !important;
+}
+
+.vettri-user-bell:hover {
+  color: #2563eb !important;
+  background: #eef4ff !important;
+}
+
+/* Floating collapse control: subtle, tactile, and visually attached to the shell. */
+.vettri-sidebar-handle {
+  width: 22px !important;
+  height: 22px !important;
+  right: -11px !important;
+  border: 1px solid rgba(148,163,184,.25) !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,.96) !important;
+  color: #62728a !important;
+  box-shadow: 0 4px 12px rgba(15,27,61,.10) !important;
+  transform: translateY(-50%) rotate(90deg) !important;
+}
+
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar-handle {
+  transform: translateY(-50%) rotate(-90deg) !important;
+}
+
+.vettri-sidebar-handle:hover {
+  color: #2563eb !important;
+  border-color: rgba(37,99,235,.25) !important;
+}
+
+/* Collapsed mode stays elegant instead of becoming a cramped icon rail. */
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar {
+  padding-left: 7px !important;
+  padding-right: 7px !important;
+}
+
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar-brand,
+.vettri-sidebar-shell.is-collapsed .vettri-workspace-switcher,
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar-search-wrap,
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar-footer {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.vettri-sidebar-shell.is-collapsed .vettri-nav-item {
+  justify-content: center !important;
+  padding: 3px !important;
+}
+
+.vettri-sidebar-shell.is-collapsed .vettri-nav-item.is-active::after {
+  right: 3px;
+}
+
+/* ------------------------------------------------------------------------
+   Main topbar: same visual language, but intentionally quieter than content.
+   ------------------------------------------------------------------------ */
+.vettri-app-shell__content {
+  min-width: 0 !important;
+}
+
+.vettri-topbar {
+  position: sticky !important;
+  top: 14px !important;
+  z-index: 30 !important;
+  min-height: 58px !important;
+  margin: 0 0 12px !important;
+  padding: 7px 10px 7px 16px !important;
+  border: 1px solid rgba(148,163,184,.18) !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.86) !important;
+  box-shadow: 0 8px 24px rgba(15,27,61,.045), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  backdrop-filter: blur(20px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(145%) !important;
+}
+
+.vettri-topbar-crumb {
+  min-width: 150px;
+  gap: 8px !important;
+  color: #94a0b2 !important;
+  font-size: 11px !important;
+}
+
+.vettri-topbar-crumb b {
+  color: #c3cad5 !important;
+  font-weight: 500 !important;
+}
+
+.vettri-topbar-crumb strong {
+  color: #1c2b45 !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+}
+
+.vettri-command-trigger {
+  height: 40px !important;
+  max-width: 470px !important;
+  border: 1px solid #e0e6ef !important;
+  border-radius: 11px !important;
+  background: #fdfefe !important;
+  color: #738096 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95) !important;
+}
+
+.vettri-command-trigger:hover {
+  border-color: rgba(37,99,235,.24) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.055) !important;
+}
+
+.vettri-command-trigger kbd {
+  border: 1px solid #e1e7ef !important;
+  border-radius: 6px !important;
+  background: #f4f7fb !important;
+  color: #78869b !important;
+  font-size: 9px !important;
+}
+
+.vettri-topbar .hz-icon-btn {
+  border: 1px solid rgba(148,163,184,.17) !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,.72) !important;
+  color: #596a83 !important;
+  transition: transform 150ms ease, background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.vettri-topbar .hz-icon-btn:hover {
+  color: #2563eb !important;
+  border-color: rgba(37,99,235,.17) !important;
+  background: #f5f8ff !important;
+  transform: translateY(-1px);
+}
+
+.vettri-topbar .hz-current-workspace {
+  max-width: 150px;
+  color: #6b7a90 !important;
+  font-size: 10.5px !important;
+  font-weight: 650 !important;
+}
+
+.vettri-topbar .hz-current-workspace svg {
+  color: #7d8ba0 !important;
+}
+
+/* Keep dropdowns visually connected to the shell. */
+.vettri-sidebar-profile-menu,
+.vettri-topbar .hz-surface,
+.vettri-topbar-notifications,
+.hz-quick-actions {
+  border: 1px solid rgba(148,163,184,.18) !important;
+  border-radius: 13px !important;
+  box-shadow: 0 18px 42px rgba(15,27,61,.13) !important;
+}
+
+@media (max-width: 1199.98px) {
+  :root {
+    --vettri-shell-sidebar-width: 236px;
+  }
+
+  .vettri-command-trigger {
+    max-width: 390px !important;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .vettri-app-shell {
+    padding: 0 !important;
+    gap: 0 !important;
+    background: var(--vettri-shell-canvas) !important;
+  }
+
+  .vettri-sidebar-shell {
+    width: 264px !important;
+    max-width: 264px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+
+  .vettri-topbar {
+    position: sticky !important;
+    top: 8px !important;
+    margin: 8px 8px 10px !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .vettri-topbar {
+    border-radius: 13px !important;
+    padding: 7px 8px !important;
+  }
+}

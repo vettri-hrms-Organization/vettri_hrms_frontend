@@ -25,12 +25,20 @@ export default function Topbar({ onOpenMobileNav }) {
   const [commandCenterOpen, setCommandCenterOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const currentPage = useMemo(() => {
-    const item = NAV_INDEX.find((entry) => {
+    const currentQuery = location.search.replace(/^\?/, '');
+    const exact = NAV_INDEX.find((entry) => {
+      const [path, query = ''] = entry.to.split('?');
+      const pathMatches = path === location.pathname || (path !== '/' && location.pathname.startsWith(`${path}/`));
+      return pathMatches && query === currentQuery;
+    });
+    if (exact) return exact.label;
+
+    const fallback = NAV_INDEX.find((entry) => {
       const [path] = entry.to.split('?');
       return path === location.pathname || (path !== '/' && location.pathname.startsWith(`${path}/`));
     });
-    return item?.label || 'Workspace';
-  }, [location.pathname]);
+    return fallback?.label || 'Workspace';
+  }, [location.pathname, location.search]);
   const isEmployeeUser = !!user?.employeeId;
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
