@@ -281,3 +281,254 @@ textarea.form-control:focus {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ======================================================================
+   VETTRI FINAL SHELL INTEGRITY FIX
+   Fixes the authenticated shell layout contract. The shell must be a
+   horizontal flex layout; controls/nav must explicitly use flex because
+   Bootstrap/base styles are not guaranteed to provide that contract.
+   ====================================================================== */
+
+/* Root application frame */
+.hz-app-shell.vettri-app-shell {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 100vh !important;
+  box-sizing: border-box !important;
+}
+
+.hz-app-shell.vettri-app-shell > .vettri-sidebar-shell {
+  flex: 0 0 var(--vettri-sidebar-width, 228px) !important;
+}
+
+.hz-app-shell.vettri-app-shell > .vettri-sidebar-shell.is-collapsed {
+  flex-basis: var(--vettri-sidebar-collapsed, 68px) !important;
+}
+
+.hz-app-shell.vettri-app-shell > .vettri-app-shell__content {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 100vh !important;
+}
+
+/* Sidebar controls — explicit layout contract */
+.vettri-sidebar-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  flex: 0 0 auto !important;
+}
+
+.vettri-sidebar-brand .vettri-mobile-close {
+  margin-left: auto !important;
+}
+
+.vettri-workspace-switcher,
+.vettri-sidebar-search,
+.vettri-quick-add,
+.vettri-user-card,
+.vettri-user-trigger,
+.vettri-user-meta {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.vettri-workspace-switcher {
+  width: 100% !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  text-align: left !important;
+}
+
+.vettri-workspace-copy {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+  overflow: hidden !important;
+}
+
+.vettri-workspace-copy strong,
+.vettri-workspace-copy small {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.vettri-sidebar-search {
+  width: 100% !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  text-align: left !important;
+}
+
+.vettri-sidebar-search > span {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Navigation must never fall back to inline anchor layout. */
+.vettri-nav-group {
+  display: block !important;
+  width: 100% !important;
+}
+
+.vettri-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+}
+
+.vettri-nav-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 25px !important;
+}
+
+.vettri-nav-label {
+  display: block !important;
+  flex: 1 1 auto !important;
+}
+
+.vettri-nav-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+}
+
+.vettri-quick-add {
+  width: 100% !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  text-decoration: none !important;
+}
+
+/* Sidebar footer stays anchored and does not participate in nav scrolling. */
+.vettri-sidebar-footer {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
+
+.vettri-user-card {
+  width: 100% !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+}
+
+.vettri-user-trigger {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  gap: 8px !important;
+  text-align: left !important;
+}
+
+.vettri-user-meta {
+  min-width: 0 !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 1px !important;
+  overflow: hidden !important;
+}
+
+.vettri-user-meta strong,
+.vettri-user-meta small {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.vettri-user-bell {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 32px !important;
+}
+
+/* Topbar layout */
+.vettri-topbar {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+}
+
+.vettri-topbar-crumb {
+  display: flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+.vettri-command-trigger {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
+}
+
+.vettri-command-trigger span {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Main page must occupy the remaining workspace rather than collapse or
+   appear underneath the sidebar. */
+.vettri-app-shell__content > .hz-main-content {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Keep links in the shell clean; module links can still opt into underlines. */
+.vettri-sidebar a,
+.vettri-topbar a {
+  text-decoration: none !important;
+}
+
+@media (max-width: 991.98px) {
+  .hz-app-shell.vettri-app-shell {
+    display: block !important;
+  }
+
+  .hz-app-shell.vettri-app-shell > .vettri-app-shell__content {
+    min-height: 100vh !important;
+  }
+
+  .vettri-sidebar-shell {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 1040 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+  }
+
+  .vettri-sidebar-shell.is-mobile-open {
+    transform: translateX(0) !important;
+  }
+}

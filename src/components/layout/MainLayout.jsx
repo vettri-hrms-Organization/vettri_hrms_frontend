@@ -25,14 +25,14 @@ export default function MainLayout() {
 
   return (
     <NavMemoryProvider>
-      <div className="hz-app-shell vettri-app-shell">
+      <div className="vettri-app-shell">
         <Sidebar
           mobileOpen={mobileNavOpen}
           onCloseMobile={() => setMobileNavOpen(false)}
         />
-        <div className="hz-app-shell__content vettri-app-shell__content d-flex flex-column flex-grow-1">
+        <div className="vettri-app-shell__content">
           <Topbar onOpenMobileNav={() => setMobileNavOpen(true)} />
-          <main className="hz-main-content hz-page-transition flex-grow-1">
+          <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
               <Breadcrumbs />
               {needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}

@@ -10783,3 +10783,390 @@ button:disabled,
     padding-bottom: 6px;
   }
 }
+/* ========================================================================
+   VETTRI FINAL PRODUCT SHELL — AUTHORITATIVE VISUAL LAYER
+   This block intentionally owns the new authenticated shell. It supersedes
+   legacy hz-sidebar/icon-rail rules without changing application behavior.
+   ======================================================================== */
+
+.vettri-app-shell {
+  display: flex !important;
+  align-items: stretch;
+  min-height: 100vh;
+  width: 100%;
+  gap: 16px;
+  padding: 14px;
+  background:
+    radial-gradient(900px 420px at 8% -12%, rgba(37,99,235,.07), transparent 62%),
+    radial-gradient(760px 420px at 100% 100%, rgba(249,115,22,.035), transparent 62%),
+    #eef2f7;
+  box-sizing: border-box;
+}
+
+.vettri-app-shell,
+.vettri-app-shell * { box-sizing: border-box; }
+
+.vettri-app-shell__content {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-width: 0;
+  min-height: calc(100vh - 28px);
+  flex-direction: column;
+}
+
+/* ---------- sidebar ---------- */
+.vettri-sidebar-shell {
+  position: relative;
+  z-index: 30;
+  flex: 0 0 236px;
+  width: 236px;
+  min-width: 236px;
+  height: calc(100vh - 28px);
+}
+
+.vettri-sidebar {
+  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px;
+  border: 1px solid rgba(148,163,184,.24);
+  border-radius: 22px;
+  background: rgba(255,255,255,.78);
+  backdrop-filter: blur(24px) saturate(155%);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  box-shadow: 0 18px 42px -28px rgba(15,27,61,.38), inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.vettri-sidebar-shell.is-collapsed {
+  flex-basis: 72px;
+  width: 72px;
+  min-width: 72px;
+}
+
+.vettri-sidebar-brand {
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 40px;
+  min-width: 0;
+  padding: 2px 7px 7px;
+  color: #172033;
+}
+
+.vettri-sidebar-brand > span {
+  overflow: hidden;
+  color: #172033;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+}
+
+.vettri-sidebar-brand svg { flex: 0 0 auto; }
+
+.vettri-mobile-close {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+}
+
+.vettri-sidebar-handle {
+  position: absolute;
+  top: 50%;
+  right: -11px;
+  z-index: 4;
+  width: 23px;
+  height: 23px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(148,163,184,.22);
+  border-radius: 50%;
+  background: rgba(255,255,255,.96);
+  color: #64748b;
+  box-shadow: 0 8px 20px -12px rgba(15,27,61,.45);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.vettri-sidebar-handle svg { transform: rotate(90deg); transition: transform .18s ease; }
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar-handle svg { transform: rotate(-90deg); }
+
+.vettri-workspace-switcher {
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 48px;
+  margin: 3px 0 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(37,99,235,.12);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,250,252,.84));
+  color: #172033;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 18px -18px rgba(37,99,235,.5);
+}
+
+.vettri-workspace-switcher:hover { border-color: rgba(37,99,235,.24); background: #fff; }
+.vettri-workspace-mark {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #2563eb, #1e40af);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px -12px rgba(37,99,235,.75);
+}
+.vettri-workspace-copy { display: flex !important; min-width: 0; flex: 1 1 auto; flex-direction: column; gap: 2px; }
+.vettri-workspace-copy strong { overflow: hidden; color: #172033; font-size: 12.5px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.vettri-workspace-copy small { overflow: hidden; color: #8190a7; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+.vettri-workspace-chevron { flex: 0 0 auto; color: #718096; }
+
+.vettri-sidebar-search-wrap { flex: 0 0 40px; margin-bottom: 8px; }
+.vettri-sidebar-search {
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 11px;
+  background: rgba(255,255,255,.82);
+  color: #718096;
+  text-align: left;
+  cursor: pointer;
+}
+.vettri-sidebar-search:hover { border-color: rgba(37,99,235,.22); color: #2563eb; background: #fff; }
+.vettri-sidebar-search > span { flex: 1; color: #64748b; font-size: 12.5px; }
+.vettri-sidebar-search kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  min-width: 42px;
+  padding: 0 6px;
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 6px;
+  background: #f7f9fc;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.vettri-sidebar-nav {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-height: 0;
+  flex-direction: column !important;
+  gap: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 2px 1px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100,116,139,.28) transparent;
+}
+.vettri-sidebar-nav::-webkit-scrollbar { width: 5px; }
+.vettri-sidebar-nav::-webkit-scrollbar-thumb { border-radius: 99px; background: rgba(100,116,139,.24); }
+
+.vettri-nav-group { display: flex !important; flex-direction: column !important; gap: 2px; margin: 0 0 7px; }
+.vettri-nav-group-label {
+  padding: 5px 9px 3px;
+  color: #91a0b5;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.vettri-nav-item {
+  position: relative;
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 35px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #5f7089;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none !important;
+  transition: background .16s ease, color .16s ease, transform .16s ease;
+}
+.vettri-nav-item:hover { background: rgba(37,99,235,.055); color: #1e40af; transform: translateX(1px); }
+.vettri-nav-item.is-active {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: #fff;
+  box-shadow: 0 7px 16px -12px rgba(37,99,235,.7);
+}
+.vettri-nav-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  border-radius: 8px;
+  background: rgba(37,99,235,.065);
+  color: #54709c;
+}
+.vettri-nav-item.is-active .vettri-nav-icon { background: rgba(255,255,255,.15); color: #fff; }
+.vettri-nav-label { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vettri-nav-badge { margin-left: auto; min-width: 20px; padding: 2px 5px; border-radius: 99px; background: rgba(37,99,235,.1); color: #2563eb; font-size: 9px; font-weight: 800; text-align: center; }
+.vettri-nav-item.is-active .vettri-nav-badge { background: rgba(255,255,255,.18); color: #fff; }
+.vettri-nav-tooltip { position: absolute; left: calc(100% + 10px); z-index: 80; pointer-events: none; padding: 7px 9px; border-radius: 8px; background: #0f1b3d; color: #fff; font-size: 11px; white-space: nowrap; opacity: 0; transform: translateX(-3px); transition: opacity .14s ease, transform .14s ease; box-shadow: 0 12px 28px -16px rgba(15,27,61,.6); }
+.vettri-nav-item:hover .vettri-nav-tooltip { opacity: 1; transform: translateX(0); }
+
+.vettri-quick-add {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 34px;
+  margin: 2px 0 4px;
+  padding: 6px 9px;
+  border: 1px dashed rgba(37,99,235,.28);
+  border-radius: 9px;
+  background: rgba(37,99,235,.025);
+  color: #2563eb;
+  font-size: 11.5px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.vettri-quick-add:hover { border-color: #2563eb; background: rgba(37,99,235,.06); }
+
+.vettri-sidebar-footer { position: relative; flex: 0 0 auto; padding-top: 8px; border-top: 1px solid rgba(15,27,61,.07); }
+.vettri-user-card { display: flex !important; align-items: center; gap: 5px; min-width: 0; }
+.vettri-user-trigger { display: flex !important; align-items: center; gap: 8px; min-width: 0; flex: 1; padding: 5px 6px; border: 0; border-radius: 9px; background: transparent; color: #172033; text-align: left; cursor: pointer; }
+.vettri-user-trigger:hover { background: rgba(37,99,235,.05); }
+.vettri-avatar-wrap { position: relative; flex: 0 0 auto; }
+.vettri-status-dot { position: absolute; right: -1px; bottom: 0; width: 7px; height: 7px; border: 1.5px solid #fff; border-radius: 50%; background: #22c55e; }
+.vettri-user-meta { display: flex !important; min-width: 0; flex: 1; flex-direction: column; gap: 1px; }
+.vettri-user-meta strong { overflow: hidden; color: #172033; font-size: 11.5px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.vettri-user-meta small { overflow: hidden; color: #8795aa; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+.vettri-user-bell { position: relative; display: inline-flex !important; align-items: center; justify-content: center; width: 30px; height: 30px; flex: 0 0 30px; border: 0; border-radius: 8px; background: transparent; color: #718096; }
+.vettri-user-bell:hover { background: rgba(37,99,235,.06); color: #2563eb; }
+.vettri-user-bell > span { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: #ef4444; }
+.vettri-sidebar-profile-menu { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 90; width: 210px; padding: 7px; border: 1px solid rgba(148,163,184,.22); border-radius: 13px; background: rgba(255,255,255,.98); box-shadow: 0 18px 44px -22px rgba(15,27,61,.35); }
+.vettri-sidebar-profile-identity { display: flex; align-items: center; gap: 8px; padding: 7px; border-bottom: 1px solid rgba(15,27,61,.07); }
+.vettri-sidebar-profile-identity span { min-width: 0; display: flex; flex-direction: column; }
+.vettri-sidebar-profile-identity strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.vettri-sidebar-profile-identity small { color: #8795aa; font-size: 9.5px; }
+.vettri-sidebar-profile-menu > button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px; margin-top: 2px; border: 0; border-radius: 8px; background: transparent; color: #52627a; font-size: 11.5px; text-align: left; cursor: pointer; }
+.vettri-sidebar-profile-menu > button:hover { background: rgba(37,99,235,.06); color: #1e40af; }
+.vettri-sidebar-profile-menu > button.danger { color: #dc2626; }
+
+/* Collapsed state */
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar { padding: 10px 8px; }
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar-brand { justify-content: center; padding-inline: 0; }
+.vettri-sidebar-shell.is-collapsed .vettri-workspace-switcher { justify-content: center; padding-inline: 0; }
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar-search { justify-content: center; padding-inline: 0; }
+.vettri-sidebar-shell.is-collapsed .vettri-nav-group-label,
+.vettri-sidebar-shell.is-collapsed .vettri-nav-label,
+.vettri-sidebar-shell.is-collapsed .vettri-nav-badge,
+.vettri-sidebar-shell.is-collapsed .vettri-quick-add span,
+.vettri-sidebar-shell.is-collapsed .vettri-user-meta,
+.vettri-sidebar-shell.is-collapsed .vettri-user-bell { display: none !important; }
+.vettri-sidebar-shell.is-collapsed .vettri-nav-group { margin-bottom: 4px; }
+.vettri-sidebar-shell.is-collapsed .vettri-nav-item { justify-content: center; padding-inline: 4px; }
+.vettri-sidebar-shell.is-collapsed .vettri-nav-icon { width: 30px; height: 30px; flex-basis: 30px; }
+.vettri-sidebar-shell.is-collapsed .vettri-quick-add { width: 36px; margin-inline: auto; }
+.vettri-sidebar-shell.is-collapsed .vettri-user-card { justify-content: center; }
+.vettri-sidebar-shell.is-collapsed .vettri-user-trigger { justify-content: center; padding-inline: 0; }
+
+/* ---------- topbar ---------- */
+.vettri-topbar.hz-topbar {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 4px);
+  min-height: 64px;
+  height: 64px;
+  margin: 0 4px 0 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 18px;
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: 0 12px 30px -24px rgba(15,27,61,.35);
+  flex-shrink: 0;
+}
+.vettri-topbar-crumb { display: flex !important; align-items: center; gap: 8px; min-width: 150px; padding: 0 8px; color: #95a1b4; font-size: 12px; }
+.vettri-topbar-crumb b { color: #c0c8d4; font-weight: 500; }
+.vettri-topbar-crumb strong { color: #172033; font-size: 13px; font-weight: 750; }
+.vettri-command-trigger { flex: 1 1 520px !important; max-width: 680px; height: 42px !important; margin: 0 auto; border-radius: 12px !important; background: #f8fafc !important; }
+.vettri-topbar .hz-icon-btn { width: 40px; min-width: 40px; height: 40px; border: 1px solid rgba(148,163,184,.16); border-radius: 11px; background: rgba(255,255,255,.75); color: #52627a; }
+.vettri-topbar .hz-icon-btn:hover { background: rgba(37,99,235,.06); color: #2563eb; }
+
+/* Main page surface */
+.vettri-app-shell .hz-main-content {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 20px 2px 32px 0;
+  overflow-x: hidden;
+  background: transparent;
+}
+.vettri-app-shell .hz-main-content > * { min-width: 0; }
+.vettri-app-shell .hz-page-transition { animation: none; }
+
+/* Settings contextual nav stays inside content and does not create a second shell. */
+.vettri-app-shell .hz-admin-settings-shell { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 18px; width: 100%; }
+.vettri-app-shell .hz-admin-settings-nav { position: sticky; top: 84px; align-self: start; padding: 8px; border: 1px solid rgba(148,163,184,.18); border-radius: 14px; background: rgba(255,255,255,.7); }
+.vettri-app-shell .hz-admin-settings-nav__title { padding: 8px 9px 6px; color: #8b98aa; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.vettri-app-shell .hz-admin-settings-nav__item { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 7px 9px; border-radius: 8px; color: #5f7089; font-size: 11.5px; font-weight: 650; text-decoration: none; }
+.vettri-app-shell .hz-admin-settings-nav__item:hover { background: rgba(37,99,235,.06); color: #1e40af; }
+
+@media (max-width: 1199.98px) {
+  .vettri-app-shell { gap: 12px; padding: 10px; }
+  .vettri-sidebar-shell { flex-basis: 224px; width: 224px; min-width: 224px; height: calc(100vh - 20px); }
+  .vettri-command-trigger { max-width: none; }
+}
+
+@media (max-width: 991.98px) {
+  .vettri-app-shell { display: block !important; padding: 0; background: #f4f7fb; }
+  .vettri-sidebar-shell { position: fixed; inset: 0 auto 0 0; z-index: 1045; display: block; width: 280px; min-width: 280px; height: 100vh; transform: translateX(-105%); transition: transform .22s ease; }
+  .vettri-sidebar-shell.is-mobile-open { transform: translateX(0); }
+  .vettri-sidebar { height: 100vh; border-radius: 0 20px 20px 0; }
+  .vettri-sidebar-handle { display: none !important; }
+  .vettri-sidebar-backdrop { position: fixed; inset: 0; z-index: 1040; background: rgba(15,27,61,.28); backdrop-filter: blur(2px); }
+  .vettri-app-shell__content { min-height: 100vh; width: 100%; }
+  .vettri-topbar.hz-topbar { width: calc(100% - 20px); margin: 10px; }
+  .vettri-app-shell .hz-main-content { padding: 16px 10px 28px; }
+  .vettri-app-shell .hz-admin-settings-shell { grid-template-columns: 1fr; }
+  .vettri-app-shell .hz-admin-settings-nav { position: static; }
+}
+
+@media (max-width: 767.98px) {
+  .vettri-topbar.hz-topbar { min-height: 58px; height: 58px; border-radius: 14px; }
+  .vettri-command-trigger { height: 38px !important; padding-inline: 10px !important; }
+  .vettri-command-trigger kbd { display: none; }
+  .vettri-topbar .hz-icon-btn { width: 36px; min-width: 36px; height: 36px; }
+  .vettri-app-shell .hz-main-content { padding: 12px 8px 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vettri-sidebar-shell, .vettri-nav-item, .vettri-sidebar-handle svg, .vettri-nav-tooltip { transition: none !important; }
+}
