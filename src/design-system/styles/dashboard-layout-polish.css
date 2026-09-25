@@ -1,0 +1,197 @@
+/* Vettri 2026 — workspace composition pass
+   Purpose: remove unused canvas space, prevent sticky-header overlap,
+   and make the dashboard occupy the workspace like the reference shell. */
+
+/* The reference topbar participates in normal document flow. Keeping it
+   sticky was causing dashboard hero content to slide underneath it. */
+.vettri-topbar {
+  position: relative !important;
+  top: auto !important;
+  margin: 0 0 12px !important;
+  z-index: 20 !important;
+}
+
+/* The authenticated content should use the available workspace instead of
+   imposing a narrow 1320px ceiling on wide monitors. */
+.hz-main-content {
+  padding: 0 10px 32px !important;
+  min-width: 0 !important;
+}
+
+.hz-main-content > * {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Dashboard canvas */
+.hz-dashboard--admin {
+  width: 100%;
+  max-width: none;
+  gap: 18px !important;
+  padding: 2px 4px 28px;
+}
+
+/* A compact hero establishes hierarchy without wasting the first viewport. */
+.hz-dashboard__hero {
+  min-height: 126px;
+  margin: 0 !important;
+  padding: 22px 24px !important;
+  border-radius: 16px !important;
+  border: 1px solid #DDE7F5 !important;
+  border-left: 3px solid #2563EB !important;
+  background:
+    radial-gradient(420px 160px at 100% 0%, rgba(37,99,235,.07), transparent 72%),
+    linear-gradient(135deg, #FFFFFF 0%, #F8FBFF 100%) !important;
+  box-shadow: 0 8px 26px rgba(15,27,61,.045) !important;
+}
+
+.hz-dashboard__hero-copy h1 {
+  color: #17356F !important;
+  font-size: clamp(27px, 2.35vw, 34px) !important;
+  line-height: 1.05 !important;
+}
+
+.hz-dashboard__hero-copy p:last-child {
+  margin-top: 7px !important;
+  color: #65758D !important;
+  font-size: 13px !important;
+}
+
+.hz-dashboard__hero-meta {
+  gap: 8px !important;
+}
+
+.hz-dashboard__hero-pill {
+  min-width: 144px !important;
+  padding: 9px 12px !important;
+  border-radius: 11px !important;
+  background: rgba(255,255,255,.82) !important;
+}
+
+.hz-dashboard__hero-pill strong {
+  font-size: 21px !important;
+}
+
+/* Metrics should follow immediately; don't create a second large visual gap. */
+.hz-dashboard__kpi-grid {
+  margin: 0 !important;
+}
+
+.hz-dashboard__section-heading {
+  margin-bottom: 9px !important;
+}
+
+.hz-dashboard__section-heading h2 {
+  font-size: 17px !important;
+  letter-spacing: -.02em !important;
+}
+
+.hz-dashboard__metric-grid {
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  border-radius: 15px !important;
+  border: 1px solid #DDE5EF !important;
+  overflow: hidden;
+  background: #fff !important;
+}
+
+.hz-dashboard__metric {
+  min-height: 126px !important;
+  padding: 18px 20px !important;
+  border: 0 !important;
+  border-right: 1px solid #E6EBF2 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.hz-dashboard__metric:last-child { border-right: 0 !important; }
+.hz-dashboard__metric:hover { transform: none !important; background: #FCFDFF !important; }
+.hz-dashboard__metric-icon { margin-bottom: 12px !important; }
+.hz-dashboard__metric > span { font-size: 12.5px !important; }
+.hz-dashboard__metric strong { font-size: 28px !important; }
+.hz-dashboard__metric small { font-size: 10.5px !important; }
+
+/* Main working area uses the available width rather than leaving a dead
+   column on the right of wide screens. */
+.hz-dashboard__overview-grid {
+  width: 100%;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, .75fr) !important;
+  gap: 18px !important;
+  margin: 0 !important;
+}
+
+.hz-dashboard__surface {
+  border-radius: 15px !important;
+  border-color: #DDE5EF !important;
+  background: rgba(255,255,255,.97) !important;
+  box-shadow: 0 4px 16px rgba(15,27,61,.035) !important;
+}
+
+.hz-dashboard__overview-grid .hz-dashboard__surface {
+  min-width: 0;
+}
+
+.hz-dashboard__overview-grid .hz-dashboard__surface:first-child,
+.hz-dashboard__overview-grid .hz-dashboard__surface:last-child {
+  min-height: 250px;
+}
+
+.hz-dashboard__action-grid a {
+  min-height: 49px !important;
+}
+
+.hz-dashboard__action-grid a:hover {
+  padding-left: 5px !important;
+  background: #F7FAFF !important;
+}
+
+/* Subsequent dashboard sections should also span the workspace. */
+.hz-dashboard__insights,
+.hz-dashboard__three-col,
+.hz-dashboard__quicklinks {
+  width: 100%;
+}
+
+.hz-dashboard__three-col {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  margin: 0 !important;
+}
+
+.hz-dashboard__insights {
+  margin: 0 !important;
+}
+
+/* Prevent the browser/window scrollbar from being visually confused with a
+   nested dashboard scrollbar. */
+.hz-dashboard,
+.hz-main-content {
+  overflow-x: clip;
+}
+
+@media (min-width: 1600px) {
+  .hz-dashboard--admin { padding-left: 6px; padding-right: 6px; }
+  .hz-dashboard__metric { min-height: 132px !important; }
+}
+
+@media (max-width: 1100px) {
+  .hz-dashboard__overview-grid { grid-template-columns: minmax(0, 1.35fr) minmax(280px, .85fr) !important; }
+}
+
+@media (max-width: 900px) {
+  .hz-dashboard__metric-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .hz-dashboard__metric:nth-child(2) { border-right: 0 !important; }
+  .hz-dashboard__metric:nth-child(-n+2) { border-bottom: 1px solid #E6EBF2 !important; }
+  .hz-dashboard__overview-grid { grid-template-columns: 1fr !important; }
+  .hz-dashboard__three-col { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 767.98px) {
+  .hz-main-content { padding: 0 8px 24px !important; }
+  .hz-dashboard--admin { padding: 0 2px 24px; gap: 14px !important; }
+  .hz-dashboard__hero { padding: 18px !important; }
+  .hz-dashboard__hero-meta { width: 100%; flex-direction: row; align-items: center !important; flex-wrap: wrap; }
+  .hz-dashboard__hero-pill { min-width: 132px !important; }
+}
