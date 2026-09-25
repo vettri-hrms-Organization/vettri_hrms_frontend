@@ -71,7 +71,7 @@ export default function Dashboard() {
     enabled: canViewExpiringDocs,
   });
 
-  const { data: holidaysData } = useQuery({
+  const { data: holidaysData, isLoading: holidaysLoading, isError: holidaysError } = useQuery({
     queryKey: ['dashboard-holidays'],
     queryFn: holidaysApi.list,
     enabled: canViewOrgSummary,
@@ -459,9 +459,9 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
       </section>
       <div className="hz-dashboard__employee-widgets">
         <AttendanceWidget records={attendance} loading={attendanceLoading} />
-        <LeaveWidget balances={leaveBalance} requests={leaveRequests} loading={leaveLoading} year={year} />
         <FinanceWidget salary={salary} />
       </div>
+      <LeaveWidget balances={leaveBalance} requests={leaveRequests} loading={leaveLoading} year={year} holidays={holidays} holidaysLoading={holidaysLoading} holidaysError={holidaysError} />
       <div className="hz-dashboard__primary-grid">
         <section className="hz-dashboard__surface" aria-labelledby="employee-actions-title">
           <div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Stay on track</span><h2 id="employee-actions-title">Pending actions</h2></div></div>
