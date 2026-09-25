@@ -62,7 +62,7 @@ export const NAV_SECTIONS = [
     collapsible: true,
     badge: null,
     items: [
-      { to: '/my-profile', icon: UserRound, label: 'My Profile' },
+      { to: '/my-profile', icon: UserRound, label: 'My Profile', end: true },
       { to: '/my-profile?tab=job', icon: Briefcase, label: 'My Job' },
       { to: '/my-profile?tab=attendance', icon: Clock, label: 'Attendance' },
       { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave' },

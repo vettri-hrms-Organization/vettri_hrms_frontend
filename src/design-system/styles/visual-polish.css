@@ -1,0 +1,288 @@
+/*
+ * Vettri 2026 visual polish layer.
+ * One final, intentional layer for shared authenticated surfaces.
+ * No routing, data, permissions, or API behavior is changed here.
+ */
+
+:root {
+  --vettri-surface-1: #ffffff;
+  --vettri-surface-2: #f8faff;
+  --vettri-ink: #172033;
+  --vettri-muted: #64748b;
+  --vettri-border-soft: rgba(23, 32, 51, 0.085);
+  --vettri-shadow-card: 0 8px 28px rgba(15, 27, 61, 0.055), 0 1px 3px rgba(15, 27, 61, 0.035);
+  --vettri-shadow-hover: 0 14px 34px rgba(15, 27, 61, 0.09), 0 2px 5px rgba(15, 27, 61, 0.04);
+}
+
+/* Shared surfaces */
+.hz-card,
+.hz-surface,
+.hz-panel {
+  border-color: var(--vettri-border-soft);
+  border-radius: 14px;
+  box-shadow: var(--vettri-shadow-card);
+}
+
+.hz-card {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.hz-card__header {
+  min-height: 62px;
+  padding: 17px 20px;
+  border-bottom-color: var(--vettri-border-soft);
+}
+
+.hz-card__body {
+  padding: 20px;
+}
+
+.hz-card--hoverable:hover {
+  border-color: rgba(37, 99, 235, 0.14);
+  box-shadow: var(--vettri-shadow-hover);
+}
+
+/* Page headers */
+.hz-page-header__eyebrow {
+  color: #2563EB;
+  font-size: 10px;
+  letter-spacing: .09em;
+}
+
+.hz-page-header__title {
+  color: #172033;
+  letter-spacing: -.035em;
+}
+
+.hz-page-header__description {
+  color: #64748b;
+}
+
+/* Forms */
+.form-control,
+.form-select {
+  min-height: 40px;
+  border: 1px solid #dce3ec;
+  border-radius: 10px;
+  color: #172033;
+  background: #fff;
+}
+
+.form-control:hover:not(:disabled):not(:focus),
+.form-select:hover:not(:disabled):not(:focus) {
+  border-color: #c4cfdd;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .11);
+}
+
+/* Buttons */
+.btn {
+  min-height: 38px;
+  border-radius: 9px;
+  font-weight: 650;
+}
+
+.btn-primary {
+  background: #2563EB;
+  border-color: #2563EB;
+  box-shadow: 0 5px 14px rgba(37, 99, 235, .16);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: #1E40AF;
+  border-color: #1E40AF;
+  box-shadow: 0 7px 18px rgba(37, 99, 235, .19);
+}
+
+/* Tabs */
+.hz-tabs {
+  gap: 3px !important;
+  border-bottom: 1px solid #dfe5ed;
+}
+
+.hz-tab {
+  min-height: 44px;
+  padding: 10px 13px;
+  border-radius: 9px 9px 0 0;
+  color: #64748b;
+  font-weight: 600;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.hz-tab:hover {
+  background: rgba(37, 99, 235, .055);
+  color: #1E40AF;
+}
+
+.hz-tab--active {
+  color: #2563EB;
+  border-bottom-color: #2563EB;
+  background: rgba(37, 99, 235, .035);
+}
+
+/* Tables */
+.hz-table thead th {
+  background: #f8fafc;
+  color: #64748b;
+  border-bottom-color: #e3e8ef;
+  font-size: 10px;
+  letter-spacing: .075em;
+}
+
+.hz-table tbody td {
+  border-bottom-color: #edf0f4;
+}
+
+.hz-table tbody tr:hover td {
+  background: #f8fbff;
+}
+
+/* Employee/profile surfaces visible across self-service and HR views */
+.hz-profile {
+  max-width: 1200px;
+  gap: 18px !important;
+}
+
+.hz-profile > a {
+  min-height: 30px;
+  color: #64748b !important;
+  font-weight: 600;
+  transition: color 140ms ease, transform 140ms ease;
+}
+
+.hz-profile > a:hover {
+  color: #2563EB !important;
+  transform: translateX(-1px);
+}
+
+.hz-profile__identity-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px !important;
+  border: 1px solid rgba(23, 32, 51, .08) !important;
+  border-top: 2px solid #2563EB !important;
+  box-shadow: 0 10px 32px rgba(15, 27, 61, .065) !important;
+}
+
+.hz-profile__identity-card > .hz-card__body {
+  padding: 0 !important;
+}
+
+.hz-profile__identity-card > .hz-card__body > .d-flex:first-child {
+  padding: 26px 28px 24px;
+}
+
+.hz-profile__identity-card .hz-avatar {
+  box-shadow: 0 0 0 4px #eef5ff, 0 0 0 5px #d9e4f2;
+}
+
+.hz-profile__identity-copy h1 {
+  font-size: 27px !important;
+  letter-spacing: -.035em;
+}
+
+.hz-profile-summary {
+  margin-top: 0 !important;
+  border-top: 1px solid #e6ebf1;
+}
+
+.hz-profile-summary__item {
+  min-height: 72px;
+  justify-content: center;
+  padding: 14px 20px !important;
+}
+
+.hz-profile-summary__item span {
+  color: #7a8798;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.hz-profile-summary__item strong {
+  color: #172033;
+  font-size: 14px;
+}
+
+.hz-profile-contact-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 0 !important;
+  border-top: 1px solid #e6ebf1;
+}
+
+.hz-profile-contact-strip__item {
+  min-width: 0;
+  padding: 17px 20px 19px;
+  border-right: 1px solid #e6ebf1;
+}
+
+.hz-profile-contact-strip__item:last-child {
+  border-right: 0;
+}
+
+.hz-profile-contact-strip__item > svg {
+  color: #2563EB;
+}
+
+.hz-profile-contact-strip__item small {
+  color: #8290a3;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.hz-profile-contact-strip__item strong {
+  color: #172033;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Toasts, dialogs and drawers should share the same surface language. */
+.hz-dialog,
+.hz-drawer,
+.hz-export-menu__popover {
+  border-color: rgba(23, 32, 51, .09);
+  border-radius: 14px;
+  box-shadow: 0 22px 55px rgba(15, 27, 61, .16);
+}
+
+@media (max-width: 767.98px) {
+  .hz-profile-contact-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hz-profile-contact-strip__item:nth-child(2) {
+    border-right: 0;
+  }
+
+  .hz-profile-contact-strip__item:nth-child(-n+2) {
+    border-bottom: 1px solid #e6ebf1;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hz-profile-contact-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .hz-profile-contact-strip__item,
+  .hz-profile-contact-strip__item:nth-child(2) {
+    border-right: 0;
+    border-bottom: 1px solid #e6ebf1;
+  }
+
+  .hz-profile-contact-strip__item:last-child {
+    border-bottom: 0;
+  }
+}

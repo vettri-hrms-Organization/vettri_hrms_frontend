@@ -10,6 +10,7 @@ import './design-system/styles/custom.scss';
 import './design-system/styles/tokens.css';
 import './design-system/styles/global.css';
 import './components/ui/components.css';
+import './design-system/styles/visual-polish.css';
 
 import { queryClient } from './api/queryClient';
 import { AuthProvider } from './auth/AuthContext';

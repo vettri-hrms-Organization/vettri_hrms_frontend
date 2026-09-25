@@ -103,7 +103,15 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                       key={`${section.id}-${item.to}`}
                       to={item.to}
                       end={item.end}
-                      className={({ isActive }) => `vettri-nav-item ${isActive ? 'is-active' : ''}`}
+                      className={() => {
+                        const [targetPath, targetQuery = ''] = item.to.split('?');
+                        const currentQuery = location.search.replace(/^\?/, '');
+                        const pathMatches = item.end
+                          ? location.pathname === targetPath
+                          : location.pathname === targetPath || location.pathname.startsWith(`${targetPath}/`);
+                        const queryMatches = targetQuery ? currentQuery === targetQuery : !currentQuery;
+                        return `vettri-nav-item ${pathMatches && queryMatches ? 'is-active' : ''}`;
+                      }}
                       title={isCollapsed ? item.label : undefined}
                       onClick={() => {
                         const matched = findNavItemByPath(item.to.split('?')[0]);
