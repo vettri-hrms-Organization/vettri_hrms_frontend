@@ -286,3 +286,215 @@
     border-bottom: 0;
   }
 }
+
+/* ================================================================
+   Vettri shell — compact production proportions
+   Keep the authenticated shell close to the reference: compact,
+   premium and space-efficient. This is intentionally the final
+   authority for shell dimensions and rhythm.
+   ================================================================ */
+:root {
+  --vettri-shell-sidebar-width: 264px;
+  --vettri-shell-sidebar-collapsed-width: 76px;
+  --vettri-shell-gap: 16px;
+}
+
+.vettri-app-shell {
+  gap: var(--vettri-shell-gap) !important;
+  padding: 16px 16px 16px 18px !important;
+  align-items: stretch !important;
+}
+
+.vettri-sidebar-shell {
+  flex: 0 0 var(--vettri-shell-sidebar-width) !important;
+  width: var(--vettri-shell-sidebar-width) !important;
+  min-width: var(--vettri-shell-sidebar-width) !important;
+  max-width: var(--vettri-shell-sidebar-width) !important;
+  height: calc(100vh - 32px) !important;
+  max-height: calc(100vh - 32px) !important;
+}
+
+.vettri-sidebar-shell.is-collapsed {
+  flex-basis: var(--vettri-shell-sidebar-collapsed-width) !important;
+  width: var(--vettri-shell-sidebar-collapsed-width) !important;
+  min-width: var(--vettri-shell-sidebar-collapsed-width) !important;
+  max-width: var(--vettri-shell-sidebar-collapsed-width) !important;
+}
+
+.vettri-sidebar {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-radius: 20px !important;
+  padding: 14px 10px 10px !important;
+  background: rgba(255,255,255,.78) !important;
+  border: 1px solid rgba(148,163,184,.24) !important;
+  box-shadow: 0 12px 34px rgba(15,27,61,.075), 0 2px 8px rgba(15,27,61,.035) !important;
+  backdrop-filter: blur(22px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(150%) !important;
+}
+
+.vettri-sidebar-brand {
+  min-height: 40px !important;
+  padding: 0 8px 4px !important;
+  margin-bottom: 6px !important;
+}
+
+.vettri-sidebar-brand > span {
+  font-size: 18px !important;
+  letter-spacing: -.025em !important;
+}
+
+.vettri-workspace-switcher {
+  min-height: 50px !important;
+  padding: 7px 8px !important;
+  margin: 4px 0 8px !important;
+  border-radius: 11px !important;
+}
+
+.vettri-workspace-mark {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  border-radius: 9px !important;
+}
+
+.vettri-workspace-copy strong {
+  font-size: 12.5px !important;
+  line-height: 1.2 !important;
+}
+
+.vettri-workspace-copy small {
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+}
+
+.vettri-sidebar-search-wrap {
+  margin: 0 0 8px !important;
+}
+
+.vettri-sidebar-search {
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+}
+
+.vettri-sidebar-search kbd {
+  font-size: 9px !important;
+  padding: 3px 5px !important;
+}
+
+.vettri-sidebar-nav {
+  min-height: 0 !important;
+  padding: 2px 0 !important;
+  gap: 2px !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(100,116,139,.28) transparent !important;
+}
+
+.vettri-nav-group {
+  margin: 0 0 7px !important;
+  gap: 2px !important;
+}
+
+.vettri-nav-group-label {
+  padding: 4px 10px 3px !important;
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+  letter-spacing: .08em !important;
+}
+
+.vettri-nav-item {
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 4px 8px !important;
+  border-radius: 9px !important;
+  gap: 9px !important;
+}
+
+.vettri-nav-icon {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  border-radius: 8px !important;
+}
+
+.vettri-nav-icon svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+.vettri-nav-label {
+  font-size: 12px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.vettri-nav-badge {
+  min-width: 19px !important;
+  height: 19px !important;
+  font-size: 9px !important;
+}
+
+.vettri-quick-add {
+  min-height: 34px !important;
+  height: 34px !important;
+  margin: 3px 2px 0 !important;
+  padding: 4px 9px !important;
+  border-radius: 9px !important;
+  font-size: 11.5px !important;
+}
+
+.vettri-sidebar-footer {
+  padding-top: 8px !important;
+  margin-top: 4px !important;
+}
+
+.vettri-user-card {
+  min-height: 48px !important;
+  padding: 5px 6px !important;
+  border-radius: 10px !important;
+}
+
+.vettri-user-trigger {
+  min-width: 0 !important;
+  gap: 8px !important;
+}
+
+.vettri-user-meta strong {
+  font-size: 11.5px !important;
+  line-height: 1.2 !important;
+}
+
+.vettri-user-meta small {
+  font-size: 9.5px !important;
+  line-height: 1.2 !important;
+}
+
+.vettri-user-bell {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+/* Keep the main content generous without making the shell feel oversized. */
+.vettri-app-shell__content {
+  min-width: 0 !important;
+}
+
+@media (max-width: 991.98px) {
+  .vettri-app-shell {
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .vettri-sidebar-shell {
+    width: 264px !important;
+    max-width: 264px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+}
