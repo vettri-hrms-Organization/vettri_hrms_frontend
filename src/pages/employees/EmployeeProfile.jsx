@@ -476,7 +476,7 @@ function DocumentsTab({ employee }) {
               <span>Required employee records</span>
             </div>
             <span className="hz-mandatory-documents__count">
-              {MANDATORY_DOCUMENTS.filter((required) => documents?.some((document) => document.documentType === required.type)).length}/{MANDATORY_DOCUMENTS.length} complete
+              {MANDATORY_DOCUMENTS.filter((required) => documents?.some((employeeDocument) => employeeDocument.documentType === required.type)).length}/{MANDATORY_DOCUMENTS.length} complete
             </span>
           </div>
           <div className="hz-mandatory-documents__grid">
@@ -647,35 +647,74 @@ function LeaveTab({ employee }) {
     queryFn: () => leaveRequestsApi.byEmployee(employee.id),
   });
 
+  const leaveBalances = Array.isArray(balances) ? balances : [];
+  const totalAvailable = leaveBalances.reduce((total, balance) => total + (Number(balance.remainingDays) || 0), 0);
+  const pendingByType = (requests || []).reduce((accumulator, request) => {
+    if (!request || request.status !== 'PENDING') return accumulator;
+    const key = request.leaveTypeName || 'Leave';
+    accumulator[key] = (accumulator[key] || 0) + (Number(request.days) || 0);
+    return accumulator;
+  }, {});
+
   return (
     <div className="row g-3">
-      <div className="col-12 col-lg-5">
-        <Card title="Leave Balance" subtitle={`${year}`}>
-          {balancesLoading && <SkeletonText lines={3} />}
-          {!balancesLoading && balances?.length === 0 && <EmptyState title="No leave types configured" />}
-          {!balancesLoading &&
-            balances?.map((b) => (
-              <div key={b.leaveTypeId} className="py-2" style={{ borderBottom: '1px solid var(--hz-border)' }}>
-                <div className="d-flex justify-content-between mb-1">
-                  <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500 }}>{b.leaveTypeName}</span>
-                  <span style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                    {b.remainingDays} / {b.allocatedDays + b.carriedForwardDays}
-                  </span>
+      <div className="col-12">
+        <div className="hz-leave-widget__hero" style={{ marginBottom: 0 }}>
+          <div className="hz-leave-widget__meta">
+            <span className="hz-leave-widget__eyebrow">Total available</span>
+            <div className="hz-leave-widget__total">
+              <strong>{formatLeaveNumber(totalAvailable)}</strong>
+              <span>days</span>
+            </div>
+            <p>{leaveBalances.length ? `Across ${leaveBalances.length} leave type${leaveBalances.length === 1 ? '' : 's'}` : 'No leave balances available'}</p>
+            <div className="hz-leave-widget__actions">
+              <Link to="/leave" className="hz-leave-widget__action hz-leave-widget__action--primary">Apply Leave</Link>
+              <Link to="/leave" className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
+            </div>
+          </div>
+
+          {balancesLoading ? (
+            <div className="hz-leave-widget__capsule-row hz-leave-widget__capsule-row--skeleton" aria-label="Loading leave balances">
+              {[1, 2, 3, 4].map((item) => (
+                <div className="hz-leave-capsule hz-leave-capsule--skeleton" key={item}>
+                  <div className="skeleton" style={{ width: 42, height: 16, borderRadius: 999, background: 'var(--hz-gray-200)' }} />
+                  <div className="skeleton" style={{ width: 30, height: 120, borderRadius: 18, background: 'var(--hz-gray-200)' }} />
+                  <div className="skeleton" style={{ width: 54, height: 16, borderRadius: 999, background: 'var(--hz-gray-200)' }} />
                 </div>
-                <div style={{ height: 6, borderRadius: 999, background: 'var(--hz-gray-100)' }}>
-                  <div
-                    style={{
-                      height: 6,
-                      borderRadius: 999,
-                      width: `${Math.min(100, Math.round((b.usedDays / (b.allocatedDays + b.carriedForwardDays || 1)) * 100))}%`,
-                      background: 'var(--hz-primary-500)',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-        </Card>
+              ))}
+            </div>
+          ) : leaveBalances.length ? (
+            <div className="hz-leave-widget__capsule-row" aria-label="Leave balances by type">
+              {leaveBalances.map((balance, index) => {
+                const available = Number(balance.remainingDays) || 0;
+                const used = Number(balance.usedDays) || 0;
+                const total = (Number(balance.allocatedDays) || 0) + (Number(balance.carriedForwardDays) || 0);
+                const percentage = total > 0 ? Math.min(100, Math.max(0, (available / total) * 100)) : 0;
+                const accent = LEAVE_TYPE_COLORS[index % LEAVE_TYPE_COLORS.length];
+                const code = getLeaveCode(balance.leaveTypeName);
+
+                return (
+                  <div key={balance.leaveTypeId || `${balance.leaveTypeName}-${index}`} className="hz-leave-capsule" tabIndex={0} role="listitem" aria-label={`${balance.leaveTypeName}: ${formatLeaveNumber(available)} days available, ${formatLeaveNumber(used)} used, ${formatLeaveNumber(pendingByType[balance.leaveTypeName] || 0)} pending, ${formatLeaveNumber(total)} total.`}>
+                    <div className="hz-leave-capsule__value">{formatLeaveNumber(available)}</div>
+                    <div className="hz-leave-capsule__tube" aria-hidden="true">
+                      <div className="hz-leave-capsule__fill" style={{ '--hz-leave-fill-height': `${percentage}%`, '--hz-leave-fill-color': accent }} />
+                    </div>
+                    <div className="hz-leave-capsule__meta">
+                      <span>{code}</span>
+                      <small>{balance.leaveTypeName}</small>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 180 }}>
+              <EmptyState icon={CalendarDays} title="No leave balances available" description="No leave data is available for this employee yet." />
+            </div>
+          )}
+        </div>
       </div>
+
       <div className="col-12 col-lg-7">
         <Card title="Request History">
           {requestsLoading && <SkeletonText lines={4} />}
@@ -706,6 +745,21 @@ function LeaveTab({ employee }) {
       </div>
     </div>
   );
+}
+
+const LEAVE_TYPE_COLORS = ['#2563EB', '#F97316', '#10B981', '#FBBF24', '#8B5CF6', '#14B8A6'];
+
+function getLeaveCode(name = '') {
+  const words = name.split(/\s+/).filter(Boolean);
+  if (!words.length) return 'LV';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words.slice(0, 2).map((word) => word[0]).join('').toUpperCase();
+}
+
+function formatLeaveNumber(value) {
+  const number = Number(value) || 0;
+  if (Number.isInteger(number)) return String(number);
+  return String(Number(number.toFixed(2)));
 }
 
 function InfoRow({ icon: Icon, label, value }) {
