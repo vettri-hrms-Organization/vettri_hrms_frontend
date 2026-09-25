@@ -287,147 +287,278 @@
   }
 }
 
-/* ================================================================
-   Vettri shell — compact production proportions
-   Keep the authenticated shell close to the reference: compact,
-   premium and space-efficient. This is intentionally the final
-   authority for shell dimensions and rhythm.
-   ================================================================ */
+/* ========================================================================
+   VETTRI 2026 — PREMIUM PRODUCT SHELL + GLOBAL VISUAL SYSTEM
+   Single authoritative visual layer. No routing/API/permission changes.
+   Design intent: compact, calm, tactile, premium and highly scannable.
+   ======================================================================== */
 :root {
-  --vettri-shell-sidebar-width: 264px;
-  --vettri-shell-sidebar-collapsed-width: 76px;
-  --vettri-shell-gap: 16px;
+  --vettri-blue: #2563EB;
+  --vettri-blue-deep: #1E40AF;
+  --vettri-navy: #0F1B3D;
+  --vettri-ink: #172033;
+  --vettri-muted: #6B7A90;
+  --vettri-canvas: #F2F5F9;
+  --vettri-surface: rgba(255,255,255,.94);
+  --vettri-line: rgba(15,27,61,.075);
+  --vettri-line-strong: #D9E1EC;
+  --vettri-shadow-sm: 0 2px 8px rgba(15,27,61,.035);
+  --vettri-shadow-md: 0 10px 28px rgba(15,27,61,.055), 0 2px 6px rgba(15,27,61,.025);
+  --vettri-shadow-lg: 0 20px 48px rgba(15,27,61,.105), 0 3px 10px rgba(15,27,61,.035);
+  --vettri-ease: cubic-bezier(.22,.61,.36,1);
+  --vettri-sidebar-width: 228px;
+  --vettri-sidebar-collapsed: 68px;
+  --vettri-shell-gap: 12px;
 }
 
+html, body, #root { min-height: 100%; }
+
+body {
+  color: var(--vettri-ink);
+  background: var(--vettri-canvas);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ============================== CANVAS ============================== */
 .vettri-app-shell {
+  position: relative;
   gap: var(--vettri-shell-gap) !important;
-  padding: 16px 16px 16px 18px !important;
-  align-items: stretch !important;
+  padding: 12px 12px 12px 14px !important;
+  background:
+    radial-gradient(620px 380px at -5% -12%, rgba(37,99,235,.055), transparent 70%),
+    radial-gradient(500px 320px at 105% 2%, rgba(249,115,22,.018), transparent 72%),
+    var(--vettri-canvas) !important;
 }
 
+.vettri-app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255,255,255,.28), transparent 24%);
+}
+
+.vettri-app-shell__content { min-width: 0 !important; }
+
+/* ============================== SIDEBAR ============================= */
 .vettri-sidebar-shell {
-  flex: 0 0 var(--vettri-shell-sidebar-width) !important;
-  width: var(--vettri-shell-sidebar-width) !important;
-  min-width: var(--vettri-shell-sidebar-width) !important;
-  max-width: var(--vettri-shell-sidebar-width) !important;
-  height: calc(100vh - 32px) !important;
-  max-height: calc(100vh - 32px) !important;
+  flex: 0 0 var(--vettri-sidebar-width) !important;
+  width: var(--vettri-sidebar-width) !important;
+  min-width: var(--vettri-sidebar-width) !important;
+  max-width: var(--vettri-sidebar-width) !important;
+  height: calc(100vh - 24px) !important;
+  max-height: calc(100vh - 24px) !important;
 }
 
 .vettri-sidebar-shell.is-collapsed {
-  flex-basis: var(--vettri-shell-sidebar-collapsed-width) !important;
-  width: var(--vettri-shell-sidebar-collapsed-width) !important;
-  min-width: var(--vettri-shell-sidebar-collapsed-width) !important;
-  max-width: var(--vettri-shell-sidebar-collapsed-width) !important;
+  flex-basis: var(--vettri-sidebar-collapsed) !important;
+  width: var(--vettri-sidebar-collapsed) !important;
+  min-width: var(--vettri-sidebar-collapsed) !important;
+  max-width: var(--vettri-sidebar-collapsed) !important;
 }
 
 .vettri-sidebar {
+  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
-  border-radius: 20px !important;
-  padding: 14px 10px 10px !important;
-  background: rgba(255,255,255,.78) !important;
-  border: 1px solid rgba(148,163,184,.24) !important;
-  box-shadow: 0 12px 34px rgba(15,27,61,.075), 0 2px 8px rgba(15,27,61,.035) !important;
-  backdrop-filter: blur(22px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(150%) !important;
+  overflow: visible !important;
+  padding: 10px 8px 8px !important;
+  border: 1px solid rgba(148,163,184,.22) !important;
+  border-radius: 19px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(248,250,253,.88)) !important;
+  box-shadow: var(--vettri-shadow-md) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+}
+
+.vettri-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.96);
 }
 
 .vettri-sidebar-brand {
-  min-height: 40px !important;
-  padding: 0 8px 4px !important;
-  margin-bottom: 6px !important;
+  position: relative;
+  min-height: 35px !important;
+  margin: 0 1px 5px !important;
+  padding: 0 7px !important;
 }
 
 .vettri-sidebar-brand > span {
-  font-size: 18px !important;
-  letter-spacing: -.025em !important;
+  color: var(--vettri-navy) !important;
+  font-size: 17px !important;
+  font-weight: 780 !important;
+  letter-spacing: -.045em !important;
 }
 
+.vettri-sidebar-brand .hz-logo-mark,
+.vettri-sidebar-brand svg {
+  filter: drop-shadow(0 3px 7px rgba(37,99,235,.10));
+}
+
+/* Workspace is intentionally compact: it should orient, not consume space. */
 .vettri-workspace-switcher {
-  min-height: 50px !important;
-  padding: 7px 8px !important;
-  margin: 4px 0 8px !important;
+  min-height: 44px !important;
+  margin: 1px 1px 6px !important;
+  padding: 5px 7px !important;
+  border: 1px solid rgba(37,99,235,.105) !important;
   border-radius: 11px !important;
+  background: linear-gradient(135deg, #F0F5FF 0%, #FFFFFF 100%) !important;
+  box-shadow: 0 2px 8px rgba(15,27,61,.025) !important;
+  transition: border-color 160ms var(--vettri-ease), box-shadow 160ms var(--vettri-ease), transform 160ms var(--vettri-ease);
+}
+
+.vettri-workspace-switcher:hover {
+  border-color: rgba(37,99,235,.22) !important;
+  box-shadow: 0 6px 15px rgba(37,99,235,.07) !important;
+  transform: translateY(-1px);
 }
 
 .vettri-workspace-mark {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  border-radius: 9px !important;
+  width: 29px !important;
+  height: 29px !important;
+  min-width: 29px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(145deg, #2563EB, #1E40AF) !important;
+  box-shadow: 0 4px 10px rgba(37,99,235,.16) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
 }
 
 .vettri-workspace-copy strong {
-  font-size: 12.5px !important;
-  line-height: 1.2 !important;
+  color: #1D2B44 !important;
+  font-size: 11.7px !important;
+  font-weight: 720 !important;
 }
 
 .vettri-workspace-copy small {
-  font-size: 10.5px !important;
-  line-height: 1.2 !important;
+  color: #8390A4 !important;
+  font-size: 9.5px !important;
 }
 
-.vettri-sidebar-search-wrap {
-  margin: 0 0 8px !important;
-}
+.vettri-workspace-chevron { color: #7F8DA1 !important; }
+
+/* Search is a control, not a text label. */
+.vettri-sidebar-search-wrap { margin: 0 1px 6px !important; }
 
 .vettri-sidebar-search {
-  min-height: 38px !important;
-  height: 38px !important;
-  padding: 0 10px !important;
-  border-radius: 10px !important;
+  min-height: 35px !important;
+  height: 35px !important;
+  padding: 0 9px !important;
+  border: 1px solid rgba(148,163,184,.24) !important;
+  border-radius: 9px !important;
+  background: rgba(255,255,255,.82) !important;
+  color: #738197 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
+
+.vettri-sidebar-search:hover { border-color: rgba(37,99,235,.18) !important; background: #fff !important; }
+.vettri-sidebar-search:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(37,99,235,.08) !important; border-color: rgba(37,99,235,.38) !important; }
 
 .vettri-sidebar-search kbd {
-  font-size: 9px !important;
+  min-width: 43px;
   padding: 3px 5px !important;
+  border: 1px solid #E0E6EF !important;
+  border-radius: 6px !important;
+  background: #F5F7FA !important;
+  color: #7B8799 !important;
+  font-size: 8.5px !important;
+  font-weight: 750 !important;
 }
 
+/* One scroll region only. Header and footer remain stable. */
 .vettri-sidebar-nav {
+  flex: 1 1 auto !important;
   min-height: 0 !important;
-  padding: 2px 0 !important;
-  gap: 2px !important;
+  padding: 0 1px 2px !important;
   overflow-x: hidden !important;
+  overflow-y: auto !important;
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(100,116,139,.28) transparent !important;
+  scrollbar-color: rgba(100,116,139,.20) transparent !important;
 }
 
-.vettri-nav-group {
-  margin: 0 0 7px !important;
-  gap: 2px !important;
-}
+.vettri-sidebar-nav::-webkit-scrollbar { width: 4px; }
+.vettri-sidebar-nav::-webkit-scrollbar-thumb { background: rgba(100,116,139,.18); border-radius: 999px; }
+.vettri-sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+
+.vettri-nav-group { margin: 0 0 5px !important; padding: 0 !important; }
+.vettri-nav-group + .vettri-nav-group { padding-top: 2px !important; }
 
 .vettri-nav-group-label {
-  padding: 4px 10px 3px !important;
-  font-size: 9px !important;
-  line-height: 1.2 !important;
-  letter-spacing: .08em !important;
+  margin: 0 4px !important;
+  padding: 4px 6px 3px !important;
+  color: #98A4B5 !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: .105em !important;
+  line-height: 1.1 !important;
+  text-transform: uppercase;
 }
 
 .vettri-nav-item {
-  min-height: 34px !important;
-  height: 34px !important;
-  padding: 4px 8px !important;
-  border-radius: 9px !important;
-  gap: 9px !important;
+  position: relative;
+  min-height: 31px !important;
+  height: 31px !important;
+  margin: 1px 0 !important;
+  padding: 2px 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  color: #586980 !important;
+  gap: 8px !important;
+  transition: color 140ms var(--vettri-ease), background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.vettri-nav-item:hover {
+  color: #253653 !important;
+  background: #F3F6FB !important;
+  border-color: #E9EEF5 !important;
+}
+
+.vettri-nav-item.is-active {
+  color: #fff !important;
+  border-color: rgba(37,99,235,.38) !important;
+  background: linear-gradient(135deg, #2D6AE7 0%, #2457C8 100%) !important;
+  box-shadow: 0 4px 11px rgba(37,99,235,.14), inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+
+.vettri-nav-item.is-active::after {
+  content: '';
+  position: absolute;
+  right: 5px;
+  top: 9px;
+  width: 3px;
+  height: 13px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.75);
 }
 
 .vettri-nav-icon {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  border-radius: 8px !important;
+  width: 25px !important;
+  height: 25px !important;
+  min-width: 25px !important;
+  border-radius: 7px !important;
+  color: #62728A !important;
+  background: #F0F4F9 !important;
+  transition: color 140ms ease, background 140ms ease;
 }
 
-.vettri-nav-icon svg {
-  width: 15px !important;
-  height: 15px !important;
-}
+.vettri-nav-item:hover .vettri-nav-icon { color: #2563EB !important; background: #E8F0FF !important; }
+.vettri-nav-item.is-active .vettri-nav-icon { color: #fff !important; background: rgba(255,255,255,.14) !important; }
 
 .vettri-nav-label {
-  font-size: 12px !important;
+  min-width: 0;
+  color: inherit !important;
+  font-size: 11.2px !important;
+  font-weight: 650 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -435,613 +566,272 @@
 }
 
 .vettri-nav-badge {
-  min-width: 19px !important;
-  height: 19px !important;
-  font-size: 9px !important;
-}
-
-.vettri-quick-add {
-  min-height: 34px !important;
-  height: 34px !important;
-  margin: 3px 2px 0 !important;
-  padding: 4px 9px !important;
-  border-radius: 9px !important;
-  font-size: 11.5px !important;
-}
-
-.vettri-sidebar-footer {
-  padding-top: 8px !important;
-  margin-top: 4px !important;
-}
-
-.vettri-user-card {
-  min-height: 48px !important;
-  padding: 5px 6px !important;
-  border-radius: 10px !important;
-}
-
-.vettri-user-trigger {
-  min-width: 0 !important;
-  gap: 8px !important;
-}
-
-.vettri-user-meta strong {
-  font-size: 11.5px !important;
-  line-height: 1.2 !important;
-}
-
-.vettri-user-meta small {
-  font-size: 9.5px !important;
-  line-height: 1.2 !important;
-}
-
-.vettri-user-bell {
-  width: 28px !important;
-  height: 28px !important;
-}
-
-/* Keep the main content generous without making the shell feel oversized. */
-.vettri-app-shell__content {
-  min-width: 0 !important;
-}
-
-@media (max-width: 991.98px) {
-  .vettri-app-shell {
-    padding: 0 !important;
-    gap: 0 !important;
-  }
-
-  .vettri-sidebar-shell {
-    width: 264px !important;
-    max-width: 264px !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-  }
-}
-
-/* ========================================================================
-   VETTRI SALES-READY SHELL — FINAL DESIGN ENGINEERING PASS
-   Intent: calm, premium, compact, highly scannable enterprise SaaS UI.
-   This layer intentionally favors hierarchy and usable screen area over
-   decorative chrome. It does not change routing, APIs, permissions or data.
-   ======================================================================== */
-:root {
-  --vettri-shell-sidebar-width: 248px;
-  --vettri-shell-sidebar-collapsed-width: 72px;
-  --vettri-shell-gap: 14px;
-  --vettri-shell-canvas: #f2f5fa;
-  --vettri-shell-blue: #2563eb;
-  --vettri-shell-blue-dark: #1e40af;
-  --vettri-shell-navy: #0f1b3d;
-  --vettri-shell-line: rgba(15, 27, 61, .075);
-  --vettri-shell-muted: #6b7a90;
-  --vettri-shell-shadow: 0 14px 38px rgba(15, 27, 61, .075), 0 2px 8px rgba(15, 27, 61, .035);
-}
-
-/* Quiet canvas: the product should feel like a workspace, not a page of cards. */
-body {
-  background: var(--vettri-shell-canvas);
-}
-
-.vettri-app-shell {
-  position: relative;
-  gap: var(--vettri-shell-gap) !important;
-  padding: 14px 14px 14px 16px !important;
-  background:
-    radial-gradient(520px 320px at 12% 0%, rgba(37,99,235,.055), transparent 72%),
-    radial-gradient(460px 300px at 96% 12%, rgba(249,115,22,.025), transparent 72%),
-    var(--vettri-shell-canvas) !important;
-}
-
-.vettri-sidebar-shell {
-  flex: 0 0 var(--vettri-shell-sidebar-width) !important;
-  width: var(--vettri-shell-sidebar-width) !important;
-  min-width: var(--vettri-shell-sidebar-width) !important;
-  max-width: var(--vettri-shell-sidebar-width) !important;
-  height: calc(100vh - 28px) !important;
-  max-height: calc(100vh - 28px) !important;
-}
-
-.vettri-sidebar-shell.is-collapsed {
-  flex-basis: var(--vettri-shell-sidebar-collapsed-width) !important;
-  width: var(--vettri-shell-sidebar-collapsed-width) !important;
-  min-width: var(--vettri-shell-sidebar-collapsed-width) !important;
-  max-width: var(--vettri-shell-sidebar-collapsed-width) !important;
-}
-
-.vettri-sidebar {
-  position: relative;
-  overflow: visible !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 12px 9px 9px !important;
-  border: 1px solid rgba(148,163,184,.20) !important;
-  border-radius: 20px !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.91) 0%, rgba(248,250,253,.82) 100%) !important;
-  box-shadow: var(--vettri-shell-shadow) !important;
-  backdrop-filter: blur(24px) saturate(155%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
-}
-
-/* A tiny highlight line gives the glass shell a crafted edge without looking flashy. */
-.vettri-sidebar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.92);
-}
-
-.vettri-sidebar-brand {
-  position: relative;
-  min-height: 38px !important;
-  margin: 0 2px 6px !important;
-  padding: 0 7px 0 !important;
-}
-
-.vettri-sidebar-brand > span {
-  color: var(--vettri-shell-navy) !important;
-  font-size: 17px !important;
-  font-weight: 750 !important;
-  letter-spacing: -.035em !important;
-}
-
-.vettri-sidebar-brand .hz-logo-mark,
-.vettri-sidebar-brand svg {
-  filter: drop-shadow(0 3px 6px rgba(37,99,235,.12));
-}
-
-.vettri-workspace-switcher {
-  position: relative;
-  min-height: 47px !important;
-  margin: 2px 1px 7px !important;
-  padding: 6px 7px !important;
-  border: 1px solid rgba(37,99,235,.10) !important;
-  border-radius: 12px !important;
-  background: linear-gradient(135deg, rgba(239,246,255,.92), rgba(255,255,255,.72)) !important;
-  box-shadow: 0 2px 8px rgba(15,27,61,.025) !important;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-}
-
-.vettri-workspace-switcher:hover {
-  border-color: rgba(37,99,235,.20) !important;
-  box-shadow: 0 5px 14px rgba(37,99,235,.075) !important;
-  transform: translateY(-1px);
-}
-
-.vettri-workspace-mark {
-  width: 31px !important;
-  height: 31px !important;
-  min-width: 31px !important;
-  border-radius: 9px !important;
-  background: linear-gradient(145deg, #2563eb, #1e40af) !important;
-  box-shadow: 0 5px 12px rgba(37,99,235,.18) !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-}
-
-.vettri-workspace-copy strong {
-  color: #1d2b44 !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-}
-
-.vettri-workspace-copy small {
-  color: #8390a4 !important;
-  font-size: 10px !important;
-  font-weight: 500 !important;
-}
-
-.vettri-workspace-chevron {
-  color: #8090a7 !important;
-}
-
-.vettri-sidebar-search-wrap {
-  margin: 0 1px 8px !important;
-}
-
-.vettri-sidebar-search {
-  min-height: 36px !important;
-  height: 36px !important;
-  padding: 0 9px !important;
-  border: 1px solid rgba(148,163,184,.24) !important;
-  border-radius: 10px !important;
-  background: rgba(255,255,255,.78) !important;
-  color: #64748b !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.9) !important;
-  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
-}
-
-.vettri-sidebar-search:hover {
-  border-color: rgba(37,99,235,.18) !important;
-  background: #fff !important;
-}
-
-.vettri-sidebar-search:focus-visible {
-  outline: 0;
-  border-color: rgba(37,99,235,.42) !important;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.08) !important;
-}
-
-.vettri-sidebar-search kbd {
-  min-width: 44px;
-  border: 1px solid #e1e7ef !important;
-  border-radius: 6px !important;
-  background: #f6f8fb !important;
-  color: #77859a !important;
-  font-size: 8.5px !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-}
-
-.vettri-sidebar-nav {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  padding: 1px 1px 2px !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(100,116,139,.22) transparent !important;
-}
-
-.vettri-sidebar-nav::-webkit-scrollbar {
-  width: 4px;
-}
-
-.vettri-sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(100,116,139,.20);
-  border-radius: 999px;
-}
-
-.vettri-sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.vettri-nav-group {
-  margin: 0 0 6px !important;
-  padding: 0 !important;
-}
-
-.vettri-nav-group + .vettri-nav-group {
-  padding-top: 3px !important;
-}
-
-.vettri-nav-group-label {
-  margin: 0 4px !important;
-  padding: 5px 7px 4px !important;
-  color: #98a4b6 !important;
-  font-size: 8.5px !important;
-  font-weight: 800 !important;
-  letter-spacing: .10em !important;
-  line-height: 1.1 !important;
-}
-
-.vettri-nav-item {
-  position: relative;
-  min-height: 33px !important;
-  height: 33px !important;
-  margin: 1px 0 !important;
-  padding: 3px 7px !important;
-  border: 1px solid transparent !important;
-  border-radius: 9px !important;
-  color: #56667e !important;
-  gap: 8px !important;
-  transition: color 150ms ease, background 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
-}
-
-.vettri-nav-item:hover {
-  color: #243653 !important;
-  background: rgba(37,99,235,.055) !important;
-  border-color: rgba(37,99,235,.065) !important;
-  transform: translateX(1px);
-}
-
-.vettri-nav-item.is-active {
-  color: #fff !important;
-  border-color: rgba(37,99,235,.55) !important;
-  background: linear-gradient(135deg, #2f6df0 0%, #2457c9 100%) !important;
-  box-shadow: 0 5px 13px rgba(37,99,235,.17), inset 0 1px 0 rgba(255,255,255,.16) !important;
-}
-
-.vettri-nav-item.is-active::after {
-  content: '';
-  position: absolute;
-  right: 6px;
-  top: 9px;
-  width: 4px;
-  height: 15px;
-  border-radius: 99px;
-  background: rgba(255,255,255,.72);
-}
-
-.vettri-nav-icon {
-  width: 27px !important;
-  height: 27px !important;
-  min-width: 27px !important;
-  border-radius: 8px !important;
-  color: #4f6da8 !important;
-  background: rgba(235,242,255,.88) !important;
-  transition: color 150ms ease, background 150ms ease, transform 150ms ease;
-}
-
-.vettri-nav-item:hover .vettri-nav-icon {
-  color: #2563eb !important;
-  background: #e7efff !important;
-}
-
-.vettri-nav-item.is-active .vettri-nav-icon {
-  color: #fff !important;
-  background: rgba(255,255,255,.14) !important;
-}
-
-.vettri-nav-label {
-  font-size: 11.5px !important;
-  font-weight: 650 !important;
-  line-height: 1 !important;
-}
-
-.vettri-nav-badge {
   margin-left: auto !important;
   min-width: 18px !important;
   height: 18px !important;
   border-radius: 6px !important;
-  background: #eef3fb !important;
-  color: #64748b !important;
+  background: #EEF3FB !important;
+  color: #65748A !important;
   font-size: 8.5px !important;
   font-weight: 800 !important;
 }
 
-.vettri-nav-item.is-active .vettri-nav-badge {
-  color: #1e40af !important;
-  background: rgba(255,255,255,.88) !important;
-}
+.vettri-nav-item.is-active .vettri-nav-badge { color: #1E40AF !important; background: rgba(255,255,255,.9) !important; }
 
 .vettri-quick-add {
-  min-height: 32px !important;
-  height: 32px !important;
-  margin: 5px 1px 1px !important;
+  min-height: 31px !important;
+  height: 31px !important;
+  margin: 4px 0 1px !important;
   padding: 3px 8px !important;
-  border: 1px dashed rgba(37,99,235,.28) !important;
-  border-radius: 9px !important;
-  background: rgba(239,246,255,.46) !important;
-  color: #315cae !important;
-  font-size: 10.5px !important;
-  font-weight: 700 !important;
-  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+  border: 1px dashed rgba(37,99,235,.27) !important;
+  border-radius: 8px !important;
+  background: rgba(239,246,255,.48) !important;
+  color: #4566A0 !important;
+  font-size: 10.3px !important;
+  font-weight: 720 !important;
 }
 
-.vettri-quick-add:hover {
-  background: rgba(239,246,255,.90) !important;
-  border-color: rgba(37,99,235,.48) !important;
-  transform: translateY(-1px);
-}
+.vettri-quick-add:hover { background: #F0F5FF !important; border-color: rgba(37,99,235,.44) !important; }
 
 .vettri-sidebar-footer {
   flex: 0 0 auto !important;
-  margin-top: 5px !important;
-  padding-top: 7px !important;
+  margin-top: 4px !important;
+  padding-top: 6px !important;
   border-top: 1px solid rgba(148,163,184,.15) !important;
 }
 
 .vettri-user-card {
-  min-height: 45px !important;
-  padding: 4px 5px !important;
+  min-height: 42px !important;
+  padding: 3px 4px !important;
   border: 1px solid transparent !important;
-  border-radius: 11px !important;
+  border-radius: 10px !important;
   background: rgba(255,255,255,.42) !important;
-  transition: background 150ms ease, border-color 150ms ease;
+  transition: background 140ms ease, border-color 140ms ease;
 }
 
-.vettri-user-card:hover {
-  background: rgba(255,255,255,.80) !important;
-  border-color: rgba(148,163,184,.16) !important;
-}
+.vettri-user-card:hover { background: rgba(255,255,255,.82) !important; border-color: rgba(148,163,184,.16) !important; }
+.vettri-user-meta strong { color: #263650 !important; font-size: 10.7px !important; font-weight: 750 !important; }
+.vettri-user-meta small { color: #8793A5 !important; font-size: 8.2px !important; font-weight: 700 !important; }
+.vettri-user-bell { width: 27px !important; height: 27px !important; border-radius: 8px !important; color: #748197 !important; }
+.vettri-user-bell:hover { color: #2563EB !important; background: #EEF4FF !important; }
 
-.vettri-user-meta strong {
-  color: #263650 !important;
-  font-size: 11px !important;
-  font-weight: 750 !important;
-}
-
-.vettri-user-meta small {
-  color: #8491a4 !important;
-  font-size: 8.5px !important;
-  font-weight: 700 !important;
-  letter-spacing: .02em;
-}
-
-.vettri-user-bell {
-  width: 27px !important;
-  height: 27px !important;
-  border-radius: 8px !important;
-  color: #718097 !important;
-}
-
-.vettri-user-bell:hover {
-  color: #2563eb !important;
-  background: #eef4ff !important;
-}
-
-/* Floating collapse control: subtle, tactile, and visually attached to the shell. */
 .vettri-sidebar-handle {
-  width: 22px !important;
-  height: 22px !important;
-  right: -11px !important;
-  border: 1px solid rgba(148,163,184,.25) !important;
+  width: 21px !important;
+  height: 21px !important;
+  right: -10px !important;
+  border: 1px solid rgba(148,163,184,.24) !important;
   border-radius: 50% !important;
-  background: rgba(255,255,255,.96) !important;
-  color: #62728a !important;
-  box-shadow: 0 4px 12px rgba(15,27,61,.10) !important;
-  transform: translateY(-50%) rotate(90deg) !important;
+  background: rgba(255,255,255,.97) !important;
+  color: #66758B !important;
+  box-shadow: 0 4px 12px rgba(15,27,61,.09) !important;
 }
 
-.vettri-sidebar-shell.is-collapsed .vettri-sidebar-handle {
-  transform: translateY(-50%) rotate(-90deg) !important;
-}
+.vettri-sidebar-handle:hover { color: #2563EB !important; border-color: rgba(37,99,235,.28) !important; }
+.vettri-sidebar-shell.is-collapsed .vettri-sidebar { padding-left: 6px !important; padding-right: 6px !important; }
+.vettri-sidebar-shell.is-collapsed .vettri-nav-item { justify-content: center !important; padding: 2px !important; }
+.vettri-sidebar-shell.is-collapsed .vettri-nav-item.is-active::after { right: 2px; }
 
-.vettri-sidebar-handle:hover {
-  color: #2563eb !important;
-  border-color: rgba(37,99,235,.25) !important;
-}
-
-/* Collapsed mode stays elegant instead of becoming a cramped icon rail. */
-.vettri-sidebar-shell.is-collapsed .vettri-sidebar {
-  padding-left: 7px !important;
-  padding-right: 7px !important;
-}
-
-.vettri-sidebar-shell.is-collapsed .vettri-sidebar-brand,
-.vettri-sidebar-shell.is-collapsed .vettri-workspace-switcher,
-.vettri-sidebar-shell.is-collapsed .vettri-sidebar-search-wrap,
-.vettri-sidebar-shell.is-collapsed .vettri-sidebar-footer {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-
-.vettri-sidebar-shell.is-collapsed .vettri-nav-item {
-  justify-content: center !important;
-  padding: 3px !important;
-}
-
-.vettri-sidebar-shell.is-collapsed .vettri-nav-item.is-active::after {
-  right: 3px;
-}
-
-/* ------------------------------------------------------------------------
-   Main topbar: same visual language, but intentionally quieter than content.
-   ------------------------------------------------------------------------ */
-.vettri-app-shell__content {
-  min-width: 0 !important;
-}
-
+/* =============================== TOPBAR ============================= */
 .vettri-topbar {
   position: sticky !important;
-  top: 14px !important;
+  top: 12px !important;
   z-index: 30 !important;
-  min-height: 58px !important;
-  margin: 0 0 12px !important;
-  padding: 7px 10px 7px 16px !important;
+  min-height: 56px !important;
+  margin: 0 0 10px !important;
+  padding: 6px 8px 6px 14px !important;
   border: 1px solid rgba(148,163,184,.18) !important;
-  border-radius: 16px !important;
-  background: rgba(255,255,255,.86) !important;
-  box-shadow: 0 8px 24px rgba(15,27,61,.045), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  border-radius: 15px !important;
+  background: rgba(255,255,255,.91) !important;
+  box-shadow: 0 8px 26px rgba(15,27,61,.04), inset 0 1px 0 rgba(255,255,255,.96) !important;
   backdrop-filter: blur(20px) saturate(145%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(145%) !important;
 }
 
 .vettri-topbar-crumb {
-  min-width: 150px;
-  gap: 8px !important;
-  color: #94a0b2 !important;
-  font-size: 11px !important;
+  min-width: 142px;
+  gap: 7px !important;
+  color: #98A3B4 !important;
+  font-size: 10.5px !important;
 }
 
-.vettri-topbar-crumb b {
-  color: #c3cad5 !important;
-  font-weight: 500 !important;
-}
-
-.vettri-topbar-crumb strong {
-  color: #1c2b45 !important;
-  font-size: 13px !important;
-  font-weight: 750 !important;
-}
+.vettri-topbar-crumb b { color: #C5CCD6 !important; font-weight: 500 !important; }
+.vettri-topbar-crumb strong { color: #1D2B44 !important; font-size: 12.5px !important; font-weight: 750 !important; }
 
 .vettri-command-trigger {
-  height: 40px !important;
-  max-width: 470px !important;
-  border: 1px solid #e0e6ef !important;
-  border-radius: 11px !important;
-  background: #fdfefe !important;
+  height: 38px !important;
+  max-width: 500px !important;
+  flex: 1 1 440px;
+  border: 1px solid #DFE6EF !important;
+  border-radius: 10px !important;
+  background: #FBFCFE !important;
   color: #738096 !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.95) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.96) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
-.vettri-command-trigger:hover {
-  border-color: rgba(37,99,235,.24) !important;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.055) !important;
-}
-
-.vettri-command-trigger kbd {
-  border: 1px solid #e1e7ef !important;
-  border-radius: 6px !important;
-  background: #f4f7fb !important;
-  color: #78869b !important;
-  font-size: 9px !important;
-}
+.vettri-command-trigger:hover { border-color: rgba(37,99,235,.24) !important; background: #fff !important; box-shadow: 0 0 0 3px rgba(37,99,235,.05) !important; }
+.vettri-command-trigger kbd { border: 1px solid #E1E7EF !important; border-radius: 6px !important; background: #F4F7FB !important; color: #78869B !important; font-size: 9px !important; }
 
 .vettri-topbar .hz-icon-btn {
+  width: 38px !important;
+  height: 38px !important;
   border: 1px solid rgba(148,163,184,.17) !important;
   border-radius: 10px !important;
-  background: rgba(255,255,255,.72) !important;
-  color: #596a83 !important;
-  transition: transform 150ms ease, background 150ms ease, color 150ms ease, border-color 150ms ease;
+  background: rgba(255,255,255,.76) !important;
+  color: #5C6D84 !important;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease, transform 140ms var(--vettri-ease);
 }
 
-.vettri-topbar .hz-icon-btn:hover {
-  color: #2563eb !important;
-  border-color: rgba(37,99,235,.17) !important;
-  background: #f5f8ff !important;
-  transform: translateY(-1px);
+.vettri-topbar .hz-icon-btn:hover { color: #2563EB !important; background: #F5F8FF !important; border-color: rgba(37,99,235,.18) !important; transform: translateY(-1px); }
+.vettri-topbar .hz-current-workspace { max-width: 150px; color: #6B7A90 !important; font-size: 10.5px !important; font-weight: 650 !important; }
+
+/* Account button gets a distinct identity treatment without becoming a card. */
+.vettri-topbar .hz-icon-btn[aria-label="Account menu"] {
+  width: auto !important;
+  min-width: 145px !important;
+  height: 40px !important;
+  padding: 3px 8px 3px 5px !important;
+  border-color: rgba(148,163,184,.16) !important;
+  background: #FAFBFD !important;
 }
 
-.vettri-topbar .hz-current-workspace {
-  max-width: 150px;
-  color: #6b7a90 !important;
-  font-size: 10.5px !important;
-  font-weight: 650 !important;
-}
+.vettri-topbar .hz-icon-btn[aria-label="Account menu"]:hover { background: #F5F8FF !important; }
 
-.vettri-topbar .hz-current-workspace svg {
-  color: #7d8ba0 !important;
-}
-
-/* Keep dropdowns visually connected to the shell. */
+/* Notification/quick-action surfaces */
 .vettri-sidebar-profile-menu,
 .vettri-topbar .hz-surface,
 .vettri-topbar-notifications,
 .hz-quick-actions {
   border: 1px solid rgba(148,163,184,.18) !important;
-  border-radius: 13px !important;
-  box-shadow: 0 18px 42px rgba(15,27,61,.13) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--vettri-shadow-lg) !important;
 }
 
-@media (max-width: 1199.98px) {
-  :root {
-    --vettri-shell-sidebar-width: 236px;
-  }
+/* ========================== GLOBAL PRODUCT SURFACES ================= */
+.hz-card,
+.hz-panel,
+.hz-surface {
+  border-color: var(--vettri-line) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--vettri-shadow-sm) !important;
+}
 
-  .vettri-command-trigger {
-    max-width: 390px !important;
-  }
+.hz-card {
+  background: rgba(255,255,255,.96) !important;
+  overflow: hidden;
+}
+
+.hz-card__header { min-height: 58px !important; padding: 15px 18px !important; border-bottom-color: var(--vettri-line) !important; }
+.hz-card__body { padding: 18px !important; }
+
+.hz-card--hoverable:hover,
+.hz-panel:hover {
+  border-color: rgba(37,99,235,.12) !important;
+  box-shadow: var(--vettri-shadow-md) !important;
+}
+
+.hz-page-header__eyebrow {
+  margin-bottom: 4px !important;
+  color: #2563EB !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: .11em !important;
+  text-transform: uppercase;
+}
+
+.hz-page-header__title {
+  color: var(--vettri-ink) !important;
+  font-size: clamp(1.45rem, 2vw, 1.85rem) !important;
+  font-weight: 760 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -.045em !important;
+}
+
+.hz-page-header__description { max-width: 720px; color: var(--vettri-muted) !important; font-size: 12.5px !important; line-height: 1.55 !important; }
+
+/* Controls */
+.form-control,
+.form-select,
+.input-group-text { border-color: #DCE3EC !important; border-radius: 9px !important; font-size: 12.5px !important; }
+.form-control,
+.form-select { min-height: 39px !important; }
+.form-control::placeholder { color: #9AA6B6 !important; }
+.form-control:focus,
+.form-select:focus { border-color: #2563EB !important; box-shadow: 0 0 0 3px rgba(37,99,235,.10) !important; }
+
+.btn {
+  min-height: 37px !important;
+  padding-inline: 13px !important;
+  border-radius: 9px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  transition: transform 140ms var(--vettri-ease), box-shadow 140ms ease, background 140ms ease, border-color 140ms ease !important;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary { background: linear-gradient(135deg,#2563EB,#1F56C9) !important; border-color: #2563EB !important; box-shadow: 0 5px 13px rgba(37,99,235,.14) !important; }
+.btn-primary:hover { background: linear-gradient(135deg,#1E5BDD,#1E40AF) !important; box-shadow: 0 8px 18px rgba(37,99,235,.18) !important; }
+.btn-outline-primary { color: #2457C9 !important; border-color: #CBD9F2 !important; background: #fff !important; }
+.btn-outline-primary:hover { color: #1E40AF !important; border-color: #A9C0EC !important; background: #F5F8FF !important; }
+
+/* Tables */
+.hz-table { border-collapse: separate !important; border-spacing: 0 !important; }
+.hz-table thead th { height: 40px; padding: 9px 13px !important; background: #F7F9FC !important; color: #78869A !important; border-bottom-color: #E3E8EF !important; font-size: 9px !important; font-weight: 800 !important; letter-spacing: .075em !important; text-transform: uppercase; }
+.hz-table tbody td { padding: 11px 13px !important; color: #33445E; font-size: 12px; border-bottom-color: #EDF0F4 !important; }
+.hz-table tbody tr:hover td { background: #F8FBFF !important; }
+
+/* Tabs */
+.hz-tabs { min-height: 42px; gap: 2px !important; border-bottom-color: #E1E7EF !important; }
+.hz-tab { min-height: 42px !important; padding: 9px 12px !important; border-radius: 8px 8px 0 0 !important; font-size: 12px !important; }
+.hz-tab:hover { background: #F5F8FF !important; color: #1E40AF !important; }
+.hz-tab--active { color: #2563EB !important; background: rgba(37,99,235,.035) !important; }
+
+.hz-badge,
+.badge { border-radius: 999px !important; font-weight: 750 !important; }
+
+/* Profile */
+.hz-profile__identity-card { border-radius: 15px !important; border-top: 2px solid #2563EB !important; box-shadow: 0 9px 30px rgba(15,27,61,.055) !important; }
+.hz-profile__identity-copy h1 { font-size: 26px !important; font-weight: 750 !important; letter-spacing: -.035em !important; }
+
+/* Overlays */
+.hz-dialog,
+.hz-drawer,
+.hz-export-menu__popover { border-radius: 14px !important; border-color: #DFE6EF !important; box-shadow: var(--vettri-shadow-lg) !important; }
+
+/* Focus / motion */
+:focus-visible { outline: 2px solid rgba(37,99,235,.52) !important; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* ============================== RESPONSIVE ========================== */
+@media (max-width: 1199.98px) {
+  :root { --vettri-sidebar-width: 218px; }
+  .vettri-command-trigger { max-width: 390px !important; }
 }
 
 @media (max-width: 991.98px) {
-  .vettri-app-shell {
-    padding: 0 !important;
-    gap: 0 !important;
-    background: var(--vettri-shell-canvas) !important;
-  }
-
-  .vettri-sidebar-shell {
-    width: 264px !important;
-    max-width: 264px !important;
+  .vettri-app-shell { padding: 0 !important; gap: 0 !important; background: var(--vettri-canvas) !important; }
+  .vettri-sidebar-shell,
+  .vettri-sidebar-shell.is-collapsed {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
     height: 100vh !important;
     max-height: 100vh !important;
   }
+  .vettri-topbar { top: 7px !important; margin: 7px 7px 9px !important; }
+  .vettri-command-trigger { max-width: none !important; flex-basis: auto; }
+}
 
-  .vettri-topbar {
-    position: sticky !important;
-    top: 8px !important;
-    margin: 8px 8px 10px !important;
-  }
+@media (max-width: 767.98px) {
+  .vettri-topbar { border-radius: 13px !important; padding: 6px 7px !important; }
+  .vettri-command-trigger { min-width: 0; }
+  .hz-card__body { padding: 15px !important; }
 }
 
 @media (max-width: 575.98px) {
-  .vettri-topbar {
-    border-radius: 13px !important;
-    padding: 7px 8px !important;
-  }
+  .vettri-topbar { border-radius: 12px !important; }
+  .vettri-topbar .hz-icon-btn[aria-label="Account menu"] { min-width: 38px !important; width: 38px !important; padding: 3px !important; }
 }

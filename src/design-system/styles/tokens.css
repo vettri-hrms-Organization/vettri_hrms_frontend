@@ -167,12 +167,12 @@
   --hz-gradient-surface: #eff6ff;
 
   /* ---- Layout ---- */
-  --hz-sidebar-width: 248px;
-  --hz-sidebar-width-collapsed: 72px;
+  --hz-sidebar-width: 228px;
+  --hz-sidebar-width-collapsed: 68px;
   --hz-rail-width: 72px;
    --hz-topbar-height: var(--vettri-topbar-height);
-  --hz-page-padding: 18px;
-  --hz-section-gap: 16px;
+  --hz-page-padding: 16px;
+  --hz-section-gap: 14px;
   --hz-card-padding: 14px;
   --hz-control-height: 36px;
   --hz-table-row-height: 46px;
