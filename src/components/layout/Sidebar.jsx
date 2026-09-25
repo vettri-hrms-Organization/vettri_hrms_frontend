@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, LifeBuoy, LogOut, Plus, Search, Settings2, UserCircle, X } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Plus, Search, Settings2, UserCircle, X } from 'lucide-react';
 import Logo from '../brand/Logo';
 import Avatar from '../ui/Avatar';
 import { visibleNavSections, findNavItemByPath } from './navConfig';
@@ -143,7 +143,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                   </span>
                 )}
               </button>
-              {!isCollapsed && <button type="button" className="vettri-user-bell" onClick={() => navigate('/notifications')} aria-label="Notifications"><span>●</span>♢</button>}
+              {!isCollapsed && <button type="button" className="vettri-user-bell" onClick={() => navigate('/notifications')} aria-label="Notifications" title="Notifications"><Bell size={16} strokeWidth={1.8} /><span /></button>}
             </div>
 
             {profileOpen && (

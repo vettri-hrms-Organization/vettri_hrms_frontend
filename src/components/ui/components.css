@@ -1712,7 +1712,7 @@ body {
   border: 1px solid #254875;
   border-radius: 10px;
   background: var(--hz-primary-900);
-  box-shadow: none;
+  box-shadow: 0 3px 10px rgba(15,27,61,.035);
   padding: 24px 28px;
 }
 
@@ -10801,7 +10801,7 @@ button:disabled,
   --vettri-shell-glass: rgba(255,255,255,.68);
   --vettri-shell-border: rgba(255,255,255,.85);
   --vettri-shell-outline: rgba(23,32,51,.07);
-  --vettri-shell-shadow: 0 20px 50px -12px rgba(43,32,90,.18), 0 2px 10px rgba(43,32,90,.06);
+  --vettri-shell-shadow: 0 22px 48px -18px rgba(15,27,61,.20), 0 3px 14px rgba(15,27,61,.07);
 }
 
 body:has(.vettri-app-shell) {
@@ -10819,9 +10819,9 @@ body:has(.vettri-app-shell) #root {
   display: flex;
   position: relative;
   background:
-    radial-gradient(circle 480px at -80px -120px, rgba(167,139,250,.28), transparent 68%),
-    radial-gradient(circle 420px at calc(100% + 100px) 20%, rgba(125,211,252,.22), transparent 68%),
-    radial-gradient(circle 380px at 22% calc(100% + 140px), rgba(251,207,232,.18), transparent 68%),
+    radial-gradient(circle 480px at -80px -120px, rgba(37,99,235,.10), transparent 68%),
+    radial-gradient(circle 420px at calc(100% + 100px) 20%, rgba(96,165,250,.09), transparent 68%),
+    radial-gradient(circle 380px at 22% calc(100% + 140px), rgba(249,115,22,.055), transparent 68%),
     var(--vettri-shell-canvas) !important;
 }
 
@@ -10871,7 +10871,7 @@ body:has(.vettri-app-shell) #root {
   border: 1px solid var(--vettri-shell-outline);
   background: #fff;
   color: var(--vettri-shell-blue);
-  box-shadow: 0 4px 12px rgba(43,32,90,.16);
+  box-shadow: 0 5px 14px rgba(15,27,61,.14);
   cursor: pointer;
   z-index: 20;
 }
@@ -10962,14 +10962,14 @@ body:has(.vettri-app-shell) #root {
 }
 .vettri-sidebar-nav::-webkit-scrollbar { width: 5px; }
 .vettri-sidebar-nav::-webkit-scrollbar-thumb { background: rgba(23,32,51,.14); border-radius: 3px; }
-.vettri-nav-group { margin-bottom: 13px; }
+.vettri-nav-group { margin-bottom: 15px; }
 .vettri-nav-group-label {
   padding: 8px 10px 6px;
   color: var(--vettri-shell-muted);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: .01em;
-  text-transform: none;
+  letter-spacing: .055em;
+  text-transform: uppercase;
 }
 .vettri-nav-item {
   position: relative;
@@ -10979,15 +10979,15 @@ body:has(.vettri-app-shell) #root {
   display: flex;
   align-items: center;
   gap: 10px;
-  border-radius: 11px;
+  border-radius: 10px;
   color: var(--vettri-shell-soft);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
   transition: background 140ms ease, color 140ms ease, transform 140ms ease;
 }
-.vettri-nav-item:hover { background: rgba(255,255,255,.65); color: var(--vettri-shell-ink); transform: translateX(1px); }
+.vettri-nav-item:hover { background: rgba(255,255,255,.72); color: var(--vettri-shell-ink); transform: translateX(1px); }
 .vettri-nav-item:focus-visible { outline: 2px solid var(--vettri-shell-blue); outline-offset: 2px; }
 .vettri-nav-icon {
   width: 28px;
@@ -11004,7 +11004,7 @@ body:has(.vettri-app-shell) #root {
 .vettri-nav-item.is-active {
   color: #fff;
   background: linear-gradient(135deg, var(--vettri-shell-blue), var(--vettri-shell-deep));
-  box-shadow: 0 8px 18px -6px rgba(37,99,235,.42);
+  box-shadow: 0 7px 18px -7px rgba(37,99,235,.38), 0 1px 3px rgba(15,27,61,.08);
 }
 .vettri-nav-item.is-active .vettri-nav-icon { background: rgba(255,255,255,.22); color: #fff; }
 .vettri-nav-label { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
@@ -11031,7 +11031,7 @@ body:has(.vettri-app-shell) #root {
 }
 .vettri-quick-add:hover { background: rgba(37,99,235,.06); border-color: var(--vettri-shell-blue); }
 
-.vettri-sidebar-footer { position: relative; border-top: 1px solid var(--vettri-shell-outline); padding: 12px; }
+.vettri-sidebar-footer { position: relative; border-top: 1px solid rgba(23,32,51,.06); padding: 12px; }
 .vettri-user-card { min-width: 0; display: flex; align-items: center; gap: 8px; padding: 7px; border-radius: 12px; }
 .vettri-user-card:hover { background: rgba(255,255,255,.60); }
 .vettri-user-trigger { min-width: 0; flex: 1; padding: 0; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; text-align: left; color: inherit; cursor: pointer; }
@@ -11040,8 +11040,9 @@ body:has(.vettri-app-shell) #root {
 .vettri-user-meta { min-width: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .vettri-user-meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
 .vettri-user-meta small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--vettri-shell-muted); }
-.vettri-user-bell { position: relative; width: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: var(--vettri-shell-muted); font-size: 13px; cursor: pointer; }
-.vettri-user-bell span { position: absolute; top: 2px; right: 3px; color: #EF4444; font-size: 7px; }
+.vettri-user-bell { position: relative; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: var(--vettri-shell-muted); cursor: pointer; }
+.vettri-user-bell:hover { background: rgba(37,99,235,.07); color: var(--vettri-shell-blue); }
+.vettri-user-bell span { position: absolute; top: 5px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: #EF4444; border: 1px solid #fff; }
 .vettri-sidebar-profile-menu { position: absolute; left: 12px; right: 12px; bottom: calc(100% - 4px); padding: 6px; z-index: 30; border: 1px solid var(--vettri-shell-border); border-radius: 12px; background: rgba(255,255,255,.96); box-shadow: 0 18px 40px rgba(23,32,51,.16); }
 .vettri-sidebar-profile-identity { padding: 8px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--vettri-shell-outline); }
 .vettri-sidebar-profile-identity span { min-width: 0; display: flex; flex-direction: column; }
@@ -11052,19 +11053,19 @@ body:has(.vettri-app-shell) #root {
 .vettri-sidebar-profile-menu > button.danger { color: #DC2626; }
 
 .vettri-topbar {
-  min-height: 64px;
-  flex: 0 0 64px;
+  min-height: 62px;
+  flex: 0 0 62px;
   width: 100%;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 28px !important;
+  padding: 0 30px !important;
   background: rgba(255,255,255,.72) !important;
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   backdrop-filter: blur(18px) saturate(140%);
   border-bottom: 1px solid rgba(23,32,51,.07) !important;
   color: var(--vettri-shell-ink) !important;
-  box-shadow: 0 1px 0 rgba(23,32,51,.03) !important;
+  box-shadow: 0 1px 0 rgba(23,32,51,.025) !important;
 }
 .vettri-topbar-crumb { min-width: 180px; align-items: baseline; gap: 7px; color: var(--vettri-shell-muted); font-size: 12.5px; }
 .vettri-topbar-crumb b { color: #B0B5C0; font-weight: 500; }
@@ -11078,8 +11079,8 @@ body:has(.vettri-app-shell) #root {
   align-items: center;
   gap: 9px;
   border: 1px solid rgba(23,32,51,.10);
-  border-radius: 11px;
-  background: rgba(255,255,255,.84) !important;
+  border-radius: 12px;
+  background: rgba(255,255,255,.88) !important;
   color: var(--vettri-shell-muted) !important;
   text-align: left;
   box-shadow: none;
