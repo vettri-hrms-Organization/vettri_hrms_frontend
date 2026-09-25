@@ -443,10 +443,10 @@ function DocumentsTab({ employee }) {
   });
 
   const today = new Date();
-  const visibleDocuments = (documents || []).filter((document) => {
+  const visibleDocuments = (documents || []).filter((docItem) => {
     const searchValue = documentSearch.trim().toLowerCase();
     if (!searchValue) return true;
-    return [DOCUMENT_TYPE_LABEL[document.documentType], document.documentNumber, document.notes]
+    return [DOCUMENT_TYPE_LABEL[docItem.documentType], docItem.documentNumber, docItem.notes]
       .filter(Boolean)
       .some((value) => value.toLowerCase().includes(searchValue));
   });
@@ -481,12 +481,12 @@ function DocumentsTab({ employee }) {
           </div>
           <div className="hz-mandatory-documents__grid">
             {MANDATORY_DOCUMENTS.map((required) => {
-              const document = documents?.find((item) => item.documentType === required.type);
-              const isPending = document?.status?.toUpperCase() === 'PENDING' || document?.status?.toUpperCase() === 'UNDER_REVIEW';
-              const status = isPending ? 'Pending review' : document ? 'Uploaded' : 'Missing';
+              const requiredDocument = documents?.find((item) => item.documentType === required.type);
+              const isPending = requiredDocument?.status?.toUpperCase() === 'PENDING' || requiredDocument?.status?.toUpperCase() === 'UNDER_REVIEW';
+              const status = isPending ? 'Pending review' : requiredDocument ? 'Uploaded' : 'Missing';
               return (
-                <div key={required.type} className={`hz-mandatory-document hz-mandatory-document--${isPending ? 'pending' : document ? 'uploaded' : 'missing'}`}>
-                  {document ? <CheckCircle2 size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />}
+                <div key={required.type} className={`hz-mandatory-document hz-mandatory-document--${isPending ? 'pending' : requiredDocument ? 'uploaded' : 'missing'}`}>
+                  {requiredDocument ? <CheckCircle2 size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />}
                   <span>
                     <strong>{required.label}</strong>
                     <small>{status}</small>
