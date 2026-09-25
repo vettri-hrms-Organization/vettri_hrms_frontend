@@ -122,11 +122,9 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
         onMouseEnter={keepFlyoutOpen}
         onMouseLeave={closeFlyoutSoon}
       >
-        <div
-          className="hz-sidebar__header d-flex align-items-center justify-content-between gap-2"
-        >
+        <div className="hz-sidebar__header d-flex align-items-center justify-content-between gap-2">
           <div className="hz-rail-brand" aria-label="Vettri HRMS">
-            <Logo variant="mark" tone="onDark" size={28} />
+            <Logo variant="mark" tone="default" size={26} />
             {!isCollapsed && <span>Vettri</span>}
           </div>
           <button

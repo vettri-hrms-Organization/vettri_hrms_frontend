@@ -93,7 +93,7 @@ export default function Topbar({ onOpenMobileNav }) {
     <header
       className="hz-topbar d-flex align-items-center gap-2 px-3 px-md-4"
     >
-      <div className="hz-brand-mark" aria-label="Vettri HRMS">
+      <div className="hz-brand-mark d-none d-lg-flex" aria-label="Vettri HRMS">
         <span className="hz-brand-mark__text">Vettri</span>
       </div>
 
