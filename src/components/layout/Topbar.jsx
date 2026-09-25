@@ -90,13 +90,7 @@ export default function Topbar({ onOpenMobileNav }) {
   }
 
   return (
-    <header
-      className="hz-topbar d-flex align-items-center gap-2 px-3 px-md-4"
-    >
-      <div className="hz-brand-mark d-none d-lg-flex" aria-label="Vettri HRMS">
-        <span className="hz-brand-mark__text">Vettri</span>
-      </div>
-
+    <header className="hz-topbar vettri-topbar">
       <button
         type="button"
         onClick={onOpenMobileNav}
@@ -107,12 +101,11 @@ export default function Topbar({ onOpenMobileNav }) {
         <Menu size={20} />
       </button>
 
-      <div className="hz-topbar-context d-none d-lg-flex" aria-live="polite">
-        <span className="hz-topbar-context__eyebrow">Workspace</span>
-        <strong>{currentPage}</strong>
+      <div className="vettri-topbar-crumb d-none d-lg-flex" aria-live="polite">
+        <span>Workspace</span><b>/</b><strong>{currentPage}</strong>
       </div>
 
-      <button type="button" className="hz-command-trigger" onClick={() => setCommandCenterOpen(true)} aria-label="Open command center">
+      <button type="button" className="hz-command-trigger vettri-command-trigger" onClick={() => setCommandCenterOpen(true)} aria-label="Open command center">
         <Search size={16} aria-hidden="true" />
         <span>Search employees, pages, actions...</span>
         <kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'} K</kbd>

@@ -28,7 +28,7 @@ export default function MainLayout() {
 
   return (
     <NavMemoryProvider>
-      <div className="hz-app-shell d-flex align-items-stretch">
+      <div className="hz-app-shell vettri-app-shell">
         <Sidebar
           mobileOpen={mobileNavOpen}
           onCloseMobile={() => setMobileNavOpen(false)}
