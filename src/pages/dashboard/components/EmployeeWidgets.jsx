@@ -93,7 +93,7 @@ export function LeaveWidget({ balances, requests, loading, year, holidays = [], 
                 </div>
                 <p>{`Across ${balances.length} leave type${balances.length === 1 ? '' : 's'}`}</p>
                 <div className="hz-leave-widget__actions">
-                  <Link to="/my-profile?tab=leave" className="hz-leave-widget__action hz-leave-widget__action--primary">Apply Leave</Link>
+                  <Link to="/leave" className="hz-leave-widget__action hz-leave-widget__action--primary">Apply Leave</Link>
                   <Link to="/my-profile?tab=leave" className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
                 </div>
               </div>

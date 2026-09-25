@@ -20,6 +20,7 @@ import { leaveStatusMeta } from '../leave/leaveStatusMeta';
 import { useBreadcrumbLabel } from '../../components/layout/BreadcrumbContext';
 import Tabs from '../../components/ui/Tabs';
 import { useAuth } from '../../hooks/useAuth';
+import ApplyLeaveModal from '../leave/ApplyLeaveModal';
 
 const TABS = [
   { key: 'overview', label: 'Profile', icon: ClipboardList },
@@ -44,6 +45,7 @@ export default function EmployeeProfile() {
   const [tab, setTab] = useState(initialTab);
   const queryClient = useQueryClient();
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [showApplyLeave, setShowApplyLeave] = useState(false);
 
   useEffect(() => {
     const requestedTab = searchParams.get('tab');
@@ -163,8 +165,10 @@ export default function EmployeeProfile() {
       {tab === 'job' && <JobTab employee={employee} />}
       {tab === 'hierarchy' && <HierarchyTab employee={employee} />}
       {tab === 'attendance' && <AttendanceTab employee={employee} />}
-      {tab === 'leave' && <LeaveTab employee={employee} />}
+      {tab === 'leave' && <LeaveTab employee={employee} onApplyLeave={() => setShowApplyLeave(true)} />}
       {tab === 'documents' && <DocumentsTab employee={employee} />}
+
+      {showApplyLeave && <ApplyLeaveModal defaultEmployeeId={employee.id} onClose={() => setShowApplyLeave(false)} />}
     </div>
   );
 }
@@ -636,7 +640,7 @@ function AddDocumentModal({ employeeId, onClose }) {
   );
 }
 
-function LeaveTab({ employee }) {
+function LeaveTab({ employee, onApplyLeave }) {
   const year = new Date().getFullYear();
   const { data: balances, isLoading: balancesLoading } = useQuery({
     queryKey: ['leave-balance', String(employee.id), year],
@@ -668,7 +672,7 @@ function LeaveTab({ employee }) {
             </div>
             <p>{leaveBalances.length ? `Across ${leaveBalances.length} leave type${leaveBalances.length === 1 ? '' : 's'}` : 'No leave balances available'}</p>
             <div className="hz-leave-widget__actions">
-              <Link to="/leave" className="hz-leave-widget__action hz-leave-widget__action--primary">Apply Leave</Link>
+              <button type="button" className="hz-leave-widget__action hz-leave-widget__action--primary" onClick={onApplyLeave}>Apply Leave</button>
               <Link to="/leave" className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
             </div>
           </div>
