@@ -76,23 +76,32 @@ export default function Table({
             ))}
 
           {!isLoading &&
-            rows.map((row, i) => (
-              <tr
-                key={getRowKey(row, i)}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                onKeyDown={onRowClick ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onRowClick(row); } } : undefined}
-                tabIndex={onRowClick ? 0 : undefined}
-                aria-label={onRowClick ? `Open row ${i + 1}` : undefined}
-                className={onRowClick ? 'hz-table-row--clickable' : undefined}
-              >
-                {selectable && <td className="hz-table__selection" onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selectedKeys.has(getRowKey(row, i))} onChange={() => onToggleRow?.(row)} aria-label={`Select row ${i + 1}`} /></td>}
+            rows.map((row, i) => {
+              const rowKey = getRowKey(row, i);
+              const isSelected = selectable && selectedKeys.has(rowKey);
+
+              return (
+                <tr
+                  key={rowKey}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onKeyDown={onRowClick ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onRowClick(row); } } : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  aria-label={onRowClick ? `Open row ${i + 1}` : undefined}
+                  aria-selected={selectable ? isSelected : undefined}
+                  className={[
+                    onRowClick ? 'hz-table-row--clickable' : undefined,
+                    selectable && isSelected ? 'hz-table-row--selected' : undefined,
+                  ].filter(Boolean).join(' ') || undefined}
+                >
+                {selectable && <td className="hz-table__selection" onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={isSelected} onChange={() => onToggleRow?.(row)} aria-label={`Select row ${i + 1}`} /></td>}
                 {columns.map((col) => (
                   <td key={col.key} data-label={typeof col.label === 'string' ? col.label : undefined} style={{ textAlign: col.align, ...col.style }} className={col.className}>
                     {col.render ? col.render(row) : row[col.key]}
                   </td>
                 ))}
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     </div>

@@ -9515,6 +9515,15 @@ button:disabled,
   border-right: 0 !important;
 }
 
+.hz-module-page--employees .hz-table tbody tr.hz-table-row--selected td {
+  background: #eaf3ff !important;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12) !important;
+}
+
+.hz-module-page--employees .hz-table tbody tr.hz-table-row--selected:hover td {
+  background: #dfeeff !important;
+}
+
 /* ============================================================
    ROW HOVER
    ============================================================ */
