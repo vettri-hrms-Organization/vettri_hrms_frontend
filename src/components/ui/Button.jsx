@@ -14,13 +14,14 @@ export default function Button({
   icon: Icon,
   children,
   className = '',
+  type = 'button',
   ...rest
 }) {
   const sizeClass = size === 'sm' ? 'btn-sm' : size === 'lg' ? 'btn-lg' : '';
   return (
     <button
       className={`btn ${VARIANT_CLASS[variant] || VARIANT_CLASS.primary} ${sizeClass} d-inline-flex align-items-center gap-2 ${className}`}
-      type="button"
+      type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...rest}

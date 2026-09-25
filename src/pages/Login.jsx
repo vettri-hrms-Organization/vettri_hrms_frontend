@@ -26,15 +26,16 @@ export default function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!identifier.trim() || !password) {
-      setError('Please enter your username or email and password');
+    const normalizedIdentifier = identifier.trim();
+    if (!normalizedIdentifier || !password.trim()) {
+      setError('Please enter both your username/email and password.');
       return;
     }
 
     setError(null);
     setSubmitting(true);
     try {
-      await login(identifier, password);
+      await login(normalizedIdentifier, password);
       navigate(from, { replace: true });
     } catch (err) {
       setError(mapPasswordError(err));
@@ -57,10 +58,10 @@ export default function Login() {
               </div>
 
               <div className="vettri-login-card__fields">
-            {error && <div className="vettri-login-card__error" role="alert">{error}</div>}
+            {error && <div className="vettri-login-card__error" role="alert" aria-live="polite">{error}</div>}
 
             <div className="vettri-login-card__field-group">
-                <label htmlFor="login-identifier">Username or email</label>
+              <label htmlFor="login-identifier">Username or email</label>
               <div className="vettri-login-card__input-wrap">
                 <Mail size={17} aria-hidden="true" />
                 <input
@@ -74,6 +75,9 @@ export default function Login() {
                   autoComplete="username"
                   autoFocus
                   disabled={submitting}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? 'login-error' : undefined}
+                  required
                 />
               </div>
             </div>
@@ -95,6 +99,9 @@ export default function Login() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   disabled={submitting}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? 'login-error' : undefined}
+                  required
                 />
                 <button
                   type="button"
@@ -133,6 +140,7 @@ export default function Login() {
               >
                 <span className="vettri-login-card__google-icon" aria-hidden="true">G</span>
                 <span>Continue with Google</span>
+                <span className="vettri-login-card__google-badge">Soon</span>
               </button>
 
               <p className="vettri-login-card__signup">
@@ -149,23 +157,35 @@ export default function Login() {
       </section>
 
       <style>{`
+        :root {
+          --vettri-login-bg: var(--hz-bg-canvas, #f4f7fb);
+          --vettri-login-card-bg: #ffffff;
+          --vettri-login-border: var(--hz-border, #e5eaf1);
+          --vettri-login-text: var(--hz-text-primary, #172033);
+          --vettri-login-muted: var(--hz-text-muted, #718096);
+          --vettri-login-strong: #243954;
+          --vettri-login-focus: rgba(37, 99, 235, 0.14);
+          --vettri-login-error-bg: rgba(254, 242, 242, 0.9);
+          --vettri-login-error-border: rgba(220, 38, 38, 0.25);
+        }
+
         .vettri-login-card-page {
           min-width: 0;
           min-height: 100vh;
           flex: 1;
           overflow: hidden;
-          background: #fff;
-          color: #102a43;
+          background: var(--vettri-login-bg);
+          color: var(--vettri-login-text);
           font-family: var(--hz-font-sans, 'Manrope', sans-serif);
         }
 
         .vettri-login-shell {
           min-height: 100vh;
           display: flex;
-          background: #f4f7fb;
+          background: var(--vettri-login-bg);
         }
 
-        .vettri-login-panel { 
+        .vettri-login-panel {
           width: 100%;
           box-sizing: border-box;
           min-height: 100vh;
@@ -176,7 +196,7 @@ export default function Login() {
 
         .vettri-login-card {
           width: 100%;
-          max-width: 340px;
+          max-width: 360px;
           margin: auto;
           box-sizing: border-box;
         }
@@ -190,23 +210,23 @@ export default function Login() {
         }
 
         .vettri-login-card__header h1 {
-          margin: 0 0 7px;
-          color: #102a43;
+          margin: 0 0 8px;
+          color: var(--vettri-login-text);
           font-size: clamp(30px, 2.5vw, 34px);
           font-weight: 750;
-          letter-spacing: -.05em;
-          line-height: 1.2;
+          letter-spacing: -0.05em;
+          line-height: 1.12;
         }
 
         .vettri-login-card__header p {
           margin: 0;
-          color: #718096;
-          font-size: 12px;
+          color: var(--vettri-login-muted);
+          font-size: 13px;
         }
 
         .vettri-login-card__fields {
           display: grid;
-          gap: 9px;
+          gap: 10px;
           margin-top: 20px;
         }
 
@@ -217,8 +237,8 @@ export default function Login() {
 
         .vettri-login-card__field-group label,
         .vettri-login-card__label-row label {
-          color: #243954;
-          font-size: 13px;
+          color: var(--vettri-login-strong);
+          font-size: 12px;
           font-weight: 700;
         }
 
@@ -229,10 +249,18 @@ export default function Login() {
           gap: 12px;
         }
 
-        .vettri-login-card__label-row a {
-          color: #1769ff;
-          font-size: 12px;
+        .vettri-login-card__label-row a,
+        .vettri-login-card__signup a,
+        .vettri-login-card__footer a {
+          color: var(--hz-primary-600, #2563eb);
           text-decoration: none;
+          font-weight: 600;
+        }
+
+        .vettri-login-card__label-row a:hover,
+        .vettri-login-card__signup a:hover,
+        .vettri-login-card__footer a:hover {
+          text-decoration: underline;
         }
 
         .vettri-login-card__input-wrap {
@@ -240,68 +268,84 @@ export default function Login() {
           display: flex;
           align-items: center;
           gap: 10px;
-          height: 44px;
-          padding: 0 13px;
-          border: 1px solid #d5dee8;
-          border-radius: 9px;
-          color: #77899e;
-          background: #fff;
-          transition: border-color .2s, box-shadow .2s;
+          width: 100%;
+          min-height: 48px;
+          padding: 0 12px 0 14px;
+          border: 1px solid var(--vettri-login-border);
+          border-radius: 12px;
+          background: var(--vettri-login-card-bg);
+          box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+          transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
         }
 
         .vettri-login-card__input-wrap:focus-within {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, .1);
+          border-color: var(--hz-primary-500, #2563eb);
+          box-shadow: 0 0 0 4px var(--vettri-login-focus);
+          background: #fff;
+        }
+
+        .vettri-login-card__input-wrap svg {
+          flex-shrink: 0;
+          color: var(--vettri-login-muted);
         }
 
         .vettri-login-card__input {
-          min-width: 0;
           width: 100%;
+          min-height: 46px;
+          padding: 0;
           border: 0;
-          outline: 0;
-          color: #172c47;
           background: transparent;
-          font: inherit;
+          color: var(--vettri-login-text);
           font-size: 14px;
+          outline: none;
         }
 
         .vettri-login-card__input::placeholder {
-          color: #9aa8b8;
+          color: var(--hz-text-muted, #718096);
         }
 
         .vettri-login-card__input:-webkit-autofill,
         .vettri-login-card__input:-webkit-autofill:hover,
         .vettri-login-card__input:-webkit-autofill:focus {
-          -webkit-text-fill-color: #172c47;
+          -webkit-text-fill-color: var(--vettri-login-text);
           -webkit-box-shadow: 0 0 0 1000px #fff inset;
           box-shadow: 0 0 0 1000px #fff inset;
-          caret-color: #172c47;
+          caret-color: var(--vettri-login-text);
         }
 
         .vettri-login-card__password-toggle {
-          display: flex;
-          flex: 0 0 auto;
-          padding: 3px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
           border: 0;
-          color: #77899e;
+          border-radius: 8px;
           background: transparent;
+          color: #64748b;
           cursor: pointer;
+        }
+
+        .vettri-login-card__password-toggle:hover {
+          background: #f3f6fb;
+          color: #254784;
         }
 
         .vettri-login-card__remember {
           display: flex;
           align-items: center;
-          gap: 7px;
-          margin-top: -1px;
-          color: #43566d;
-          font-size: 12px;
+          gap: 10px;
+          margin-top: 6px;
+          color: #445d7c;
+          font-size: 13px;
+          cursor: pointer;
         }
 
         .vettri-login-card__remember input {
-          width: 14px;
-          height: 14px;
           margin: 0;
-          accent-color: #1769ff;
+          accent-color: var(--hz-primary-500, #2563eb);
+          width: 16px;
+          height: 16px;
         }
 
         .vettri-login-card__submit,
@@ -310,129 +354,141 @@ export default function Login() {
           align-items: center;
           justify-content: center;
           width: 100%;
-          height: 44px;
-          border-radius: 9px;
-          font: inherit;
+          min-height: 46px;
+          border-radius: 12px;
           font-size: 14px;
           font-weight: 700;
         }
 
         .vettri-login-card__submit {
-          gap: 10px;
-          margin-top: 5px;
+          gap: 8px;
+          margin-top: 18px;
           border: 0;
           color: #fff;
-          background: #1769ff;
-          box-shadow: 0 9px 18px rgba(23, 105, 255, .2);
+          background: linear-gradient(180deg, #2b6ef7 0%, #1655d5 100%);
+          box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
           cursor: pointer;
-          transition: background .2s, transform .2s;
+          transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
         }
 
         .vettri-login-card__submit:hover:not(:disabled) {
-          background: #1259db;
           transform: translateY(-1px);
+          box-shadow: 0 12px 22px rgba(37, 99, 235, 0.22);
         }
 
         .vettri-login-card__submit:disabled {
-          cursor: wait;
-          opacity: .68;
+          opacity: 0.72;
+          cursor: progress;
         }
 
         .vettri-login-card__divider {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
+          display: flex;
           align-items: center;
-          gap: 12px;
-          margin: 16px 0 12px;
-          color: #8a99aa;
+          gap: 15px;
+          margin: 18px 0 14px;
+          color: #8aa0b6;
           font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
         }
 
         .vettri-login-card__divider::before,
         .vettri-login-card__divider::after {
           content: '';
           height: 1px;
-          border-top: 1px dashed #dbe3eb;
+          flex: 1;
+          background: #e4ebf3;
         }
 
         .vettri-login-card__google {
-          gap: 9px;
-          border: 1px solid #d5dee8;
-          color: #344a62;
-          background: #fff;
+          gap: 10px;
+          border: 1px solid #dfe7f1;
+          background: #f8fafc;
+          color: #475569;
           cursor: not-allowed;
-          opacity: .7;
-        }
-
-        .vettri-login-card__signup {
-          margin: 15px 0 0;
-          color: #718096;
-          font-size: 12px;
-          text-align: center;
-        }
-
-        .vettri-login-card__signup a {
-          color: #1769ff;
-          font-weight: 700;
-          text-decoration: none;
+          opacity: 0.82;
         }
 
         .vettri-login-card__google-icon {
-          display: grid;
-          place-items: center;
-          width: 20px;
-          height: 20px;
-          color: #4285f4;
-          font-family: Arial, sans-serif;
-          font-size: 17px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #4285f4, #34a853 45%, #fbbc05 70%, #ea4335);
+          color: #fff;
+          font-size: 12px;
           font-weight: 800;
         }
 
+        .vettri-login-card__google-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 42px;
+          min-height: 22px;
+          padding: 0 8px;
+          border-radius: 999px;
+          background: #eef4ff;
+          color: #4866bd;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .vettri-login-card__signup {
+          margin: 18px 0 0;
+          color: #64748b;
+          font-size: 13px;
+          text-align: center;
+        }
+
         .vettri-login-card__error {
+          margin: 0 0 12px;
           padding: 10px 12px;
-          border: 1px solid #f1caca;
-          border-radius: 8px;
-          color: #a43d3d;
-          background: #fff4f4;
+          border: 1px solid var(--vettri-login-error-border);
+          border-radius: 10px;
+          background: var(--vettri-login-error-bg);
+          color: #b42318;
           font-size: 12px;
-          line-height: 1.4;
+          font-weight: 600;
         }
 
         .vettri-login-card__footer {
           display: flex;
-          justify-content: space-between;
-          gap: 16px;
-          width: 100%;
-          max-width: 340px;
-          margin: 0 auto;
-          box-sizing: border-box;
-          padding: 0;
-          color: #8795a6;
-          font-size: 9px;
-          line-height: 1.4;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 12px 0 0;
+          color: var(--hz-text-muted);
+          font-size: 11px;
+          line-height: 1.5;
+          text-align: center;
         }
 
-        .vettri-login-card__footer a {
-          color: #1769ff;
-          text-decoration: none;
-        }
-
-        @media (max-width: 560px) {
-          .vettri-login-shell { display: block; }
-
-          .vettri-login-card-page {
-            min-height: 100vh;
-            overflow: visible;
+        @media (max-width: 760px) {
+          .vettri-login-shell {
+            flex-direction: column;
           }
 
-          .vettri-login-panel { padding: 20px 24px 18px; }
+          .vettri-login-card-page {
+            min-height: auto;
+            background: var(--hz-bg-canvas);
+          }
 
-          .vettri-login-card__body { padding: 16px 0 12px; }
+          .vettri-login-panel {
+            padding: 20px 16px 28px;
+          }
+
+          .vettri-login-card {
+            max-width: 100%;
+          }
 
           .vettri-login-card__footer {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
+            margin-top: 8px;
           }
         }
       `}</style>

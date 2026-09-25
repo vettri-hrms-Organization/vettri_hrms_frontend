@@ -15,6 +15,17 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { EmployeeMetric, AttendanceWidget, LeaveWidget, FinanceWidget } from './dashboard/components/EmployeeWidgets';
 
+async function safeAuthorizedQuery(request, fallbackValue = null) {
+  try {
+    return await request();
+  } catch (error) {
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      return fallbackValue;
+    }
+    throw error;
+  }
+}
+
 export default function Dashboard() {
   const { user, hasPermission, hasRole } = useAuth();
   const toast = useToast();
@@ -25,8 +36,9 @@ export default function Dashboard() {
 
   const { data } = useQuery({
     queryKey: ['dashboard-summary'],
-    queryFn: dashboardApi.summary,
+    queryFn: () => safeAuthorizedQuery(dashboardApi.summary, null),
     enabled: canViewOrgSummary,
+    retry: false,
   });
 
   const canViewApprovals = hasPermission('LEAVE_VIEW') || hasPermission('LEAVE_APPROVE');
@@ -39,8 +51,9 @@ export default function Dashboard() {
     refetch: refetchPendingLeave,
   } = useQuery({
     queryKey: ['leave-requests', 'PENDING'],
-    queryFn: () => leaveRequestsApi.list('PENDING'),
+    queryFn: () => safeAuthorizedQuery(() => leaveRequestsApi.list('PENDING'), []),
     enabled: canViewApprovals && !isTeamScoped,
+    retry: false,
   });
 
   const {
@@ -50,8 +63,9 @@ export default function Dashboard() {
     refetch: refetchMyTeam,
   } = useQuery({
     queryKey: ['dashboard-my-team'],
-    queryFn: dashboardApi.myTeam,
+    queryFn: () => safeAuthorizedQuery(dashboardApi.myTeam, { pendingApprovals: [] }),
     enabled: isTeamScoped,
+    retry: false,
   });
 
   const approvalQueue = isTeamScoped ? myTeam?.pendingApprovals : pendingLeave;
@@ -67,14 +81,16 @@ export default function Dashboard() {
     refetch: refetchExpiringDocs,
   } = useQuery({
     queryKey: ['documents-expiring-soon'],
-    queryFn: () => documentsApi.expiringSoon(30),
+    queryFn: () => safeAuthorizedQuery(() => documentsApi.expiringSoon(30), []),
     enabled: canViewExpiringDocs,
+    retry: false,
   });
 
   const { data: holidaysData, isLoading: holidaysLoading, isError: holidaysError } = useQuery({
     queryKey: ['dashboard-holidays'],
-    queryFn: holidaysApi.list,
+    queryFn: () => safeAuthorizedQuery(holidaysApi.list, []),
     enabled: canViewOrgSummary,
+    retry: false,
   });
 
   const decideLeave = useMutation({
@@ -322,43 +338,51 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
   const year = new Date().getFullYear();
   const { data: employee } = useQuery({
     queryKey: ['employee-dashboard-profile', employeeId],
-    queryFn: () => employeesApi.getById(employeeId),
+    queryFn: () => safeAuthorizedQuery(() => employeesApi.getById(employeeId), null),
     enabled: !!employeeId,
+    retry: false,
   });
   const { data: attendanceData, isLoading: attendanceLoading } = useQuery({
     queryKey: ['employee-dashboard-attendance', employeeId],
-    queryFn: () => attendanceApi.byEmployee(employeeId),
+    queryFn: () => safeAuthorizedQuery(() => attendanceApi.byEmployee(employeeId), []),
     enabled: !!employeeId,
+    retry: false,
   });
   const { data: leaveBalanceData, isLoading: leaveLoading } = useQuery({
     queryKey: ['employee-dashboard-leave-balance', employeeId, year],
-    queryFn: () => leaveRequestsApi.balance(employeeId, year),
+    queryFn: () => safeAuthorizedQuery(() => leaveRequestsApi.balance(employeeId, year), []),
     enabled: !!employeeId,
+    retry: false,
   });
   const { data: leaveRequestsData } = useQuery({
     queryKey: ['employee-dashboard-leave', employeeId],
-    queryFn: () => leaveRequestsApi.byEmployee(employeeId),
+    queryFn: () => safeAuthorizedQuery(() => leaveRequestsApi.byEmployee(employeeId), []),
     enabled: !!employeeId,
+    retry: false,
   });
   const { data: documentsData } = useQuery({
     queryKey: ['employee-dashboard-documents', employeeId],
-    queryFn: () => documentsApi.byEmployee(employeeId),
+    queryFn: () => safeAuthorizedQuery(() => documentsApi.byEmployee(employeeId), []),
     enabled: !!employeeId,
+    retry: false,
   });
   const { data: salary } = useQuery({
     queryKey: ['employee-dashboard-salary', employeeId],
-    queryFn: () => employeeSalaryApi.getDetail(employeeId),
+    queryFn: () => safeAuthorizedQuery(() => employeeSalaryApi.getDetail(employeeId), null),
     enabled: !!employeeId,
+    retry: false,
   });
   const { data: holidaysData } = useQuery({
     queryKey: ['employee-dashboard-holidays'],
-    queryFn: holidaysApi.list,
+    queryFn: () => safeAuthorizedQuery(holidaysApi.list, []),
     enabled: !!employeeId,
+    retry: false,
   });
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
-    queryFn: selfServiceApi.notifications,
+    queryFn: () => safeAuthorizedQuery(selfServiceApi.notifications, []),
     enabled: !!employeeId,
+    retry: false,
   });
 
   const attendance = Array.isArray(attendanceData) ? attendanceData : [];

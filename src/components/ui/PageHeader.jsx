@@ -1,7 +1,7 @@
 export default function PageHeader({ eyebrow, title, description, actions, className = '' }) {
   return (
     <div className={`hz-page-header d-flex align-items-end justify-content-between flex-wrap gap-3 ${className}`.trim()}>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-grow-1">
         {eyebrow && <p className="hz-page-header__eyebrow">{eyebrow}</p>}
         <h1 className="hz-page-header__title">{title}</h1>
         {description && <p className="hz-page-header__description">{description}</p>}
