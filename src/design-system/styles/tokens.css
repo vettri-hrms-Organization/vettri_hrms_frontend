@@ -14,15 +14,15 @@
   /* Canonical Vettri palette. Component-level aliases below keep the
      existing public token API stable while making the brand contract
      explicit for the next design phase. */
-  --vettri-navy: #0b2342;
-  --vettri-primary-blue: #1769ff;
-  --vettri-soft-blue: #eef5ff;
-  --vettri-page-background: #f5f8fc;
+  --vettri-navy: #0f1b3d;
+  --vettri-primary-blue: #2563eb;
+  --vettri-soft-blue: #f4f7fb;
+  --vettri-page-background: #f4f7fb;
   --vettri-white: #ffffff;
-  --vettri-primary-text: #102a43;
-  --vettri-secondary-text: #60758d;
-  --vettri-border: #e2e8f0;
-  --vettri-gold: #d9a441;
+  --vettri-primary-text: #172033;
+  --vettri-secondary-text: #475569;
+  --vettri-border: rgba(15, 27, 61, 0.08);
+  --vettri-gold: #ffb000;
 
   --vettri-space-unit: 0.25rem;
   --vettri-radius-control: 0.5rem;
@@ -56,6 +56,7 @@
 
   --hz-accent-500: #f97316;
   --hz-accent-600: #ea580c;
+  --hz-gold-400: #ffb000;
 
   /* ---- Semantic ---- */
   --hz-success-50: #f0fdf4;
@@ -162,9 +163,9 @@
   --hz-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 
   /* ---- Brand gradients ---- */
-  --hz-gradient-primary: #2563eb;
-  --hz-gradient-accent: #f97316;
-  --hz-gradient-surface: #eff6ff;
+  --hz-gradient-primary: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  --hz-gradient-accent: linear-gradient(135deg, #f97316 0%, #ffb000 100%);
+  --hz-gradient-surface: linear-gradient(135deg, rgba(30, 64, 175, 0.12), rgba(37, 99, 235, 0.04));
 
   /* ---- Layout ---- */
   --hz-sidebar-width: 256px;

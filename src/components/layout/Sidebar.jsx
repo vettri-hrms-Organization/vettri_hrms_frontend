@@ -27,8 +27,13 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const supportItem = supportSection?.items.find((item) => item.to === '/support');
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [flyoutTop, setFlyoutTop] = useState(12);
   const flyoutCloseTimer = useRef(null);
+
+  const openCommandCenter = () => {
+    window.dispatchEvent(new CustomEvent('vettri:open-command-center'));
+  };
 
   // Restore the user's group preferences, then always open the active group
   // so navigation never hides the page they are currently viewing.
@@ -112,7 +117,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
       )}
       <aside
         ref={sidebarRef}
-        className={`d-flex flex-column hz-sidebar hz-icon-rail ${mobileOpen ? 'hz-sidebar--mobile-open' : ''}`}
+        className={`d-flex flex-column hz-sidebar hz-icon-rail ${mobileOpen ? 'hz-sidebar--mobile-open' : ''} ${isCollapsed ? 'hz-sidebar--collapsed' : ''}`}
         aria-label="Main navigation"
         onMouseEnter={keepFlyoutOpen}
         onMouseLeave={closeFlyoutSoon}
@@ -122,8 +127,20 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
         >
           <div className="hz-rail-brand" aria-label="Vettri HRMS">
             <Logo variant="mark" tone="onDark" size={28} />
-            <span>Vettri HRMS</span>
+            {!isCollapsed && <span>Vettri</span>}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.innerWidth < 992) onCloseMobile?.();
+              else setIsCollapsed((value) => !value);
+            }}
+            className="hz-sidebar__collapse-btn d-flex align-items-center justify-content-center border-0"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
           <button
             type="button"
             onClick={onCloseMobile}
@@ -134,6 +151,22 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
             <X size={18} />
           </button>
         </div>
+
+        <div className="hz-sidebar__workspace" role="button" tabIndex={0} onClick={() => navigate('/dashboard')} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate('/dashboard'); }}}>
+          <div className="hz-sidebar__workspace-mark">V</div>
+          {!isCollapsed && (
+            <div className="hz-sidebar__workspace-copy">
+              <span className="hz-sidebar__workspace-name">{user?.companyName || 'Vettri Workspace'}</span>
+              <small>{user?.fullName || 'Company workspace'}</small>
+            </div>
+          )}
+        </div>
+
+        <button type="button" className="hz-sidebar__search" onClick={openCommandCenter} aria-label="Open command center" title="Search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M16 16L21 21" /></svg>
+          {!isCollapsed && <span>Search</span>}
+          {!isCollapsed && <kbd>{navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl K'}</kbd>}
+        </button>
 
         <nav className="hz-icon-rail__nav flex-grow-1 overflow-auto" aria-label="Product areas">
           {primarySections.map((section) => {
@@ -169,6 +202,12 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
         </nav>
 
         <div className="hz-rail-utilities">
+          {hasPermission('EMPLOYEE_CREATE') && (
+            <button type="button" className="hz-sidebar__quick-action" onClick={() => navigate('/employees')} aria-label="Add employee" title="Add employee">
+              <span className="hz-sidebar__quick-action-plus">+</span>
+              {!isCollapsed && <span>Add employee</span>}
+            </button>
+          )}
           {supportItem && (
             <button
               type="button"
@@ -178,7 +217,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
               title="Support"
             >
               <LifeBuoy size={19} strokeWidth={1.8} />
-              <span>Support</span>
+              {!isCollapsed && <span>Support</span>}
             </button>
           )}
           {administration && (
@@ -195,7 +234,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
               }}
             >
               <Settings2 size={19} strokeWidth={1.8} />
-              <span>Settings</span>
+              {!isCollapsed && <span>Settings</span>}
             </button>
           )}
           <div className="hz-rail-profile">
