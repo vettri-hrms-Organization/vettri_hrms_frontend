@@ -613,3 +613,78 @@ textarea.form-control:focus {
     transform: translateX(0) !important;
   }
 }
+
+
+/* ======================================================================
+   VETTRI ROLE CONSISTENCY — EMPLOYEE HOME
+   Employee users keep employee-specific content and permissions, but
+   inherit the same visual composition as the HR/Admin dashboard.
+   ====================================================================== */
+
+.hz-dashboard--employee {
+  --employee-surface-radius: 14px;
+}
+
+/* Employee home intentionally uses the same hero, metric, queue and
+   shortcut language as the HR/Admin dashboard. */
+.hz-dashboard--employee .hz-dashboard__hero,
+.hz-dashboard--employee .hz-dashboard__metric,
+.hz-dashboard--employee .hz-dashboard__surface,
+.hz-dashboard--employee .hz-dashboard__module-card,
+.hz-dashboard--employee .hz-dashboard__support-strip {
+  border-radius: var(--employee-surface-radius);
+}
+
+.hz-dashboard--employee .hz-dashboard__hero {
+  margin-bottom: 22px;
+}
+
+.hz-dashboard--employee .hz-dashboard__hero-copy h1 {
+  color: var(--hz-primary-800);
+}
+
+.hz-dashboard--employee .hz-dashboard__metric-grid {
+  margin-bottom: 0;
+}
+
+.hz-dashboard--employee .hz-dashboard__overview-grid {
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr);
+}
+
+.hz-dashboard--employee .hz-dashboard__insights {
+  margin-bottom: 20px;
+}
+
+.hz-dashboard--employee .hz-dashboard__module-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.hz-dashboard--employee .hz-dashboard__module-card {
+  min-height: 82px;
+}
+
+.hz-dashboard--employee .hz-dashboard__employee-widgets {
+  margin-top: 20px;
+}
+
+@media (max-width: 991.98px) {
+  .hz-dashboard--employee .hz-dashboard__overview-grid,
+  .hz-dashboard--employee .hz-dashboard__module-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .hz-dashboard--employee .hz-dashboard__hero {
+    padding: 20px;
+  }
+
+  .hz-dashboard--employee .hz-dashboard__hero-meta {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .hz-dashboard--employee .hz-dashboard__hero {
+    flex-direction: column;
+  }
+}
