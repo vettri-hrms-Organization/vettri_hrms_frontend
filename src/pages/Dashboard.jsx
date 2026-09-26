@@ -372,7 +372,7 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
     enabled: !!employeeId,
     retry: false,
   });
-  const { data: holidaysData } = useQuery({
+  const { data: holidaysData, isLoading: holidaysLoading, isError: holidaysError } = useQuery({
     queryKey: ['employee-dashboard-holidays'],
     queryFn: () => safeAuthorizedQuery(holidaysApi.list, []),
     enabled: !!employeeId,
