@@ -16,10 +16,11 @@ const STATUS_VARIANTS = {
   INTERVIEW: 'info',
 };
 
-function formatStatus(status) {
-  return String(status || 'UNKNOWN').replace(/[_-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+export function formatStatusLabel(status) {
+  return String(status ?? 'UNKNOWN').replace(/[_-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export default function StatusBadge({ status, variant, dot = true, children, ...rest }) {
-  return <Badge variant={variant || STATUS_VARIANTS[String(status || '').toUpperCase()] || 'neutral'} dot={dot} {...rest}>{children || formatStatus(status)}</Badge>;
+  const safeStatus = status ?? 'UNKNOWN';
+  return <Badge variant={variant || STATUS_VARIANTS[String(safeStatus).toUpperCase()] || 'neutral'} dot={dot} {...rest}>{children ?? formatStatusLabel(safeStatus)}</Badge>;
 }

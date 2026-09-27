@@ -286,9 +286,9 @@ function EmployeeReportPanel({ departmentFilter, statusFilter }) {
               </Button>
             }
           >
-            <ReportBarChart data={statusEntries.map(([status, count]) => ({ label: status.replace('_', ' '), value: count }))} color="var(--hz-primary-500)" />
+            <ReportBarChart data={statusEntries.map(([status, count]) => ({ label: formatStatusLabel(status), value: count }))} color="var(--hz-primary-500)" />
             {statusEntries.map(([status, count]) => (
-              <Bar key={status} label={status.replace('_', ' ')} value={count} max={data.totalEmployees} />
+              <Bar key={status} label={formatStatusLabel(status)} value={count} max={data.totalEmployees} />
             ))}
           </ChartCard>
         </div>

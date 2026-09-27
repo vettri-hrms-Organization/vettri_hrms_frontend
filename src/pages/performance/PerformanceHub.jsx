@@ -7,6 +7,7 @@ import { employeesApi } from '../../api/endpoints/employees';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import { formatStatusLabel } from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
 import Avatar from '../../components/ui/Avatar';
 import EmptyState from '../../components/ui/EmptyState';
@@ -144,7 +145,7 @@ function GoalsPanel() {
           <div key={g.id} className="py-3" style={{ borderBottom: '1px solid var(--hz-border)' }}>
             <div className="d-flex align-items-center justify-content-between mb-1">
               <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{g.title}</span>
-              <Badge variant={GOAL_STATUS_VARIANT[g.status]}>{g.status.replace('_', ' ')}</Badge>
+              <Badge variant={GOAL_STATUS_VARIANT[g.status]}>{formatStatusLabel(g.status)}</Badge>
             </div>
             {g.description && <p style={{ fontSize: 13, color: 'var(--hz-text-secondary)', marginBottom: 8 }}>{g.description}</p>}
             <div className="d-flex align-items-center gap-2">

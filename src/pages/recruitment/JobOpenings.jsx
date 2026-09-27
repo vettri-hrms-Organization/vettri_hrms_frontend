@@ -15,7 +15,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton';
 import PageHeader from '../../components/ui/PageHeader';
 import Tabs from '../../components/ui/Tabs';
 import FilterBar from '../../components/ui/FilterBar';
-import StatusBadge from '../../components/ui/StatusBadge';
+import StatusBadge, { formatStatusLabel } from '../../components/ui/StatusBadge';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 
 const STATUS_VARIANT = { OPEN: 'success', ON_HOLD: 'warning', CLOSED: 'neutral' };
@@ -102,7 +102,7 @@ export default function JobOpenings() {
                   <Card hoverable>
                     <div className="d-flex align-items-start justify-content-between mb-2">
                       <h3 style={{ fontSize: 'var(--hz-text-base)', fontWeight: 600, color: 'var(--hz-text-primary)', margin: 0 }}>{o.title}</h3>
-                      <StatusBadge status={o.status} variant={STATUS_VARIANT[o.status]} dot>{o.status.replace('_', ' ')}</StatusBadge>
+                      <StatusBadge status={o.status} variant={STATUS_VARIANT[o.status]} dot>{formatStatusLabel(o.status)}</StatusBadge>
                     </div>
                     <p style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)', marginBottom: 12 }}>
                       {o.departmentName || 'Any department'} {o.designationTitle ? `· ${o.designationTitle}` : ''}

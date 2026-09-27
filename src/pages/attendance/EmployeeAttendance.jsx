@@ -5,7 +5,7 @@ import { attendanceApi } from '../../api/endpoints/attendance';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import StatusBadge from '../../components/ui/StatusBadge';
+import StatusBadge, { formatStatusLabel } from '../../components/ui/StatusBadge';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
@@ -242,7 +242,7 @@ export default function EmployeeAttendance() {
               <div className="d-flex flex-column gap-4">
                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
                   <div className="d-flex align-items-center gap-3"><div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: 48, height: 48, background: session ? 'var(--hz-success-50)' : 'var(--hz-gray-100)', color: session ? 'var(--hz-success-600)' : 'var(--hz-text-secondary)' }}><Clock3 size={22} /></div><div><div style={{ fontWeight: 700, fontSize: 18 }}>{session ? 'Checked in' : 'Not checked in'}</div><div className="text-muted-hz" style={{ fontSize: 13 }}>{session ? `${session.locationType} · ${session.source}` : 'Choose a work location to begin'}</div></div></div>
-                  {session && <StatusBadge status={session.status} variant={session.status === 'CHECKED_IN' ? 'success' : 'info'} dot>{session.status.replace('_', ' ')}</StatusBadge>}
+                  {session && <StatusBadge status={session.status} variant={session.status === 'CHECKED_IN' ? 'success' : 'info'} dot>{formatStatusLabel(session.status)}</StatusBadge>}
                 </div>
                 <div className="row g-3"><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check in</div><strong>{session?.checkInTime ? formatTimeIST(session.checkInTime) : '--:--'}</strong></div><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check out</div><strong>{session?.checkOutTime ? formatTimeIST(session.checkOutTime) : '--:--'}</strong></div></div>
                 <div className="d-flex flex-wrap gap-2">
