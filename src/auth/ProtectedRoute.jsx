@@ -24,7 +24,7 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   if (user?.employeeId && !hasPermission('ATTENDANCE_VIEW') && location.pathname === '/attendance') {
-    return <Navigate to="/my-profile?tab=attendance" replace />;
+    return <Navigate to="/my-attendance" replace />;
   }
 
   if (user?.employeeId && !hasPermission('LEAVE_VIEW') && !hasPermission('LEAVE_APPROVE') && location.pathname === '/leave') {

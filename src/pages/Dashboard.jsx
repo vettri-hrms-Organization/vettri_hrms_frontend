@@ -27,10 +27,18 @@ async function safeAuthorizedQuery(request, fallbackValue = null) {
 }
 
 export default function Dashboard() {
-  const { user, hasPermission, hasRole } = useAuth();
+  const { user, hasPermission, hasRole, hasAnyRole } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
   const firstName = user?.fullName?.split(' ')[0];
+
+  const isAdminDashboardUser = hasAnyRole(['SUPER_ADMIN', 'HR_ADMIN', 'COMPANY_ADMIN', 'MANAGER'])
+    || hasPermission('EMPLOYEE_VIEW')
+    || hasPermission('ATTENDANCE_VIEW')
+    || hasPermission('LEAVE_VIEW')
+    || hasPermission('LEAVE_APPROVE')
+    || hasPermission('SALARY_VIEW')
+    || hasPermission('REPORTS_VIEW');
 
   const canViewOrgSummary = hasPermission('EMPLOYEE_VIEW');
 
@@ -119,7 +127,7 @@ export default function Dashboard() {
   const today = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
 
-  if (hasRole('EMPLOYEE')) {
+  if (!isAdminDashboardUser && (user?.employeeId || hasRole('EMPLOYEE'))) {
     return <EmployeeDashboard employeeId={user?.employeeId} firstName={firstName} greeting={greeting} today={today} />;
   }
 

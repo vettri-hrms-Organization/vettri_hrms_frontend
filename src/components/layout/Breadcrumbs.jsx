@@ -18,6 +18,7 @@ const ROUTES = [
   },
 
   { pattern: '/attendance', crumbs: [{ label: 'Attendance' }] },
+  { pattern: '/my-attendance', crumbs: [{ label: 'My Attendance' }] },
   {
     pattern: '/attendance/devices',
     crumbs: [{ label: 'Attendance', path: '/attendance' }, { label: 'Devices' }],

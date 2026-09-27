@@ -64,7 +64,7 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/my-profile', icon: UserRound, label: 'My Profile', end: true },
       { to: '/my-profile?tab=job', icon: Briefcase, label: 'My Job' },
-      { to: '/my-profile?tab=attendance', icon: Clock, label: 'Attendance' },
+      { to: '/my-attendance', icon: Clock, label: 'My Attendance' },
       { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave' },
       { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents' },
       { to: '/my-interviews', icon: CalendarClock, label: 'My Interviews' },
@@ -237,14 +237,16 @@ export function findNavItemByPath(path) {
  *  check can actually reach. An item/section with no `permission` tag is
  *  assumed open to any authenticated user (matches today's backend reality
  *  for modules that haven't had permission codes carved out yet). */
-export function visibleNavSections(hasPermission, hasRole = () => false) {
+export function visibleNavSections(hasPermission, hasRole = () => false, hasEmployeeProfile = false) {
+  const isEmployeeScoped = hasEmployeeProfile || hasRole('EMPLOYEE');
+
   const filtered = NAV_SECTIONS.map((section) => {
     const items = section.items.filter((item) => {
       const required = item.permission || section.permission;
-      return (!required || hasPermission(required)) && (!item.role || hasRole(item.role));
+      return (!required || hasPermission(required)) && (!item.role || hasRole(item.role) || (item.role === 'EMPLOYEE' && isEmployeeScoped));
     });
     return { ...section, items };
-  }).filter((section) => section.items.length > 0 && (!section.role || hasRole(section.role)));
+  }).filter((section) => section.items.length > 0 && (!section.role || hasRole(section.role) || (section.role === 'EMPLOYEE' && isEmployeeScoped)));
 
   const hasEmployeeHome = filtered.some((section) => section.id === 'employee-home');
   const employeeSelfIds = new Set(['employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps']);
