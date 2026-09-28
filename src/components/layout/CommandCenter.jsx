@@ -28,7 +28,7 @@ import { useNavMemory } from './NavMemoryContext';
 const MAX_RESULTS = 12;
 const ACTIONS = [
   { id: 'employees', label: 'Open employee workspace', description: 'Manage people and employee records', icon: Users, to: '/employees', permission: 'EMPLOYEE_VIEW' },
-  { id: 'import-employees', label: 'Import employees', description: 'Upload employee records', icon: FileSpreadsheet, to: '/employees/import', permission: 'EMPLOYEE_CREATE' },
+  { id: 'import-employees', label: 'Import employees', description: 'Upload employee records', icon: FileSpreadsheet, to: '/employees/import', permission: 'EMPLOYEE_IMPORT' },
   { id: 'apply-leave', label: 'Open leave management', description: 'Review leave requests and balances', icon: CalendarDays, to: '/leave', permission: 'LEAVE_VIEW' },
   { id: 'recruitment', label: 'Open recruitment', description: 'Manage jobs and candidates', icon: Briefcase, to: '/recruitment', permission: 'RECRUITMENT_VIEW' },
   { id: 'payroll', label: 'Run payroll', description: 'Open payroll processing', icon: Wallet, to: '/salary/payroll-processing', permission: 'SALARY_VIEW' },

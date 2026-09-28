@@ -21,6 +21,7 @@ import { statusMeta, EMPLOYMENT_TYPE_LABEL } from './statusMeta';
 import PageHeader from '../../components/ui/PageHeader';
 import FilterBar from '../../components/ui/FilterBar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { useAuth } from '../../hooks/useAuth';
 
 const COLUMNS = [
   {
@@ -124,6 +125,7 @@ const COLUMNS = [
 
 export default function EmployeeList() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { hasPermission } = useAuth();
 
   const departmentId = searchParams.get('departmentId');
   const departmentName = searchParams.get('departmentName');
@@ -164,6 +166,7 @@ export default function EmployeeList() {
   const employees = data?.content ?? [];
   const totalPages = data?.totalPages ?? 0;
   const totalElements = data?.totalElements ?? 0;
+  const canImportEmployees = hasPermission('EMPLOYEE_IMPORT');
 
   const bulkUpdate = useMutation({
     mutationFn: async () =>
@@ -223,13 +226,15 @@ export default function EmployeeList() {
         description="Your organization's people, all in one place"
         actions={
           <div className="d-flex gap-2">
-            <Link
-              to="/employees/import"
-              className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
-            >
-              <FileSpreadsheet size={16} />
-              Import Employees
-            </Link>
+            {canImportEmployees && (
+              <Link
+                to="/employees/import"
+                className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+              >
+                <FileSpreadsheet size={16} />
+                Import Employees
+              </Link>
+            )}
 
             <Button
               icon={UserPlus}

@@ -130,12 +130,16 @@ export const NAV_SECTIONS = [
   {
     id: 'organization',
     label: 'Organization',
-    description: 'People and workplace management',
+    description: 'Company administration and governance',
     collapsible: true,
     badge: null,
     items: [
-      { to: '/employees', icon: Users, label: 'Employees', permission: 'EMPLOYEE_VIEW' },
-      { to: '/employees/import', icon: FileSpreadsheet, label: 'Import Employees', permission: 'EMPLOYEE_CREATE' },
+      { to: '/employees/import', icon: FileSpreadsheet, label: 'Import Employees', permission: 'EMPLOYEE_IMPORT' },
+      { to: '/settings/organization', icon: Building2, label: 'Departments', permission: 'ORG_VIEW' },
+      { to: '/settings/organization', icon: Building2, label: 'Designations', permission: 'ORG_VIEW' },
+      { to: '/settings/organization', icon: Building2, label: 'Teams', permission: 'ORG_VIEW' },
+      { to: '/settings/users', icon: ShieldCheck, label: 'Users & Roles', permission: 'USER_VIEW' },
+      { to: '/settings/organization', icon: Building2, label: 'Organization Settings', permission: 'ORG_VIEW' },
     ],
   },
   {
@@ -251,8 +255,9 @@ export function visibleNavSections(hasPermission, hasRole = () => false, hasEmpl
   const hasEmployeeHome = filtered.some((section) => section.id === 'employee-home');
   const employeeSelfIds = new Set(['employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps']);
   const employeeSelfItems = [];
-  let people = null;
+  const peopleItems = [{ to: '/employees', icon: Users, label: 'Employees', permission: 'EMPLOYEE_VIEW' }];
   let timeAndLeave = null;
+  let organizationSection = null;
 
   for (const section of filtered) {
     // Notifications already have a dedicated topbar bell and notification center.
@@ -265,18 +270,18 @@ export function visibleNavSections(hasPermission, hasRole = () => false, hasEmpl
       continue;
     }
 
-    if (section.id === 'organization' || section.id === 'talent') {
-      if (!people) {
-        people = {
-          id: 'people',
-          label: 'People',
-          description: 'Employees, recruitment and talent workflows',
-          collapsible: true,
-          badge: null,
-          items: [],
-        };
-      }
-      people.items.push(...section.items);
+    if (section.id === 'talent') {
+      peopleItems.push(...section.items);
+      continue;
+    }
+
+    if (section.id === 'organization') {
+      organizationSection = {
+        ...section,
+        id: 'organization',
+        label: 'Organization',
+        description: 'Company administration and governance',
+      };
       continue;
     }
 
@@ -319,7 +324,17 @@ export function visibleNavSections(hasPermission, hasRole = () => false, hasEmpl
     });
   }
 
-  addSection(people);
+  addSection({
+    id: 'people',
+    label: 'People',
+    description: 'Employees, recruitment and talent workflows',
+    collapsible: true,
+    badge: null,
+    items: peopleItems,
+  });
+  if (organizationSection) {
+    addSection(organizationSection);
+  }
   addSection(timeAndLeave);
 
   for (const section of filtered) {

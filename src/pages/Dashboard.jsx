@@ -241,7 +241,7 @@ export default function Dashboard() {
           </div>
           <div className="hz-dashboard__action-grid">
             <Link to="/employees"><Users size={18} /><span>Manage employees</span></Link>
-            <Link to="/employees/import"><Inbox size={18} /><span>Import employees</span></Link>
+            {hasPermission('EMPLOYEE_IMPORT') && <Link to="/employees/import"><Inbox size={18} /><span>Import employees</span></Link>}
             <Link to="/leave"><CalendarOff size={18} /><span>Manage leave</span></Link>
             <Link to="/reports"><FileText size={18} /><span>Generate report</span></Link>
           </div>
