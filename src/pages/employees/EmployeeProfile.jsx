@@ -457,6 +457,14 @@ function DocumentsTab({ employee, isEmployee }) {
   function daysUntil(dateStr) {
     return Math.ceil((new Date(dateStr) - today) / 86400000);
   }
+  function docStatusLabel(status) {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING_REVIEW': return 'Pending review';
+      case 'APPROVED': return 'Approved';
+      case 'REJECTED': return 'Rejected';
+      default: return 'Pending review';
+    }
+  }
   function expiryTone(days) {
     if (days < 0) return { color: 'var(--hz-danger-600)', label: 'Expired' };
     if (days <= 30) return { color: 'var(--hz-warning-600)', label: `${days}d left` };
@@ -537,7 +545,10 @@ function DocumentsTab({ employee, isEmployee }) {
               return (
                 <tr key={d.id}>
                   <td className="ps-4" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>
-                    {DOCUMENT_TYPE_LABEL[d.documentType] || d.documentType}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span>{DOCUMENT_TYPE_LABEL[d.documentType] || d.documentType}</span>
+                      <small style={{ color: 'var(--hz-text-muted)' }}>{docStatusLabel(d.status)}</small>
+                    </div>
                   </td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{d.documentNumber || '—'}</td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
@@ -555,6 +566,48 @@ function DocumentsTab({ employee, isEmployee }) {
                     </span>
                   </td>
                   <td className="pe-4 text-end">
+                    {d.s3ObjectKey && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-light border-0 me-2"
+                        onClick={async () => {
+                          const response = await documentsApi.download(d.id);
+                          const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = d.originalFileName || 'document';
+                          link.click();
+                          window.URL.revokeObjectURL(url);
+                        }}
+                      >
+                        Download
+                      </button>
+                    )}
+                    {!isEmployee && d.status !== 'APPROVED' && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-light border-0 me-2"
+                        onClick={() => documentsApi.review(d.id, true, null).then(() => refetch())}
+                        style={{ color: 'var(--hz-success-600)' }}
+                      >
+                        Approve
+                      </button>
+                    )}
+                    {!isEmployee && d.status !== 'APPROVED' && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-light border-0"
+                        onClick={() => {
+                          const reason = window.prompt('Please provide the rejection reason for this document:');
+                          if (!reason || !reason.trim()) return;
+                          documentsApi.review(d.id, false, reason.trim()).then(() => refetch());
+                        }}
+                        style={{ color: 'var(--hz-danger-600)' }}
+                      >
+                        Reject
+                      </button>
+                    )}
                     {!isEmployee && <button
                       className="btn btn-sm btn-light border-0"
                       style={{ color: 'var(--hz-danger-600)' }}
@@ -580,10 +633,11 @@ function DocumentsTab({ employee, isEmployee }) {
 function AddDocumentModal({ employeeId, onClose }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ documentType: 'ID_PROOF', documentNumber: '', issueDate: '', expiryDate: '', notes: '' });
+  const [file, setFile] = useState(null);
   const [error, setError] = useState(null);
 
   const create = useMutation({
-    mutationFn: documentsApi.create,
+    mutationFn: () => documentsApi.upload(employeeId, file, form),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-documents', String(employeeId)] });
       onClose();
@@ -598,7 +652,11 @@ function AddDocumentModal({ employeeId, onClose }) {
   function handleSubmit(e) {
     e.preventDefault();
     setError(null);
-    create.mutate({ ...form, employeeId, issueDate: form.issueDate || null, notes: form.notes || null });
+    if (!file) {
+      setError('Please attach a document file.');
+      return;
+    }
+    create.mutate();
   }
 
   return (
@@ -617,6 +675,16 @@ function AddDocumentModal({ employeeId, onClose }) {
             </option>
           ))}
         </FormField>
+
+        <div className="mb-3">
+          <label className="form-label">Document File</label>
+          <input
+            className="form-control"
+            type="file"
+            onChange={(event) => setFile(event.target.files?.[0] || null)}
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+          />
+        </div>
 
         <FormField label="Document Number (optional)" value={form.documentNumber} onChange={(v) => set('documentNumber', v)} />
 

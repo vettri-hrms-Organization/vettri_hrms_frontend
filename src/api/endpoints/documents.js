@@ -4,6 +4,23 @@ export const documentsApi = {
   byEmployee: (employeeId) => axiosClient.get(`/api/documents/employee/${employeeId}`).then((res) => res.data),
   expiringSoon: (days) => axiosClient.get('/api/documents/expiring-soon', { params: days ? { days } : {} }).then((res) => res.data),
   create: (payload) => axiosClient.post('/api/documents', payload).then((res) => res.data),
+  upload: (employeeId, file, meta) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentType', meta.documentType);
+    if (meta.documentNumber) formData.append('documentNumber', meta.documentNumber);
+    if (meta.issueDate) formData.append('issueDate', meta.issueDate);
+    if (meta.expiryDate) formData.append('expiryDate', meta.expiryDate);
+    if (meta.notes) formData.append('notes', meta.notes);
+    return axiosClient.post(`/api/documents/employee/${employeeId}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((res) => res.data);
+  },
+  review: (documentId, approved, rejectionReason) => axiosClient.post(`/api/documents/${documentId}/review`, {
+    approved,
+    rejectionReason,
+  }).then((res) => res.data),
+  download: (documentId) => axiosClient.get(`/api/documents/${documentId}/download`, { responseType: 'blob' }),
   remove: (id) => axiosClient.delete(`/api/documents/${id}`),
 };
 
