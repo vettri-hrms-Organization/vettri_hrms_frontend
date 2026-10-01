@@ -166,7 +166,7 @@ export default function EmployeeProfile() {
       {tab === 'hierarchy' && <HierarchyTab employee={employee} />}
       {tab === 'attendance' && <AttendanceTab employee={employee} />}
       {tab === 'leave' && <LeaveTab employee={employee} onApplyLeave={() => setShowApplyLeave(true)} />}
-      {tab === 'documents' && <DocumentsTab employee={employee} />}
+      {tab === 'documents' && <DocumentsTab employee={employee} isEmployee={isEmployee} />}
 
       {showApplyLeave && <ApplyLeaveModal defaultEmployeeId={employee.id} onClose={() => setShowApplyLeave(false)} />}
     </div>
@@ -431,7 +431,7 @@ function AttendanceTab({ employee }) {
   );
 }
 
-function DocumentsTab({ employee }) {
+function DocumentsTab({ employee, isEmployee }) {
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [documentSearch, setDocumentSearch] = useState('');
