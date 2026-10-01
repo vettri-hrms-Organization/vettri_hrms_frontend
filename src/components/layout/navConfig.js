@@ -206,7 +206,7 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/executive', icon: Presentation, label: 'Executive Dashboard', permission: 'REPORTS_VIEW' },
       { to: '/reports', icon: FileBarChart, label: 'Reports', permission: 'REPORTS_VIEW' },
-      { to: '/requirements', icon: ClipboardList, label: 'Requirements' },
+      { to: '/requirements', icon: ClipboardList, label: 'Requirements', permission: 'REQUIREMENT_VIEW' },
     ],
   },
   {
@@ -221,7 +221,7 @@ export const NAV_SECTIONS = [
       { to: '/settings/leave', icon: CalendarDays, label: 'Leave Configuration', permission: 'LEAVE_MANAGE' },
       { to: '/settings/audit', icon: ScrollText, label: 'Audit Logs', permission: 'AUDIT_VIEW' },
       { to: '/settings/platform', icon: ShieldCheck, label: 'Platform Admin', role: 'SUPER_ADMIN' },
-      { to: '/onboarding', icon: ClipboardList, label: 'Workspace Setup' },
+      { to: '/onboarding', icon: ClipboardList, label: 'Workspace Setup', roles: ['COMPANY_ADMIN', 'SUPER_ADMIN'] },
       { to: '/support', icon: LifeBuoy, label: 'Support Information' },
     ],
   },
@@ -229,9 +229,12 @@ export const NAV_SECTIONS = [
 
 /** Flat list of every navigable page, each tagged with its section label -
  *  what the search index and favorites picker actually iterate over. */
-export const NAV_INDEX = NAV_SECTIONS.flatMap((section) =>
-  section.items.map((item) => ({ ...item, section: section.label, permission: item.permission || section.permission }))
-);
+export const NAV_INDEX = [
+  ...NAV_SECTIONS.flatMap((section) =>
+    section.items.map((item) => ({ ...item, section: section.label, permission: item.permission || section.permission }))
+  ),
+  { to: '/employees', permission: 'EMPLOYEE_VIEW' },
+];
 
 export function findNavItemByPath(path) {
   return NAV_INDEX.find((item) => item.to === path);
@@ -243,19 +246,26 @@ export function findNavItemByPath(path) {
  *  for modules that haven't had permission codes carved out yet). */
 export function visibleNavSections(hasPermission, hasRole = () => false, hasEmployeeProfile = false) {
   const isEmployeeScoped = hasEmployeeProfile || hasRole('EMPLOYEE');
+  const hasAccessRole = (item) =>
+    (!item.role && !item.roles) ||
+    (item.role && hasRole(item.role)) ||
+    (item.roles && item.roles.some((role) => hasRole(role))) ||
+    (item.role === 'EMPLOYEE' && isEmployeeScoped);
 
   const filtered = NAV_SECTIONS.map((section) => {
     const items = section.items.filter((item) => {
       const required = item.permission || section.permission;
-      return (!required || hasPermission(required)) && (!item.role || hasRole(item.role) || (item.role === 'EMPLOYEE' && isEmployeeScoped));
+      return (!required || hasPermission(required)) && hasAccessRole(item);
     });
     return { ...section, items };
-  }).filter((section) => section.items.length > 0 && (!section.role || hasRole(section.role) || (section.role === 'EMPLOYEE' && isEmployeeScoped)));
+  }).filter((section) => section.items.length > 0 && hasAccessRole(section));
 
   const hasEmployeeHome = filtered.some((section) => section.id === 'employee-home');
   const employeeSelfIds = new Set(['employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps']);
   const employeeSelfItems = [];
-  const peopleItems = [{ to: '/employees', icon: Users, label: 'Employees', permission: 'EMPLOYEE_VIEW' }];
+  const peopleItems = hasPermission('EMPLOYEE_VIEW')
+    ? [{ to: '/employees', icon: Users, label: 'Employees', permission: 'EMPLOYEE_VIEW' }]
+    : [];
   let timeAndLeave = null;
   let organizationSection = null;
 

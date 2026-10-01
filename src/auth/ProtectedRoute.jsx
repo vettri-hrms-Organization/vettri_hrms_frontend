@@ -46,9 +46,14 @@ export default function ProtectedRoute({ allowedRoles }) {
     .find((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`));
   const requiredPermission = matchedItem?.permission;
   const requiredRole = matchedItem?.role;
+  const requiredRoles = matchedItem?.roles;
 
   const hasRequiredEmployeeProfile = requiredRole === 'EMPLOYEE' && !!user?.employeeId;
   if (requiredRole && !hasRequiredEmployeeProfile && !hasAnyRole([requiredRole])) {
+    return <AccessDenied />;
+  }
+
+  if (requiredRoles && !hasAnyRole(requiredRoles)) {
     return <AccessDenied />;
   }
 
