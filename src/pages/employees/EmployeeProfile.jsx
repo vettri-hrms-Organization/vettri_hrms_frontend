@@ -476,7 +476,9 @@ function DocumentsTab({ employee, isEmployee }) {
       title="Documents"
       subtitle="ID proof, visas, certifications, and contracts on file"
       actions={
-        !isEmployee && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setShowAdd(true)}>Add Document</Button>
+        <Button size="sm" variant="secondary" icon={Plus} onClick={() => setShowAdd(true)}>
+          {isEmployee ? 'Upload Document' : 'Add Document'}
+        </Button>
       }
       bodyClassName="p-0"
     >
@@ -488,14 +490,15 @@ function DocumentsTab({ employee, isEmployee }) {
               <span>Required employee records</span>
             </div>
             <span className="hz-mandatory-documents__count">
-              {MANDATORY_DOCUMENTS.filter((required) => documents?.some((employeeDocument) => employeeDocument.documentType === required.type)).length}/{MANDATORY_DOCUMENTS.length} complete
+              {MANDATORY_DOCUMENTS.filter((required) => documents?.some((employeeDocument) => employeeDocument.documentType === required.type && employeeDocument.status === 'APPROVED')).length}/{MANDATORY_DOCUMENTS.length} complete
             </span>
           </div>
           <div className="hz-mandatory-documents__grid">
             {MANDATORY_DOCUMENTS.map((required) => {
               const requiredDocument = documents?.find((item) => item.documentType === required.type);
-              const isPending = requiredDocument?.status?.toUpperCase() === 'PENDING' || requiredDocument?.status?.toUpperCase() === 'UNDER_REVIEW';
-              const status = isPending ? 'Pending review' : requiredDocument ? 'Uploaded' : 'Missing';
+              const requiredStatus = requiredDocument?.status?.toUpperCase();
+              const isPending = requiredStatus === 'PENDING' || requiredStatus === 'UNDER_REVIEW' || requiredStatus === 'PENDING_REVIEW';
+              const status = isPending ? 'Pending review' : requiredStatus === 'APPROVED' ? 'Approved' : requiredStatus === 'REJECTED' ? 'Rejected' : 'Missing';
               return (
                 <div key={required.type} className={`hz-mandatory-document hz-mandatory-document--${isPending ? 'pending' : requiredDocument ? 'uploaded' : 'missing'}`}>
                   {requiredDocument ? <CheckCircle2 size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />}
@@ -625,7 +628,7 @@ function DocumentsTab({ employee, isEmployee }) {
         </table>
       )}
 
-      {showAdd && !isEmployee && <AddDocumentModal employeeId={employee.id} onClose={() => setShowAdd(false)} />}
+      {showAdd && <AddDocumentModal employeeId={employee.id} onClose={() => setShowAdd(false)} />}
     </Card>
   );
 }
@@ -660,7 +663,7 @@ function AddDocumentModal({ employeeId, onClose }) {
   }
 
   return (
-    <Dialog open onClose={onClose} title="Add Document" size="sm">
+    <Dialog open onClose={onClose} title="Upload Document" size="sm">
       <form onSubmit={handleSubmit}>
         {error && (
           <div className="mb-3 px-3 py-2" style={{ background: 'var(--hz-danger-50)', color: 'var(--hz-danger-600)', borderRadius: 8, fontSize: 13 }}>
