@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { tokenStorage } from '../auth/tokenStorage';
 import { tenantStorage } from '../auth/tenantStorage';
-import { isPublicAuthEndpoint, isPublicAuthRoute } from '../auth/authRoutes';
+import { isAuthenticationEndpoint, isPublicAuthEndpoint, isPublicAuthRoute } from '../auth/authRoutes';
 import { notifyableStatus, userFacingError } from '../utils/userFacingError';
 import {
   ConnectionState,
@@ -174,6 +174,9 @@ axiosClient.interceptors.response.use(
     }
 
     if (!error.response && !originalRequest?._queueReplayed) {
+      if (isAuthenticationEndpoint(requestPath)) {
+        return Promise.reject(error);
+      }
       emitApiError({ message: safeMessage, status: null });
       setConnectedStatus(false);
       if (originalRequest?._skipOfflineQueue) {

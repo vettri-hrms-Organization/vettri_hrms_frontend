@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Fingerprint, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Fingerprint, Pencil, Check, X, Plus } from 'lucide-react';
 import { devicesApi } from '../../api/endpoints/attendance';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function Devices() {
   const queryClient = useQueryClient();
+  const { hasPermission } = useAuth();
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [serialNumber, setSerialNumber] = useState('');
+  const [deviceName, setDeviceName] = useState('');
 
   const { data: devices, isLoading, isError, refetch } = useQuery({ queryKey: ['devices'], queryFn: devicesApi.list });
 
@@ -21,6 +26,15 @@ export default function Devices() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['devices'] });
       setEditingId(null);
+    },
+  });
+
+  const register = useMutation({
+    mutationFn: devicesApi.register,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
+      setSerialNumber('');
+      setDeviceName('');
     },
   });
 
@@ -33,9 +47,21 @@ export default function Devices() {
       <div>
         <h1 style={{ fontSize: 'var(--hz-text-2xl)', fontWeight: 700 }}>Biometric Devices</h1>
         <p className="text-secondary-hz" style={{ fontSize: 'var(--hz-text-sm)' }}>
-          Devices self-register the moment they push their first ADMS handshake — nothing to configure here first
+          Register each device before configuring its ADMS connection.
         </p>
       </div>
+
+      {hasPermission('DEVICE_MANAGE') && (
+        <form className="d-flex gap-2 flex-wrap" onSubmit={(event) => {
+          event.preventDefault();
+          register.mutate({ serialNumber: serialNumber.trim(), deviceName: deviceName.trim() });
+        }}>
+          <input className="form-control" value={serialNumber} onChange={(event) => setSerialNumber(event.target.value)} placeholder="Device serial number" aria-label="Device serial number" required maxLength={50} />
+          <input className="form-control" value={deviceName} onChange={(event) => setDeviceName(event.target.value)} placeholder="Device name" aria-label="Device name" required maxLength={100} />
+          <Button type="submit" icon={Plus} loading={register.isPending} disabled={register.isPending}>Register Device</Button>
+          {register.isError && <p className="text-danger w-100 mb-0" role="alert">{register.error?.response?.data?.message || 'Could not register this device.'}</p>}
+        </form>
+      )}
 
       <Card bodyClassName="p-0">
         {isLoading && (
@@ -47,8 +73,8 @@ export default function Devices() {
         {!isLoading && !isError && devices?.length === 0 && (
           <EmptyState
             icon={Fingerprint}
-            title="No devices have checked in yet"
-            description="Point your eSSL device's ADMS server address at this backend - it'll appear here on its first handshake."
+            title="No biometric devices registered"
+            description="Register a device, then configure its ADMS server address and an allowed source IP."
           />
         )}
         {!isLoading && !isError && devices?.length > 0 && (

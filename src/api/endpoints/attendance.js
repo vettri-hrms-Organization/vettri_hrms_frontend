@@ -34,5 +34,6 @@ export const workSessionApi = {
 
 export const devicesApi = {
   list: () => axiosClient.get('/api/devices').then((res) => res.data),
+  register: (payload) => axiosClient.post('/api/devices', payload).then((res) => res.data),
   rename: (id, deviceName) => axiosClient.patch(`/api/devices/${id}/rename`, { deviceName }).then((res) => res.data),
 };

@@ -254,6 +254,11 @@ export const monitoringApi = {
       .get(`/api/devices/${deviceId}/remote-support`)
       .then((res) => res.data),
 
+  remoteSupportCredential: (deviceId, jobId) =>
+    axiosClient
+      .post(`/api/devices/${deviceId}/remote-support/${jobId}/credential`)
+      .then((res) => res.data),
+
   configureRemoteSupport: (deviceId) =>
     axiosClient
       .post(

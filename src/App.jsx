@@ -51,6 +51,8 @@ const Requirements = lazy(() => import('./pages/Requirements'));
 const MonitoringReports = lazy(() => import('./pages/monitoring/MonitoringReports'));
 const SettingsPlatform = lazy(() => import('./pages/SettingsPlatform'));
 const SoftwareManagement = lazy(() => import('./pages/software/SoftwareManagement'));
+const CareersList = lazy(() => import('./pages/careers/CareersList'));
+const JobApply = lazy(() => import('./pages/careers/JobApply'));
 
 export default function App() {
   return (
@@ -61,6 +63,8 @@ export default function App() {
       <Route path="/activate-account" element={<ActivateAccount />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/careers" element={<CareersList />} />
+      <Route path="/careers/:jobId" element={<JobApply />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>

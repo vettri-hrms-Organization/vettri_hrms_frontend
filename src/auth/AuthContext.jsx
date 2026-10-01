@@ -4,6 +4,7 @@ import { authApi } from '../api/endpoints/auth';
 import { queryClient } from '../api/queryClient';
 import { tokenStorage } from './tokenStorage';
 import { tenantStorage } from './tenantStorage';
+import { clearQueue } from '../utils/offlineRequestQueue';
 
 export const AuthContext = createContext(null);
 
@@ -14,6 +15,7 @@ export function AuthProvider({ children }) {
 
   const setSelectedCompanyId = useCallback((companyId) => {
     queryClient.clear();
+    clearQueue();
     setSelectedCompanyIdState(companyId ? String(companyId) : null);
     tenantStorage.setSelectedCompanyId(companyId);
   }, []);
@@ -21,6 +23,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     function handleSessionExpired() {
       queryClient.clear();
+      clearQueue();
       tokenStorage.clear();
       tenantStorage.clear();
       setSelectedCompanyIdState(null);
@@ -35,6 +38,7 @@ export function AuthProvider({ children }) {
     async function restoreSession() {
       const token = tokenStorage.getAccessToken();
       if (!token) {
+        clearQueue();
         setIsLoading(false);
         return;
       }
@@ -46,6 +50,7 @@ export function AuthProvider({ children }) {
         // axiosClient's interceptor already tried a refresh and failed if
         // we land here - session really is gone.
         tokenStorage.clear();
+        clearQueue();
         tenantStorage.clear();
         setSelectedCompanyIdState(null);
         setUser(null);
@@ -63,6 +68,7 @@ export function AuthProvider({ children }) {
 
     tokenStorage.setTokens(accessToken, refreshToken);
     resetSessionExpirationHandling();
+    clearQueue();
     tenantStorage.clear();
     setSelectedCompanyIdState(null);
 
@@ -85,6 +91,7 @@ export function AuthProvider({ children }) {
       // Best-effort - clear local state regardless of whether the server call succeeded.
     }
     tokenStorage.clear();
+    clearQueue();
     tenantStorage.clear();
     resetSessionExpirationHandling();
     setSelectedCompanyIdState(null);

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   useMutation,
   useQuery,
@@ -75,6 +75,7 @@ export default function DeviceDetails() {
   const [reason, setReason] = useState('');
 
   const [newToken, setNewToken] = useState('');
+  const [revealedPassword, setRevealedPassword] = useState('');
 
   // Recent Activity Sessions pagination
   const [sessionPage, setSessionPage] = useState(1);
@@ -364,6 +365,16 @@ export default function DeviceDetails() {
           latestSupport.rustDeskId.trim()
         )}`
       : null;
+
+  const credentialMutation = useMutation({
+    mutationFn: () => monitoringApi.remoteSupportCredential(id, latestSupport?.jobId),
+    onSuccess: (data) => setRevealedPassword(data.password || ''),
+  });
+
+  useEffect(() => {
+    setRevealedPassword('');
+    credentialMutation.reset();
+  }, [id, latestSupport?.jobId]);
 
 
   // ============================================================
@@ -1273,67 +1284,40 @@ export default function DeviceDetails() {
                       </div>
 
 
-                      {/* RUSTDESK PASSWORD */}
-
-                      {latestSupport?.rustDeskPassword && (
-
-                        <div className="mt-3">
-
-                          <div
-                            className="text-secondary-hz"
-                            style={{
-                              fontSize: 13,
-                              marginBottom: 6,
-                            }}
-                          >
-                            RustDesk Password
-                          </div>
-
-
-                          <div
-                            className="d-flex align-items-center gap-2"
-                          >
-
-                            <code
-                              style={{
-                                fontSize: 13,
-                                padding:
-                                  '4px 8px',
-                                background:
-                                  'var(--hz-gray-50)',
-                                borderRadius: 4,
-                                fontFamily:
-                                  'monospace',
-                                fontWeight: 600,
-                              }}
-                            >
-                              {
-                                latestSupport.rustDeskPassword
-                              }
+                      <div className="mt-3">
+                        <div className="text-secondary-hz" style={{ fontSize: 13, marginBottom: 6 }}>
+                          RustDesk Password
+                        </div>
+                        {revealedPassword ? (
+                          <div className="d-flex align-items-center gap-2">
+                            <code style={{ fontSize: 13, padding: '4px 8px', background: 'var(--hz-gray-50)', borderRadius: 4, fontFamily: 'monospace', fontWeight: 600 }}>
+                              {revealedPassword}
                             </code>
-
-
-                            <Button
-                              size="xs"
-                              variant="secondary"
-                              icon={Copy}
-                              onClick={() => {
-
-                                navigator.clipboard.writeText(
-                                  latestSupport.rustDeskPassword
-                                );
-
-                              }}
-                              aria-label="Copy RustDesk Password"
-                            >
+                            <Button size="xs" variant="secondary" icon={Copy} onClick={() => navigator.clipboard.writeText(revealedPassword)} aria-label="Copy RustDesk Password">
                               Copy
                             </Button>
-
+                            <Button size="xs" variant="secondary" onClick={() => setRevealedPassword('')}>
+                              Hide
+                            </Button>
                           </div>
-
-                        </div>
-
-                      )}
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={KeyRound}
+                            loading={credentialMutation.isPending}
+                            disabled={credentialMutation.isPending}
+                            onClick={() => credentialMutation.mutate()}
+                          >
+                            Reveal password
+                          </Button>
+                        )}
+                        {credentialMutation.isError && (
+                          <div className="text-danger mt-2" role="alert">
+                            {credentialMutation.error?.response?.data?.message || 'Could not retrieve the password.'}
+                          </div>
+                        )}
+                      </div>
 
 
                       <div
@@ -1449,19 +1433,12 @@ export default function DeviceDetails() {
 
                     <Button
                       size="sm"
-                      variant="danger"
+                      variant="secondary"
                       icon={Ban}
-                      disabled={
-                        !isDeviceOnline(device) ||
-                        supportMutation.isPending
-                      }
-                      onClick={() =>
-                        supportMutation.mutate(
-                          'disable'
-                        )
-                      }
+                      disabled
+                      title="Remote support disable is not supported by the current RustDesk automation adapter."
                     >
-                      Disable
+                      Disable (unsupported)
                     </Button>
 
                   </>
