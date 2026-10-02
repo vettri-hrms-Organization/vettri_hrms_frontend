@@ -216,12 +216,14 @@ axiosClient.interceptors.response.use(
     if (status >= 500) {
       emitApiError({ message: safeMessage, status });
       setConnectionState(ConnectionState.OFFLINE);
-      const queued = queueRequestForRetry({
-        ...originalRequest,
-        _queueId: originalRequest?._queueId || `${Date.now()}-${Math.random()}`,
-      }, error);
-      if (queued) {
-        scheduleQueueFlush(axiosClient);
+      if (!originalRequest?._skipOfflineQueue) {
+        const queued = queueRequestForRetry({
+          ...originalRequest,
+          _queueId: originalRequest?._queueId || `${Date.now()}-${Math.random()}`,
+        }, error);
+        if (queued) {
+          scheduleQueueFlush(axiosClient);
+        }
       }
       return Promise.reject(error);
     }
