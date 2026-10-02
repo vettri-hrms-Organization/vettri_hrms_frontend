@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { employeesApi } from '../../api/endpoints/employees';
 import { leaveRequestsApi } from '../../api/endpoints/leave';
 import { attendanceApi } from '../../api/endpoints/attendance';
-import { documentsApi, DOCUMENT_TYPE_LABEL, MANDATORY_DOCUMENTS } from '../../api/endpoints/documents';
+import { documentsApi, DOCUMENT_TYPE_LABEL, MANDATORY_DOCUMENTS, EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES } from '../../api/endpoints/documents';
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Users, ChevronDown, Fingerprint, Pencil, Check, X, CalendarDays, Clock, FileText, Plus, Trash2, AlertTriangle, Network, ClipboardList, Search, Send, UserX, CheckCircle2 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -638,6 +638,7 @@ function AddDocumentModal({ employeeId, onClose }) {
   const [form, setForm] = useState({ documentType: 'ID_PROOF', documentNumber: '', issueDate: '', expiryDate: '', notes: '' });
   const [file, setFile] = useState(null);
   const [error, setError] = useState(null);
+  const expiryNotApplicable = EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES.includes(form.documentType);
 
   const create = useMutation({
     mutationFn: () => documentsApi.upload(employeeId, file, form),
@@ -650,6 +651,14 @@ function AddDocumentModal({ employeeId, onClose }) {
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function setDocumentType(documentType) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      documentType,
+      expiryDate: EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES.includes(documentType) ? '' : currentForm.expiryDate,
+    }));
   }
 
   function handleSubmit(e) {
@@ -671,7 +680,7 @@ function AddDocumentModal({ employeeId, onClose }) {
           </div>
         )}
 
-        <FormField as="select" label="Document Type" required value={form.documentType} onChange={(v) => set('documentType', v)}>
+        <FormField as="select" label="Document Type" required value={form.documentType} onChange={setDocumentType}>
           {Object.entries(DOCUMENT_TYPE_LABEL).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -692,8 +701,10 @@ function AddDocumentModal({ employeeId, onClose }) {
         <FormField label="Document Number (optional)" value={form.documentNumber} onChange={(v) => set('documentNumber', v)} />
 
         <div className="row g-3 mb-3">
-          <FormField col={6} label="Issue Date (optional)" type="date" value={form.issueDate} onChange={(v) => set('issueDate', v)} />
-          <FormField col={6} label="Expiry Date" type="date" required value={form.expiryDate} onChange={(v) => set('expiryDate', v)} />
+          <FormField col={expiryNotApplicable ? 12 : 6} label="Issue Date (optional)" type="date" value={form.issueDate} onChange={(v) => set('issueDate', v)} />
+          {!expiryNotApplicable && (
+            <FormField col={6} label="Expiry Date" type="date" required value={form.expiryDate} onChange={(v) => set('expiryDate', v)} />
+          )}
         </div>
 
         <FormField as="textarea" label="Notes (optional)" rows={2} value={form.notes} onChange={(v) => set('notes', v)} />

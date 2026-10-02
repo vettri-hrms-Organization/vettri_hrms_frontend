@@ -1,5 +1,7 @@
 import { axiosClient } from '../axiosClient';
 
+export const EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES = ['AADHAAR', 'PAN'];
+
 export const documentsApi = {
   byEmployee: (employeeId) => axiosClient.get(`/api/documents/employee/${employeeId}`).then((res) => res.data),
   expiringSoon: (days) => axiosClient.get('/api/documents/expiring-soon', { params: days ? { days } : {} }).then((res) => res.data),
@@ -10,7 +12,9 @@ export const documentsApi = {
     formData.append('documentType', meta.documentType);
     if (meta.documentNumber) formData.append('documentNumber', meta.documentNumber);
     if (meta.issueDate) formData.append('issueDate', meta.issueDate);
-    if (meta.expiryDate) formData.append('expiryDate', meta.expiryDate);
+    if (!EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES.includes(meta.documentType) && meta.expiryDate) {
+      formData.append('expiryDate', meta.expiryDate);
+    }
     if (meta.notes) formData.append('notes', meta.notes);
     return axiosClient.post(`/api/documents/employee/${employeeId}/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
