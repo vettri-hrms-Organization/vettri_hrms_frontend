@@ -18,6 +18,43 @@ import EmptyState from '../components/ui/EmptyState';
 import { useToast } from '../components/ui/Toast';
 import PageHeader from '../components/ui/PageHeader';
 import ErrorBanner from '../components/ui/ErrorBanner';
+import { useAuth } from '../hooks/useAuth';
+
+const ROLE_LABELS = {
+  COMPANY_ADMIN: 'Organization Administrator',
+  HR_ADMIN: 'HR Manager',
+  MANAGER: 'Team Lead',
+  EMPLOYEE: 'Employee',
+  SUPER_ADMIN: 'Platform Administrator',
+  HR_EXECUTIVE: 'HR Executive',
+  HR_COORDINATOR: 'HR Coordinator',
+  DEPARTMENT_MANAGER: 'Department Manager',
+  IT_ADMINISTRATOR: 'IT Administrator',
+};
+
+function displayRole(role) {
+  return role?.label || ROLE_LABELS[role?.name] || role?.name || ROLE_LABELS[role] || role;
+}
+
+const SCOPE_LABELS = {
+  SELF: 'Self',
+  TEAM: 'Team',
+  DEPARTMENT: 'Department',
+  ORGANIZATION: 'Company',
+};
+const COMPANY_SCOPED_PERMISSIONS = new Set([
+  'IT_MANAGEMENT_ACCESS',
+  'SOFTWARE_VIEW',
+  'SOFTWARE_DEPLOY',
+  'SOFTWARE_MANAGE',
+]);
+
+function scopesForSave(selected, scopes) {
+  return Object.fromEntries([...selected].map((code) => [
+    code,
+    COMPANY_SCOPED_PERMISSIONS.has(code) ? 'ORGANIZATION' : scopes[code] || 'ORGANIZATION',
+  ]));
+}
 
 function roleOperationError(error) {
   const status = error?.response?.status;
@@ -125,7 +162,7 @@ function UsersPanel() {
                     <div className="d-flex gap-1 flex-wrap">
                       {u.roles.map((r) => (
                         <Badge key={r} variant="primary">
-                          {r}
+                          {displayRole(r)}
                         </Badge>
                       ))}
                     </div>
@@ -181,6 +218,7 @@ function UsersPanel() {
 function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { hasRole } = useAuth();
   const [selected, setSelected] = useState(() => new Set(user.roles));
 
   const { data: roles, isLoading, isError, error: rolesError } = useQuery({
@@ -189,12 +227,6 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
     retry: false,
   });
 
-  // No backend guard exists against this (UserService#assignRoles is an
-  // unconditional overwrite) - without this check, removing SUPER_ADMIN
-  // from the last account that has it locks every admin screen in the
-  // app with no recovery path except direct database access. Computed
-  // from the already-loaded user list on the parent page rather than a
-  // new endpoint, since it's just a count over data that's already there.
   const wouldRemoveLastSuperAdmin = user.roles.includes('SUPER_ADMIN') && !selected.has('SUPER_ADMIN') && otherSuperAdminCount === 0;
 
   const save = useMutation({
@@ -223,7 +255,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
       {!isLoading && !isError && (
         <>
           <div className="d-flex flex-column gap-2 mb-3">
-            {roles?.map((r) => (
+            {roles?.filter((role) => role.name !== 'SUPER_ADMIN' || hasRole('SUPER_ADMIN')).map((r) => (
               <label
                 key={r.id}
                 className="d-flex align-items-start gap-2 p-2 rounded-3"
@@ -232,7 +264,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
                 <input type="checkbox" className="form-check-input mt-1" checked={selected.has(r.name)} onChange={() => toggle(r.name)} />
                 <span>
                   <span className="d-block" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>
-                    {r.name}
+                    {displayRole(r)}
                   </span>
                   {r.description && (
                     <span className="d-block" style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>
@@ -269,6 +301,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
 
 function CreateUserModal({ onClose }) {
   const queryClient = useQueryClient();
+  const { hasRole } = useAuth();
   const [form, setForm] = useState({ username: '', email: '', fullName: '', temporaryPassword: '', roleNames: [] });
   const [error, setError] = useState(null);
 
@@ -305,7 +338,7 @@ function CreateUserModal({ onClose }) {
             onChange={(event) => setForm({ ...form, roleNames: [event.target.value] })}
           >
             <option value="EMPLOYEE">Employee</option>
-            <option value="COMPANY_ADMIN">Company Admin</option>
+            {hasRole('SUPER_ADMIN') && <option value="COMPANY_ADMIN">Organization Administrator</option>}
           </select>
         </div>
         <FormField
@@ -343,7 +376,7 @@ function RolesPanel() {
   const deleteRole = useMutation({
     mutationFn: (id) => rolesApi.remove(id),
     onSuccess: () => {
-      toast.success(`Deleted role "${deletingRole?.name}".`);
+      toast.success(`Deleted role "${displayRole(deletingRole)}".`);
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       setDeletingRole(null);
     },
@@ -387,7 +420,7 @@ function RolesPanel() {
                   <tr key={r.id}>
                     <td className="ps-4">
                       <div className="d-flex align-items-center gap-2">
-                        <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)' }}>{r.name}</div>
+                        <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)' }}>{displayRole(r)}</div>
                         {r.systemDefined && (
                           <Badge variant="neutral" title="Built-in role - permissions are fixed by the platform">
                             <Lock size={11} className="me-1" style={{ verticalAlign: -1 }} />System
@@ -412,7 +445,7 @@ function RolesPanel() {
                             size="sm"
                             icon={Trash2}
                             onClick={() => setDeletingRole(r)}
-                            aria-label={`Delete role "${r.name}"`}
+                            aria-label={`Delete role "${displayRole(r)}"`}
                           >
                             Delete
                           </Button>
@@ -435,7 +468,7 @@ function RolesPanel() {
         open={!!deletingRole}
         onClose={() => setDeletingRole(null)}
         onConfirm={() => deleteRole.mutate(deletingRole.id)}
-        title={`Delete "${deletingRole?.name}"?`}
+        title={`Delete "${displayRole(deletingRole)}"?`}
         description="Users currently holding only this role will lose the permissions it grants. This can't be undone."
         confirmLabel="Delete Role"
         loading={deleteRole.isPending}
@@ -476,12 +509,12 @@ function PermissionMatrix({ permissions, selected, onToggle, scopes = {}, onScop
                 <select
                   className="form-select form-select-sm ms-auto"
                   style={{ maxWidth: 150 }}
-                  value={scopes?.[permission.code] || 'ORGANIZATION'}
-                  disabled={readOnly || !selected.has(permission.code)}
+                  value={COMPANY_SCOPED_PERMISSIONS.has(permission.code) ? 'ORGANIZATION' : scopes?.[permission.code] || 'ORGANIZATION'}
+                  disabled={readOnly || !selected.has(permission.code) || COMPANY_SCOPED_PERMISSIONS.has(permission.code)}
                   onChange={(event) => onScopeChange(permission.code, event.target.value)}
                   aria-label={`${permission.code} scope`}
                 >
-                  {ROLE_SCOPES.map((scope) => <option key={scope} value={scope}>{scope}</option>)}
+                  {ROLE_SCOPES.map((scope) => <option key={scope} value={scope}>{SCOPE_LABELS[scope]}</option>)}
                 </select>
               </label>
             ))}
@@ -502,10 +535,10 @@ function EditPermissionsModal({ role, onClose }) {
   const { data: permissions, isLoading, isError } = useQuery({ queryKey: ['permissions'], queryFn: permissionsApi.list });
 
   const save = useMutation({
-    mutationFn: () => rolesApi.updatePermissionsAndScopes(role.id, Array.from(selected), scopes),
+    mutationFn: () => rolesApi.updatePermissionsAndScopes(role.id, Array.from(selected), scopesForSave(selected, scopes)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast.success(`Updated permissions for ${role.name}.`);
+      toast.success(`Updated permissions for ${displayRole(role)}.`);
       onClose();
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Could not update permissions.'),
@@ -528,7 +561,7 @@ function EditPermissionsModal({ role, onClose }) {
     <Dialog
       open
       onClose={onClose}
-      title={readOnly ? `${role.name} permissions` : `Edit permissions - ${role.name}`}
+      title={readOnly ? `${displayRole(role)} permissions` : `Edit permissions - ${displayRole(role)}`}
       description={readOnly ? 'This is a built-in role - its permissions are fixed by the platform.' : 'Choose exactly what this role can see and do.'}
       size="xl"
       footer={!readOnly && (
@@ -558,7 +591,7 @@ function CreateRoleModal({ onClose }) {
   const { data: permissions, isLoading, isError } = useQuery({ queryKey: ['permissions'], queryFn: permissionsApi.list });
 
   const createRole = useMutation({
-    mutationFn: () => rolesApi.create({ name: form.name, description: form.description, permissionCodes: Array.from(selected), permissionScopes: scopes }),
+    mutationFn: () => rolesApi.create({ name: form.name, description: form.description, permissionCodes: Array.from(selected), permissionScopes: scopesForSave(selected, scopes) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success(`Created role "${form.name}".`);

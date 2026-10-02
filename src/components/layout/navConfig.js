@@ -168,18 +168,29 @@ export const NAV_SECTIONS = [
     ],
   },
   {
-    id: 'monitoring',
-    label: 'Monitoring',
-    description: 'Workforce activity and compliance',
+    id: 'team-monitoring',
+    label: 'Team Monitoring',
+    description: 'Activity and reports for employees in your authorized scope',
     collapsible: true,
     permission: 'MONITORING_VIEW',
     badge: null,
     items: [
       { to: '/monitoring', icon: MonitorSmartphone, label: 'Live Activity', end: true },
-      { to: '/monitoring/devices', icon: MonitorSmartphone, label: 'Devices', permission: 'MONITORING_VIEW' },
+      { to: '/monitoring/activity', icon: Clock, label: 'Activity Log' },
+      { to: '/monitoring/reports', icon: FileBarChart, label: 'Reports' },
+    ],
+  },
+  {
+    id: 'monitoring',
+    label: 'IT MANAGEMENT',
+    description: 'Managed devices and software',
+    collapsible: true,
+    permission: 'IT_MANAGEMENT_ACCESS',
+    badge: null,
+    items: [
+      { to: '/monitoring', icon: MonitorSmartphone, label: 'Live Activity', end: true },
+      { to: '/monitoring/devices', icon: MonitorSmartphone, label: 'Devices' },
       { to: '/software', icon: PackageOpen, label: 'Software', permission: 'SOFTWARE_VIEW' },
-      { to: '/monitoring/activity', icon: Clock, label: 'Activity Log', permission: 'MONITORING_VIEW' },
-      { to: '/monitoring/reports', icon: FileBarChart, label: 'Reports', permission: 'MONITORING_VIEW' },
     ],
   },
   {
@@ -231,7 +242,12 @@ export const NAV_SECTIONS = [
  *  what the search index and favorites picker actually iterate over. */
 export const NAV_INDEX = [
   ...NAV_SECTIONS.flatMap((section) =>
-    section.items.map((item) => ({ ...item, section: section.label, permission: item.permission || section.permission }))
+    section.items.map((item) => ({
+      ...item,
+      section: section.label,
+      permission: item.permission || section.permission,
+      sectionPermission: section.permission,
+    }))
   ),
   { to: '/employees', permission: 'EMPLOYEE_VIEW' },
 ];
@@ -253,10 +269,10 @@ export function visibleNavSections(hasPermission, hasRole = () => false, hasEmpl
     (item.role === 'EMPLOYEE' && isEmployeeScoped);
 
   const filtered = NAV_SECTIONS.map((section) => {
-    const items = section.items.filter((item) => {
-      const required = item.permission || section.permission;
-      return (!required || hasPermission(required)) && hasAccessRole(item);
-    });
+    const sectionAllowed = !section.permission || hasPermission(section.permission);
+    const items = sectionAllowed
+      ? section.items.filter((item) => (!item.permission || hasPermission(item.permission)) && hasAccessRole(item))
+      : [];
     return { ...section, items };
   }).filter((section) => section.items.length > 0 && hasAccessRole(section));
 

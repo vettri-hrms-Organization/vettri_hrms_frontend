@@ -45,6 +45,7 @@ export default function ProtectedRoute({ allowedRoles }) {
     .sort((first, second) => second.to.length - first.to.length)
     .find((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`));
   const requiredPermission = matchedItem?.permission;
+  const requiredSectionPermission = matchedItem?.sectionPermission;
   const requiredRole = matchedItem?.role;
   const requiredRoles = matchedItem?.roles;
 
@@ -58,6 +59,10 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   if (requiredPermission && !hasPermission(requiredPermission) && !isOwnProfile) {
+    return <AccessDenied />;
+  }
+
+  if (requiredSectionPermission && !hasPermission(requiredSectionPermission) && !isOwnProfile) {
     return <AccessDenied />;
   }
 
