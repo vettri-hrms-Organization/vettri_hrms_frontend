@@ -392,13 +392,126 @@ function HierarchyTab({ employee }) {
 }
 
 function AttendanceTab({ employee }) {
+  const queryClient = useQueryClient();
+  const { hasPermission } = useAuth();
+  const canManageAttendance = hasPermission('ATTENDANCE_MANAGE');
+  const [configurationForm, setConfigurationForm] = useState({
+    attendanceMethodOverride: '',
+    biometricDeviceId: '',
+    biometricDeviceUserId: '',
+  });
   const { data: records, isLoading, isError, refetch } = useQuery({
     queryKey: ['attendance-employee', String(employee.id)],
     queryFn: () => attendanceApi.byEmployee(employee.id),
   });
+  const { data: sessions = [] } = useQuery({
+    queryKey: ['attendance-employee-sessions', String(employee.id)],
+    queryFn: () => attendanceApi.employeeSessions(employee.id),
+  });
+  const configuration = useQuery({
+    queryKey: ['attendance-employee-configuration', String(employee.id)],
+    queryFn: () => attendanceApi.employeeConfiguration(employee.id),
+  });
+  const devices = useQuery({
+    queryKey: ['attendance-biometric-devices', String(employee.id)],
+    queryFn: () => attendanceApi.biometricDevices(employee.id),
+    enabled: canManageAttendance,
+  });
+  const saveConfiguration = useMutation({
+    mutationFn: () => attendanceApi.updateEmployeeConfiguration(employee.id, {
+      attendanceMethodOverride: configurationForm.attendanceMethodOverride || null,
+      biometricDeviceId: configurationForm.biometricDeviceId ? Number(configurationForm.biometricDeviceId) : null,
+      biometricDeviceUserId: configurationForm.biometricDeviceUserId || null,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-employee-configuration', String(employee.id)] });
+    },
+  });
+
+  useEffect(() => {
+    if (configuration.data) {
+      setConfigurationForm({
+        attendanceMethodOverride: configuration.data.attendanceMethodOverride || '',
+        biometricDeviceId: configuration.data.biometricDeviceId ? String(configuration.data.biometricDeviceId) : '',
+        biometricDeviceUserId: configuration.data.biometricDeviceUserId || '',
+      });
+    }
+  }, [configuration.data]);
 
   return (
-    <Card title="Punch History" bodyClassName="p-0">
+    <div className="d-flex flex-column gap-4">
+    <Card title="Attendance configuration" subtitle="Effective policy and biometric enrollment">
+      {configuration.isLoading && <SkeletonText lines={2} />}
+      {configuration.isError && <ErrorState description="Couldn't load attendance configuration." onRetry={configuration.refetch} />}
+      {!configuration.isLoading && !configuration.isError && (
+        <div className="d-flex flex-column gap-3">
+          <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <span><strong>Effective method</strong><small className="d-block text-muted-hz">{configuration.data.effectiveAttendanceMethod?.replaceAll('_', ' ')}</small></span>
+            <Badge variant={configuration.data.biometricEnrolled ? 'success' : 'warning'} dot>
+              {configuration.data.biometricEnrolled ? 'Biometric enrolled' : 'Biometric mapping required'}
+            </Badge>
+          </div>
+          {canManageAttendance ? (
+            <form className="row g-3 align-items-end" onSubmit={(event) => { event.preventDefault(); saveConfiguration.mutate(); }}>
+              <div className="col-12 col-md-4">
+                <label className="form-label" htmlFor="employee-attendance-method">Employee attendance method</label>
+                <select id="employee-attendance-method" className="form-select" value={configurationForm.attendanceMethodOverride} onChange={(event) => setConfigurationForm({ ...configurationForm, attendanceMethodOverride: event.target.value })}>
+                  <option value="">Use organization default</option>
+                  <option value="HYBRID">Hybrid</option>
+                  <option value="BIOMETRIC_ONLY">Biometric only</option>
+                  <option value="WEB_APP_ONLY">Web / App only</option>
+                </select>
+              </div>
+              <div className="col-12 col-md-4">
+                <label className="form-label" htmlFor="employee-biometric-device">Biometric device</label>
+                <select id="employee-biometric-device" className="form-select" value={configurationForm.biometricDeviceId} onChange={(event) => setConfigurationForm({ ...configurationForm, biometricDeviceId: event.target.value })}>
+                  <option value="">No device assigned</option>
+                  {(devices.data || []).map((device) => <option key={device.id} value={device.id}>{device.name}{device.online ? '' : ' · Offline'}</option>)}
+                </select>
+              </div>
+              <div className="col-12 col-md-3">
+                <label className="form-label" htmlFor="employee-biometric-id">Biometric user ID</label>
+                <input id="employee-biometric-id" className="form-control" maxLength={30} value={configurationForm.biometricDeviceUserId} onChange={(event) => setConfigurationForm({ ...configurationForm, biometricDeviceUserId: event.target.value })} />
+              </div>
+              <div className="col-12 col-md-1">
+                <Button type="submit" className="w-100" loading={saveConfiguration.isPending}>Save</Button>
+              </div>
+              {saveConfiguration.isError && <div className="col-12"><div className="alert alert-danger mb-0" role="alert">{saveConfiguration.error.response?.data?.message || 'Could not save attendance configuration.'}</div></div>}
+              {devices.isError && <div className="col-12"><div className="alert alert-warning mb-0" role="status">Biometric device list is unavailable; check attendance/device permissions.</div></div>}
+            </form>
+          ) : (
+            <p className="mb-0 text-muted-hz" style={{ fontSize: 13 }}>Your attendance method is managed by your organization.</p>
+          )}
+          {canManageAttendance && configuration.data.biometricDeviceName && (
+            <small className="text-muted-hz">Assigned device: {configuration.data.biometricDeviceName} · Biometric ID: {configuration.data.biometricDeviceUserId || 'Not assigned'}</small>
+          )}
+        </div>
+      )}
+    </Card>
+
+    <Card title="Attendance sessions" subtitle="Daily check-in and check-out details">
+      {sessions.length === 0 ? (
+        <EmptyState icon={Clock} title="No attendance sessions" description="Web/App check-ins and approved regularizations will appear here." />
+      ) : (
+        <div className="table-responsive">
+          <table className="table mb-0 align-middle hz-table" aria-label="Employee attendance sessions">
+            <thead><tr><th>Date</th><th>Work mode</th><th>Check in</th><th>Check out</th><th>Source</th><th>Status</th></tr></thead>
+            <tbody>{sessions.map((session) => (
+              <tr key={session.id}>
+                <td>{session.attendanceDate}</td>
+                <td>{session.wfh ? 'WFH' : session.locationType || 'Office'}</td>
+                <td>{session.checkInTime ? new Date(session.checkInTime).toLocaleTimeString() : '—'}</td>
+                <td>{session.checkOutTime ? new Date(session.checkOutTime).toLocaleTimeString() : '—'}</td>
+                <td>{session.source || '—'}</td>
+                <td><Badge variant={session.status === 'CHECKED_OUT' ? 'success' : 'info'} dot={false}>{session.status}</Badge></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+
+    <Card title="Punch history" bodyClassName="p-0">
       {isLoading && (
         <div className="p-4">
           <SkeletonText lines={5} />
@@ -415,6 +528,7 @@ function AttendanceTab({ employee }) {
               <th className="ps-4">Date</th>
               <th>Time</th>
               <th>Type</th>
+              <th>Source</th>
               <th>Verify Mode</th>
               <th className="pe-4">Device</th>
             </tr>
@@ -427,6 +541,7 @@ function AttendanceTab({ employee }) {
                 <td>
                   <Badge variant={r.punchType === 'IN' ? 'success' : r.punchType === 'OUT' ? 'danger' : 'neutral'}>{r.punchType}</Badge>
                 </td>
+                <td style={{ fontSize: 'var(--hz-text-sm)' }}>{r.source || 'BIOMETRIC'}</td>
                 <td style={{ fontSize: 'var(--hz-text-sm)' }}>{r.verifyMode || '—'}</td>
                 <td className="pe-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.deviceName || '—'}</td>
               </tr>
@@ -435,6 +550,7 @@ function AttendanceTab({ employee }) {
         </table>
       )}
     </Card>
+    </div>
   );
 }
 

@@ -6,9 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
 import { adminApi } from '../../api/endpoints/admin';
 import Avatar from '../ui/Avatar';
-import Logo from '../brand/Logo';
-import { NAV_INDEX, NAV_SECTIONS } from './navConfig';
-import { useNavMemory } from './NavMemoryContext';
+import { NAV_INDEX } from './navConfig';
 import { selfServiceApi } from '../../api/endpoints/selfService';
 import { useTheme } from '../../contexts/ThemeContext';
 import CommandCenter from './CommandCenter';
@@ -71,8 +69,15 @@ export default function Topbar({ onOpenMobileNav }) {
         setCommandCenterOpen(true);
       }
     }
+    function openFromSidebar() {
+      setCommandCenterOpen(true);
+    }
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('vettri:open-command-center', openFromSidebar);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('vettri:open-command-center', openFromSidebar);
+    };
   }, []);
 
   async function openMyProfile() {
@@ -119,122 +124,6 @@ export default function Topbar({ onOpenMobileNav }) {
         <kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'} K</kbd>
       </button>
       <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} />
-
-      {false && (
-          <div id="hz-global-search-results" className="position-absolute hz-surface hz-search-panel" style={{ top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 20, maxHeight: '70vh', overflowY: 'auto' }}>
-            {!query.trim() && recentItems.length > 0 && (
-              <div className="pb-1">
-                <div className="px-3 pt-2 pb-1 d-flex align-items-center gap-2" style={{ fontSize: 11, color: 'var(--hz-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  <Clock3 size={12} /> Recent Pages
-                </div>
-                {recentItems.map((item, i) => (
-                  <SearchRow
-                    key={item.to}
-                    active={activeIndex === i}
-                    icon={<item.icon size={15} />}
-                    title={item.label}
-                    subtitle={item.section}
-                    onClick={() => goTo({ kind: 'page', item })}
-                  />
-                ))}
-              </div>
-            )}
-            
-            {!query.trim() && recentItems.length === 0 && searchHistory.length === 0 && (
-              <div className="px-3 py-3" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-muted)' }}>
-                Pages you visit will show up here
-              </div>
-            )}
-
-            {!query.trim() && searchHistory.length > 0 && (
-              <div className="pb-1">
-                <div className="px-3 pt-2 pb-1 d-flex align-items-center justify-content-between" style={{ fontSize: 11, color: 'var(--hz-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  <span><Zap size={12} style={{ marginRight: 4, display: 'inline' }} /> Search History</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearSearchHistory();
-                      setSearchHistory([]);
-                    }}
-                    className="border-0 bg-transparent p-0"
-                    style={{ cursor: 'pointer', color: 'var(--hz-text-muted)' }}
-                    title="Clear history"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-                {searchHistory.slice(0, 5).map((historyQuery, i) => (
-                  <button
-                    key={`history-${i}`}
-                    type="button"
-                    onClick={() => setQuery(historyQuery)}
-                    className="hz-search-row d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start px-3 py-2"
-                    style={{ 
-                      background: activeIndex === recentItems.length + i ? 'var(--hz-primary-50)' : 'transparent',
-                      borderRadius: 8,
-                      margin: '0 6px',
-                      transition: 'all 150ms ease-out'
-                    }}
-                  >
-                    <span className="d-flex align-items-center justify-content-center" style={{ width: 24, flexShrink: 0, color: 'var(--hz-text-secondary)' }}>
-                      <Clock3 size={14} />
-                    </span>
-                    <span className="flex-grow-1 text-truncate">
-                      <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500, color: 'var(--hz-text-primary)' }}>{historyQuery}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {query.trim() && matchedPages.length === 0 && matchedEmployees.length === 0 && !employeesLoading && (
-              <div className="px-3 py-3 d-flex align-items-center gap-2" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-muted)' }}>
-                <ShieldAlert size={14} /> No matches for "{query}"
-              </div>
-            )}
-
-            {query.trim() && matchedPages.length > 0 && (
-              <div className="pb-1">
-                <div className="px-3 pt-2 pb-1" style={{ fontSize: 11, color: 'var(--hz-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Pages & Modules
-                </div>
-                {matchedPages.map((item, i) => {
-                  const moduleInfo = NAV_SECTIONS.find((s) => s.label === item.section);
-                  return (
-                    <SearchRow
-                      key={item.to}
-                      active={activeIndex === i}
-                      icon={<item.icon size={15} />}
-                      title={item.label}
-                      subtitle={moduleInfo?.description || item.section}
-                      onClick={() => goTo({ kind: 'page', item })}
-                    />
-                  );
-                })}
-              </div>
-            )}
-
-            {query.trim() && (matchedEmployees.length > 0 || employeesLoading) && (
-              <div className="pb-1">
-                <div className="px-3 pt-2 pb-1" style={{ fontSize: 11, color: 'var(--hz-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  People
-                </div>
-                {employeesLoading && <div className="px-3 py-2" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-muted)' }}>Searching…</div>}
-                {!employeesLoading &&
-                  matchedEmployees.map((emp, i) => (
-                    <SearchRow
-                      key={emp.id}
-                      active={activeIndex === matchedPages.length + i}
-                      icon={<Avatar name={emp.fullName} size="sm" />}
-                      title={emp.fullName}
-                      subtitle={emp.designationTitle || emp.departmentName || 'Employee'}
-                      onClick={() => goTo({ kind: 'employee', item: emp })}
-                    />
-                  ))}
-              </div>
-            )}
-          </div>
-      )}
 
       <div className="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
         {quickActions.length > 0 && (
@@ -385,11 +274,7 @@ export default function Topbar({ onOpenMobileNav }) {
                 style={{ zIndex: 15 }}
                 onClick={() => setMenuOpen(false)}
               />
-              <div
-                role="menu"
-                className="position-absolute end-0 mt-2 hz-surface"
-                style={{ width: 220, zIndex: 20, padding: 6 }}
-              >
+              <div role="menu" className="position-absolute end-0 mt-2 hz-surface hz-topbar-menu">
                 <div className="px-2 py-2 mb-1" style={{ borderBottom: '1px solid var(--hz-border)' }}>
                   <div style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{user?.fullName}</div>
                   <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{user?.email}</div>
@@ -416,29 +301,5 @@ export default function Topbar({ onOpenMobileNav }) {
         </div>
       </div>
     </header>
-  );
-}
-
-function SearchRow({ icon, title, subtitle, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="hz-search-row d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start px-3 py-2"
-      style={{ 
-        background: active ? 'var(--hz-primary-50)' : 'transparent',
-        borderRadius: 8,
-        margin: '0 6px',
-        transition: 'all 150ms ease-out'
-      }}
-    >
-      <span className="d-flex align-items-center justify-content-center" style={{ width: 24, flexShrink: 0, color: 'var(--hz-text-secondary)' }}>
-        {icon}
-      </span>
-      <span className="flex-grow-1 text-truncate">
-        <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600, color: 'var(--hz-text-primary)' }}>{title}</span>
-        {subtitle && <span className="d-block" style={{ fontSize: 11, color: 'var(--hz-text-muted)' }}>{subtitle}</span>}
-      </span>
-    </button>
   );
 }

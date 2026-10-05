@@ -1,0 +1,340 @@
+/*
+ * Vettri HRMS product UI — last paint layer.
+ * Makes every authenticated module feel like one enterprise HR workspace.
+ */
+
+.vettri-app-shell {
+  background:
+    radial-gradient(900px 420px at 100% -8%, rgba(37, 99, 235, 0.07), transparent 58%),
+    radial-gradient(640px 280px at -6% 12%, rgba(15, 27, 61, 0.04), transparent 50%),
+    var(--hz-bg-canvas);
+}
+
+.hz-breadcrumbs {
+  min-height: 28px;
+  margin: 12px 4px 10px;
+  color: var(--hz-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hz-breadcrumb-link {
+  color: var(--hz-text-secondary);
+  text-decoration: none;
+}
+
+.hz-breadcrumb-link:hover {
+  color: var(--hz-primary-600);
+}
+
+.hz-breadcrumb-current {
+  color: var(--hz-text-primary);
+}
+
+.hz-page-header {
+  padding: 4px 2px 2px;
+}
+
+.hz-page-header__eyebrow {
+  margin: 0 0 6px;
+  color: var(--hz-primary-600);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hz-page-header__title {
+  font-weight: 750;
+}
+
+.hz-filter-bar,
+.hz-reports__toolbar,
+.hz-billing-toolbar,
+.hz-bulk-toolbar {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.hz-module-page .hz-filter-bar > * {
+  flex: 0 1 auto;
+}
+
+.hz-module-page .hz-filter-bar .hz-search-field,
+.hz-module-page .hz-filter-bar > .hz-employee-search,
+.hz-module-page .hz-filter-bar > .position-relative {
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.hz-search-field {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 420px;
+}
+
+.hz-search-field__icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  color: var(--hz-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.hz-search-field__input,
+.hz-employee-search-input {
+  padding-left: 38px;
+}
+
+.hz-employee-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  color: var(--hz-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.hz-inline-summary {
+  border-radius: 14px;
+  background: var(--hz-border);
+  box-shadow: 0 8px 24px rgba(15, 27, 61, 0.04);
+}
+
+.hz-inline-summary__item {
+  min-height: 78px;
+  justify-content: center;
+  padding: 16px 18px;
+}
+
+.hz-inline-summary__item strong {
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.hz-table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--hz-border);
+  background: #fbfcfe;
+}
+
+.hz-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hz-live-pill--on {
+  background: var(--hz-success-50);
+  color: var(--hz-success-600);
+}
+
+.hz-live-pill--off {
+  background: var(--hz-gray-100);
+  color: var(--hz-text-secondary);
+}
+
+.hz-dashboard__composition {
+  display: grid;
+  gap: 14px;
+}
+
+.hz-dashboard__composition-bar {
+  display: flex;
+  overflow: hidden;
+  height: 14px;
+  border-radius: 999px;
+  background: #edf2f7;
+}
+
+.hz-dashboard__composition-bar > span {
+  display: block;
+  min-width: 0;
+  height: 100%;
+}
+
+.hz-dashboard__composition-bar > span:nth-child(1) { background: #2563eb; }
+.hz-dashboard__composition-bar > span:nth-child(2) { background: #d97706; }
+.hz-dashboard__composition-bar > span:nth-child(3) { background: #94a3b8; }
+
+.hz-dashboard__composition-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.hz-dashboard__composition-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--hz-text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.hz-dashboard__composition-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 99px;
+}
+
+.hz-dashboard__composition-legend i.active { background: #2563eb; }
+.hz-dashboard__composition-legend i.leave { background: #d97706; }
+.hz-dashboard__composition-legend i.other { background: #94a3b8; }
+
+.hz-admin-settings-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.hz-admin-settings-nav {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--hz-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.hz-admin-settings-nav__title {
+  margin: 2px 8px 10px;
+  color: var(--hz-text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hz-admin-settings-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--hz-text-secondary);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.hz-admin-settings-nav__item:hover,
+.hz-admin-settings-nav__item.active {
+  background: var(--hz-primary-50);
+  color: var(--hz-primary-700);
+}
+
+.vettri-auth-page {
+  min-height: 100vh;
+  background: #f4f7fb;
+}
+
+.vettri-auth-form {
+  width: 100%;
+  max-width: 440px;
+}
+
+.vettri-auth-mobile-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.vettri-auth-card {
+  overflow: hidden;
+  border: 1px solid rgba(15, 27, 61, 0.08);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(15, 27, 61, 0.08);
+}
+
+.vettri-auth-field {
+  position: relative;
+}
+
+.vettri-auth-field__icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  color: var(--hz-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.vettri-auth-field .form-control {
+  min-height: 46px;
+  padding-left: 40px;
+}
+
+.vettri-auth-field--password .form-control {
+  padding-right: 48px;
+}
+
+.vettri-auth-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--hz-text-secondary);
+  transform: translateY(-50%);
+}
+
+.vettri-auth-field__toggle:hover {
+  background: var(--hz-gray-100);
+  color: var(--hz-text-primary);
+}
+
+.hz-topbar-menu {
+  width: 240px;
+  padding: 8px;
+  z-index: 20;
+}
+
+.hz-topbar-menu button {
+  border-radius: 8px;
+}
+
+@media (max-width: 991.98px) {
+  .hz-admin-settings-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .hz-admin-settings-nav {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+  }
+}
+
+[data-theme='dark'] .hz-filter-bar,
+[data-theme='dark'] .hz-inline-summary__item,
+[data-theme='dark'] .hz-admin-settings-nav,
+[data-theme='dark'] .vettri-auth-card,
+[data-theme='dark'] .hz-table-pagination {
+  background: var(--hz-bg-surface);
+}
+
+[data-theme='dark'] .vettri-app-shell {
+  background: var(--hz-bg-canvas);
+}

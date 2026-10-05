@@ -9,6 +9,13 @@ export const attendanceApi = {
   checkIn: (payload) => axiosClient.post('/api/attendance/check-in', payload).then((res) => res.data),
   checkOut: (payload) => axiosClient.post('/api/attendance/check-out', payload).then((res) => res.data),
   today: () => axiosClient.get('/api/attendance/today').then((res) => res.data),
+  context: () => axiosClient.get('/api/attendance/policy/context').then((res) => res.data),
+  policy: () => axiosClient.get('/api/attendance/policy').then((res) => res.data),
+  updatePolicy: (payload) => axiosClient.put('/api/attendance/policy', payload).then((res) => res.data),
+  employeeConfiguration: (employeeId) => axiosClient.get(`/api/attendance/employee/${employeeId}/configuration`).then((res) => res.data),
+  updateEmployeeConfiguration: (employeeId, payload) => axiosClient.put(`/api/attendance/employee/${employeeId}/configuration`, payload).then((res) => res.data),
+  biometricDevices: (employeeId) => axiosClient.get(`/api/attendance/employee/${employeeId}/biometric-devices`).then((res) => res.data),
+  employeeSessions: (employeeId) => axiosClient.get(`/api/attendance/employee/${employeeId}/sessions`).then((res) => res.data),
   officeLocations: () => axiosClient.get('/api/attendance/office-locations').then((res) => res.data),
   createOfficeLocation: (payload) => axiosClient.post('/api/attendance/office-locations', payload).then((res) => res.data),
     updateOfficeLocation: (id, payload) => axiosClient.put(`/api/attendance/office-locations/${id}`, payload).then((res) => res.data),
@@ -21,6 +28,10 @@ export const attendanceApi = {
   requestWfh: (payload) => axiosClient.post('/api/attendance/wfh/request', payload).then((res) => res.data),
   approveWfh: (id, note) => axiosClient.patch(`/api/attendance/wfh/${id}/approve`, null, { params: note ? { note } : {} }).then((res) => res.data),
   rejectWfh: (id, note) => axiosClient.patch(`/api/attendance/wfh/${id}/reject`, null, { params: note ? { note } : {} }).then((res) => res.data),
+  myRegularizations: () => axiosClient.get('/api/attendance/regularizations/mine').then((res) => res.data),
+  pendingRegularizations: () => axiosClient.get('/api/attendance/regularizations/pending').then((res) => res.data),
+  requestRegularization: (payload) => axiosClient.post('/api/attendance/regularizations', payload).then((res) => res.data),
+  reviewRegularization: (id, approved, note) => axiosClient.patch(`/api/attendance/regularizations/${id}/review`, { approved, note }).then((res) => res.data),
   // EventSource can't set an Authorization header, so the access token
   // rides along as a query param for this one connection - see the
   // matching comment in JwtAuthenticationFilter on the backend.

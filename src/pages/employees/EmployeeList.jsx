@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  Search,
   UserPlus,
   FileSpreadsheet,
   ChevronLeft,
@@ -20,6 +19,7 @@ import CreateEmployeeModal from './CreateEmployeeModal';
 import { statusMeta, EMPLOYMENT_TYPE_LABEL } from './statusMeta';
 import PageHeader from '../../components/ui/PageHeader';
 import FilterBar from '../../components/ui/FilterBar';
+import SearchField from '../../components/ui/SearchField';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -246,31 +246,34 @@ export default function EmployeeList() {
         }
       />
 
-      <FilterBar>
-        <div
-          className="position-relative hz-employee-search"
-          style={{
-            maxWidth: 360,
-            width: '100%',
-          }}
-        >
-          <Search
-            size={16}
-            className="hz-employee-search-icon"
-            aria-hidden="true"
-          />
-
-          <input
-            type="search"
-            placeholder="Search by name, code, or email…"
-            aria-label="Search employees by name, code, or email"
-            className="form-control hz-employee-search-input"
-            value={search}
-            onChange={(e) =>
-              handleSearchChange(e.target.value)
-            }
-          />
+      {!isLoading && !isError && (
+        <div className="hz-inline-summary" aria-label="Employee directory summary">
+          <div className="hz-inline-summary__item">
+            <strong>{totalElements}</strong>
+            <span>People in directory</span>
+          </div>
+          <div className="hz-inline-summary__item">
+            <strong>{employees.length}</strong>
+            <span>On this page</span>
+          </div>
+          <div className="hz-inline-summary__item">
+            <strong>{selectedIds.size}</strong>
+            <span>Selected</span>
+          </div>
+          <div className="hz-inline-summary__item hz-inline-summary__item--info">
+            <strong>{page + 1}/{Math.max(totalPages, 1)}</strong>
+            <span>Current page</span>
+          </div>
         </div>
+      )}
+
+      <FilterBar>
+        <SearchField
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Search by name, code, or email…"
+          aria-label="Search employees by name, code, or email"
+        />
 
         {departmentId && (
           <div
@@ -371,13 +374,7 @@ export default function EmployeeList() {
         {!isLoading &&
           !isError &&
           totalElements > 0 && (
-            <div
-              className="d-flex align-items-center justify-content-between px-4 py-3"
-              style={{
-                borderTop:
-                  '1px solid var(--hz-border)',
-              }}
-            >
+            <div className="hz-table-pagination">
               <span
                 style={{
                   fontSize:

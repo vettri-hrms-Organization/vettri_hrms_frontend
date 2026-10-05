@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import LoginBrandPanel from '../components/auth/LoginBrandPanel';
+import Logo from '../components/brand/Logo';
 import { mapPasswordError } from '../utils/errorMapping';
 
 export default function Login() {
@@ -51,31 +52,37 @@ export default function Login() {
   }
 
   return (
-    <main className="container-fluid p-0">
+    <main className="container-fluid p-0 vettri-auth-page">
       <div className="row g-0 min-vh-100">
         <div className="col-lg-6 d-none d-lg-block">
           <LoginBrandPanel />
         </div>
 
-        <section className="col-12 col-lg-6 min-vh-100 bg-light d-flex align-items-center justify-content-center p-3 p-md-4">
-          <div className="w-100" style={{ maxWidth: 440 }}>
-            <div className="d-flex justify-content-end align-items-center gap-2 mb-4 small text-secondary">
+        <section className="col-12 col-lg-6 min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-4">
+          <div className="vettri-auth-form">
+            <div className="vettri-auth-mobile-brand d-lg-none">
+              <Logo size={32} />
+              <Link to="/signup" className="btn btn-sm btn-outline-primary px-3 fw-semibold">
+                Create account
+              </Link>
+            </div>
+            <div className="d-none d-lg-flex justify-content-end align-items-center gap-2 mb-4 small text-secondary">
               <span>New to Vettri?</span>
               <Link to="/signup" className="btn btn-sm btn-outline-primary px-3 fw-semibold">
                 Create account
               </Link>
             </div>
 
-            <div className="card border-0 shadow-sm rounded-4">
+            <div className="vettri-auth-card">
               <div className="card-body p-4 p-md-5">
                 <div className="mb-4">
                   <span className="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-semibold">
                     <ShieldCheck size={14} className="me-1" />
-                    Secure sign in
+                    Secure workspace access
                   </span>
                   <h1 className="h2 fw-bold text-dark mt-3 mb-2">Welcome back</h1>
                   <p className="text-secondary mb-0">
-                    Sign in to continue to your Vettri workspace.
+                    Sign in to continue to your Vettri HRMS workspace.
                   </p>
                 </div>
 
@@ -91,13 +98,11 @@ export default function Login() {
                     <label htmlFor="login-identifier" className="form-label fw-semibold text-dark">
                       Username or email
                     </label>
-                    <div className="input-group bg-white border-end-0 text-secondary">
-                      {/* <span className="input-group-text bg-white border-end-0 text-secondary">
-                        <Mail size={18} />
-                      </span> */}
+                    <div className="vettri-auth-field">
+                      <Mail size={16} className="vettri-auth-field__icon" aria-hidden="true" />
                       <input
                         id="login-identifier"
-                        className="form-control border-start-0"
+                        className="form-control"
                         type="text"
                         name="username"
                         value={identifier}
@@ -123,13 +128,11 @@ export default function Login() {
                       </Link>
                     </div>
 
-                    <div className="input-group">
-                      {/* <span className="input-group-text bg-white border-end-0 text-secondary">
-                        <Lock size={18} />
-                      </span> */}
+                    <div className="vettri-auth-field vettri-auth-field--password">
+                      <Lock size={16} className="vettri-auth-field__icon" aria-hidden="true" />
                       <input
                         id="login-password"
-                        className="form-control border-start-0 border-end-0"
+                        className="form-control"
                         type={showPassword ? 'text' : 'password'}
                         name="password"
                         value={password}
@@ -143,7 +146,7 @@ export default function Login() {
                       />
                       <button
                         type="button"
-                        className="btn btn-outline-secondary border-start-0 bg-white"
+                        className="vettri-auth-field__toggle"
                         onClick={() => setShowPassword((visible) => !visible)}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >

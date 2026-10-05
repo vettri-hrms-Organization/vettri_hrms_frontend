@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Navigate } from 'react-router-dom';
-import { CalendarPlus, Check, X as XIcon, Calendar, Search, CalendarDays, BarChart3 } from 'lucide-react';
+import { CalendarPlus, Check, X as XIcon, Calendar, CalendarDays, BarChart3 } from 'lucide-react';
 import { leaveRequestsApi } from '../../api/endpoints/leave';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import PageHeader from '../../components/ui/PageHeader';
 import FilterBar from '../../components/ui/FilterBar';
+import SearchField from '../../components/ui/SearchField';
 import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
 import Tabs from '../../components/ui/Tabs';
@@ -103,17 +104,12 @@ export default function LeaveRequests() {
 
       <FilterBar className="hz-leave-toolbar justify-content-between">
         <Tabs items={TABS} value={tab} onChange={setTab} ariaLabel="Leave request status" />
-        <div className="position-relative mb-2" style={{ width: 240 }}>
-          <Search size={14} className="position-absolute" style={{ left: 10, top: 9, color: 'var(--hz-text-muted)' }} />
-          <input
-            type="search"
-            placeholder="Filter by name, type, dept…"
-            aria-label="Filter leave requests by employee, type, or department"
-            className="form-control form-control-sm ps-4"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          placeholder="Filter by name, type, dept…"
+          aria-label="Filter leave requests by employee, type, or department"
+        />
       </FilterBar>
 
       <Card bodyClassName="p-0">

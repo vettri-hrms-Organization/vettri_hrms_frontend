@@ -114,6 +114,17 @@ export default function Dashboard() {
 
   const pendingCount = approvalQueue?.length || 0;
   const expiringCount = expiringDocs?.length || 0;
+  const totalEmployees = data?.totalEmployees || 0;
+  const activeEmployees = data?.activeEmployees || 0;
+  const onLeaveEmployees = data?.onLeave || 0;
+  const otherEmployees = Math.max(totalEmployees - activeEmployees - onLeaveEmployees, 0);
+  const composition = totalEmployees
+    ? [
+        { key: 'active', value: activeEmployees, width: `${(activeEmployees / totalEmployees) * 100}%` },
+        { key: 'leave', value: onLeaveEmployees, width: `${(onLeaveEmployees / totalEmployees) * 100}%` },
+        { key: 'other', value: otherEmployees, width: `${(otherEmployees / totalEmployees) * 100}%` },
+      ]
+    : [];
   const kpis = data
     ? [
         { label: 'Total Employees', value: data.totalEmployees, icon: Users, accent: 'var(--hz-primary-600)' },
@@ -256,13 +267,26 @@ export default function Dashboard() {
           </div>
           <BarChart3 size={20} aria-hidden="true" />
         </div>
-        <div className="hz-dashboard__empty-inline">
-          <BarChart3 size={22} />
-          <div>
-            <strong>{data ? `${data.activeEmployees} employees currently active` : 'Insights will appear as your workforce grows'}</strong>
-            <small>{data ? `On leave: ${data.onLeave}. Pending actions: ${pendingCount}.` : 'Connect attendance, leave, and employee data to see trends here.'}</small>
+        {totalEmployees ? (
+          <div className="hz-dashboard__composition">
+            <div className="hz-dashboard__composition-bar" role="img" aria-label={`Workforce composition: ${activeEmployees} active, ${onLeaveEmployees} on leave, ${otherEmployees} other`}>
+              {composition.map((segment) => <span key={segment.key} style={{ width: segment.width }} />)}
+            </div>
+            <div className="hz-dashboard__composition-legend">
+              <span><i className="active" /> {activeEmployees} active</span>
+              <span><i className="leave" /> {onLeaveEmployees} on leave</span>
+              <span><i className="other" /> {otherEmployees} other</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="hz-dashboard__empty-inline">
+            <BarChart3 size={22} />
+            <div>
+              <strong>Insights will appear as your workforce grows</strong>
+              <small>Connect attendance, leave, and employee data to see trends here.</small>
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="hz-dashboard__three-col">

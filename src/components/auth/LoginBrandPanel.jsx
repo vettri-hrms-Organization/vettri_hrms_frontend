@@ -28,8 +28,8 @@ export default function LoginBrandPanel() {
         <div className="login-brand-panel__brand"><Logo tone="onDark" size={42} /></div>
         <div className="login-brand-panel__copy">
           <p className="login-brand-panel__eyebrow">People <span>•</span> Process <span>•</span> Progress</p>
-          <h2>A smarter <em>workplace</em> for a stronger tomorrow</h2>
-          <p className="login-brand-panel__intro">Unify your people, assets, devices, and workplace operations - all in one platform.</p>
+          <h2>People operations, <em>beautifully</em> organized</h2>
+          <p className="login-brand-panel__intro">One workspace for employees, attendance, leave, payroll, and workplace operations.</p>
           <div className="login-brand-panel__benefits">
             {benefits.map(({ icon: Icon, title, copy }) => (
               <div className="login-brand-panel__benefit" key={title}>

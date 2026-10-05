@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -54,7 +54,7 @@ function SettingsWorkspace({ hasPermission, hasRole }) {
         <div className="hz-admin-settings-nav__title">Administration</div>
         {items.map((item) => {
           const Icon = item.icon;
-          return <Link key={item.to} to={item.to} className="hz-admin-settings-nav__item"><Icon size={16} /><span>{item.label}</span></Link>;
+          return <NavLink key={item.to} to={item.to} className={({ isActive }) => `hz-admin-settings-nav__item${isActive ? ' active' : ''}`}><Icon size={16} /><span>{item.label}</span></NavLink>;
         })}
       </aside>
       <div className="hz-admin-settings-shell__content"><Outlet /></div>

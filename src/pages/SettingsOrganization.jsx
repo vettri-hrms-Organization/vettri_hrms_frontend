@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LocateFixed, MapPin, Pencil, Plus, Search } from 'lucide-react';
 import { departmentsApi, designationsApi, teamsApi } from '../api/endpoints/organization';
 import { attendanceApi } from '../api/endpoints/attendance';
+import { useAuth } from '../hooks/useAuth';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -18,22 +19,129 @@ const TABS = [
   { key: 'designations', label: 'Designations' },
   { key: 'teams', label: 'Teams' },
   { key: 'locations', label: 'Office locations', icon: MapPin },
+  { key: 'attendance-policy', label: 'Attendance policy', icon: LocateFixed },
 ];
 
 export default function SettingsOrganization() {
   const [tab, setTab] = useState('departments');
+  const { hasPermission } = useAuth();
+  const visibleTabs = TABS.filter((item) => item.key !== 'attendance-policy' || hasPermission('ATTENDANCE_MANAGE'));
 
   return (
     <div className="hz-admin-page hz-admin-page--organization hz-settings-page d-flex flex-column gap-4">
       <PageHeader eyebrow="Settings" title="Organization" description="The structure your employees, teams, and reporting lines are built on" />
 
-      <Tabs items={TABS} value={tab} onChange={setTab} />
+      <Tabs items={visibleTabs} value={tab} onChange={setTab} />
 
       {tab === 'departments' && <DepartmentsPanel />}
       {tab === 'designations' && <DesignationsPanel />}
       {tab === 'teams' && <TeamsPanel />}
       {tab === 'locations' && <OfficeLocationsPanel />}
+      {tab === 'attendance-policy' && <AttendancePolicyPanel canManage={hasPermission('ATTENDANCE_MANAGE')} />}
     </div>
+  );
+}
+
+function AttendancePolicyPanel({ canManage }) {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const { data: policy, isLoading, isError, refetch } = useQuery({
+    queryKey: ['attendance-policy'],
+    queryFn: attendanceApi.policy,
+  });
+  const [form, setForm] = useState({
+    attendanceMethod: 'HYBRID',
+    manualRegularizationEnabled: true,
+    regularizationApprovalRequired: true,
+    gracePeriodMinutes: 10,
+  });
+
+  useEffect(() => {
+    if (policy) {
+      setForm({
+        attendanceMethod: policy.attendanceMethod,
+        manualRegularizationEnabled: policy.manualRegularizationEnabled,
+        regularizationApprovalRequired: policy.regularizationApprovalRequired,
+        gracePeriodMinutes: policy.gracePeriodMinutes,
+      });
+    }
+  }, [policy]);
+
+  const save = useMutation({
+    mutationFn: attendanceApi.updatePolicy,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-policy'] });
+      toast.success('Attendance policy saved.');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not save the attendance policy.'),
+  });
+
+  const methods = [
+    { value: 'HYBRID', label: 'Hybrid', description: 'Biometric in office; Web/App check-in for approved remote work.' },
+    { value: 'BIOMETRIC_ONLY', label: 'Biometric only', description: 'Employees record office attendance using assigned biometric devices.' },
+    { value: 'WEB_APP_ONLY', label: 'Web / App only', description: 'Employees check in through Vettri, with office location verification.' },
+  ];
+
+  return (
+    <Panel title="Attendance policy">
+      {isLoading && <SkeletonText lines={4} />}
+      {isError && <div className="alert alert-danger mb-0">Could not load this policy. <button type="button" className="btn btn-link p-0" onClick={refetch}>Try again</button></div>}
+      {!isLoading && !isError && (
+        <div className="d-flex flex-column gap-4">
+          <section aria-labelledby="attendance-method-heading">
+            <div className="mb-3">
+              <h3 id="attendance-method-heading" className="h6 mb-1">Attendance method</h3>
+              <p className="text-muted-hz mb-0" style={{ fontSize: 13 }}>Choose how attendance is recorded across your organization.</p>
+            </div>
+            <div className="d-grid gap-2">
+              {methods.map((method) => (
+                <label key={method.value} className="d-flex align-items-start gap-3 p-3 rounded-3" style={{ border: `1px solid ${form.attendanceMethod === method.value ? 'var(--hz-primary-400)' : 'var(--hz-border)'}`, background: form.attendanceMethod === method.value ? 'var(--hz-primary-50)' : 'var(--hz-surface)' }}>
+                  <input type="radio" name="attendance-method" className="form-check-input mt-1" value={method.value} checked={form.attendanceMethod === method.value} disabled={!canManage} onChange={() => setForm({ ...form, attendanceMethod: method.value })} />
+                  <span><strong>{method.label}</strong><small className="d-block text-muted-hz mt-1">{method.description}</small></span>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <div className="row g-3">
+            <div className="col-12 col-md-6">
+              <div className="d-flex align-items-center justify-content-between border rounded-3 p-3 h-100">
+                <span><strong className="d-block">Biometric attendance</strong><small className="text-muted-hz">Determined by the selected method</small></span>
+                <span className="badge text-bg-light">{policy.biometricEnabled ? 'On' : 'Not required'}</span>
+              </div>
+            </div>
+            <div className="col-12 col-md-6">
+              <div className="d-flex align-items-center justify-content-between border rounded-3 p-3 h-100">
+                <span><strong className="d-block">Remote / WFH check-in</strong><small className="text-muted-hz">Remote check-in requires approved WFH</small></span>
+                <span className="badge text-bg-light">{policy.remoteCheckInEnabled ? 'Available by policy' : 'Disabled'}</span>
+              </div>
+            </div>
+            <div className="col-12 col-md-6">
+              <label className="form-label" htmlFor="regularization-enabled">Manual regularization</label>
+              <select id="regularization-enabled" className="form-select" value={String(form.manualRegularizationEnabled)} disabled={!canManage} onChange={(event) => setForm({ ...form, manualRegularizationEnabled: event.target.value === 'true' })}>
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+            </div>
+            <div className="col-12 col-md-6">
+              <label className="form-label" htmlFor="regularization-approval">Regularization approval</label>
+              <select id="regularization-approval" className="form-select" value={String(form.regularizationApprovalRequired)} disabled={!canManage || !form.manualRegularizationEnabled} onChange={(event) => setForm({ ...form, regularizationApprovalRequired: event.target.value === 'true' })}>
+                <option value="true">Approval required</option>
+                <option value="false">Apply automatically</option>
+              </select>
+            </div>
+            <div className="col-12 col-md-6">
+              <label className="form-label" htmlFor="attendance-grace">Grace period</label>
+              <select id="attendance-grace" className="form-select" value={form.gracePeriodMinutes} disabled={!canManage} onChange={(event) => setForm({ ...form, gracePeriodMinutes: Number(event.target.value) })}>
+                {[0, 5, 10, 15, 20, 30, 45, 60].map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}
+              </select>
+              <small className="text-muted-hz">Stored in policy for attendance reporting; late rules require configured shifts.</small>
+            </div>
+          </div>
+          {canManage && <div className="d-flex justify-content-end"><Button onClick={() => save.mutate(form)} loading={save.isPending}>Save attendance policy</Button></div>}
+        </div>
+      )}
+    </Panel>
   );
 }
 

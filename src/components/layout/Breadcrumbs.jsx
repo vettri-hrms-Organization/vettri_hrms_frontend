@@ -106,7 +106,7 @@ export default function Breadcrumbs() {
   // so the trail collapses to just the Home icon there.
   if (!matched || matched.pattern === '/dashboard') {
     return (
-      <nav aria-label="Breadcrumb" className="d-flex align-items-center gap-1 mb-3">
+      <nav aria-label="Breadcrumb" className="hz-breadcrumbs d-flex align-items-center gap-1">
         <Home size={14} color="var(--hz-text-muted)" />
       </nav>
     );
@@ -115,7 +115,7 @@ export default function Breadcrumbs() {
   const crumbs = matched.crumbs.map((c) => (c.dynamic ? { ...c, label: override || c.label } : c));
 
   return (
-    <nav aria-label="Breadcrumb" className="d-flex align-items-center flex-wrap gap-1 mb-3">
+    <nav aria-label="Breadcrumb" className="hz-breadcrumbs d-flex align-items-center flex-wrap gap-1">
       <Link to="/dashboard" className="hz-breadcrumb-link d-flex align-items-center" aria-label="Dashboard">
         <Home size={14} />
       </Link>

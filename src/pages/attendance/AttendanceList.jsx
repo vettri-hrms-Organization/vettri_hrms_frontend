@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Navigate } from 'react-router-dom';
 import { Radio, Clock, Fingerprint, AlertTriangle, CalendarOff, Users } from 'lucide-react';
 import { attendanceApi } from '../../api/endpoints/attendance';
@@ -20,11 +20,8 @@ function PunchBadge({ type }) {
 }
 
 /**
- * "Exception" here means exactly one thing: an active employee with zero
- * punches today, who also isn't on approved leave - see
- * AttendanceExceptionDTO on the backend for why lateness/early-leave
- * aren't included (no shift/scheduled-hours concept exists to measure
- * against, so that would mean guessing a threshold).
+ * The detailed list categorizes active employees without a punch today,
+ * including approved leave; it doesn't infer lateness without shift data.
  */
 function AttendanceExceptionsCard() {
   const { data, isLoading, isError, refetch } = useQuery({
@@ -42,17 +39,44 @@ function AttendanceExceptionsCard() {
       {!isLoading && !isError && data && !data.workingDay && (
         <EmptyState icon={CalendarOff} title="Not a working day" description="Weekends and company holidays are excluded from this check." />
       )}
-      {!isLoading && !isError && data?.workingDay && data.missingPunch.length === 0 && (
+      {!isLoading && !isError && data?.workingDay && (data.exceptions || []).length === 0 && (
         <EmptyState icon={Clock} title="No exceptions" description="Every active employee has either punched in or is on approved leave today." />
       )}
-      {!isLoading && !isError && data?.workingDay && data.missingPunch.length > 0 && (
+      {!isLoading && !isError && data?.workingDay && (data.exceptions || []).length > 0 && (
         <div className="d-flex flex-column gap-2">
           <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: 13, color: 'var(--hz-warning-600)' }}>
             <AlertTriangle size={15} />
+            {(data.exceptions || []).filter((item) => item.category !== 'LEAVE').length} employee(s) require attention
+          </div>
+          <div className="d-flex flex-column gap-2">
+            {data.exceptions.map((item) => (
+              <Link
+                key={item.employeeId}
+                to={`/employees/${item.employeeId}?tab=attendance`}
+                className="d-flex align-items-center justify-content-between flex-wrap gap-2 text-decoration-none px-3 py-2 rounded-3"
+                style={{ background: 'var(--hz-gray-50)', border: '1px solid var(--hz-border)' }}
+              >
+                <span className="d-flex align-items-center gap-2">
+                  <Avatar name={item.employeeName} size="sm" />
+                  <span>
+                    <strong className="d-block" style={{ fontSize: 13, color: 'var(--hz-text-primary)' }}>{item.employeeName}</strong>
+                    <small style={{ color: 'var(--hz-text-secondary)' }}>{item.message}</small>
+                  </span>
+                </span>
+                <StatusBadge status={item.category} variant={item.category === 'LEAVE' || item.category === 'WFH_APPROVED' ? 'success' : item.category === 'REGULARIZATION_PENDING' ? 'warning' : 'danger'} dot={false}>
+                  {item.category.replaceAll('_', ' ')}
+                </StatusBadge>
+              </Link>
+            ))}
+          </div>
+          {/* Backward compatibility for older server responses. */}
+          {(data.exceptions || []).length === 0 && data.missingPunch.length > 0 && (
+          <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: 13, color: 'var(--hz-warning-600)' }}>
             {data.missingPunch.length} employee{data.missingPunch.length === 1 ? '' : 's'} with no punch today
           </div>
+          )}
           <div className="d-flex flex-wrap gap-2">
-            {data.missingPunch.map((emp) => (
+            {(data.exceptions || []).length === 0 && data.missingPunch.map((emp) => (
               <Link
                 key={emp.id}
                 to={`/employees/${emp.id}`}
@@ -64,6 +88,54 @@ function AttendanceExceptionsCard() {
               </Link>
             ))}
           </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function AttendanceRegularizationReviewCard() {
+  const { hasPermission } = useAuth();
+  const queryClient = useQueryClient();
+  const [notes, setNotes] = useState({});
+  const [error, setError] = useState('');
+  const { data: requests = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['attendance-regularizations-pending'],
+    queryFn: attendanceApi.pendingRegularizations,
+    enabled: hasPermission('ATTENDANCE_MANAGE'),
+  });
+  const review = useMutation({
+    mutationFn: ({ id, approved }) => attendanceApi.reviewRegularization(id, approved, notes[id] || null),
+    onSuccess: () => {
+      setError('');
+      queryClient.invalidateQueries({ queryKey: ['attendance-regularizations-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-exceptions'] });
+    },
+    onError: (failure) => setError(failure.response?.data?.message || 'Could not review this request.'),
+  });
+
+  if (!hasPermission('ATTENDANCE_MANAGE')) return null;
+  return (
+    <Card title="Attendance regularization requests" subtitle="Review employee-submitted exceptions within your authorized scope">
+      {isLoading && <SkeletonText lines={2} />}
+      {isError && <ErrorState description="Couldn't load regularization requests." onRetry={refetch} />}
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
+      {!isLoading && !isError && requests.length === 0 && <EmptyState icon={Clock} title="No pending requests" description="New attendance regularization requests will appear here." />}
+      {requests.length > 0 && (
+        <div className="table-responsive">
+          <table className="table mb-0 align-middle hz-table" aria-label="Pending attendance regularization requests">
+            <thead><tr><th>Employee</th><th>Date</th><th>Requested time</th><th>Reason</th><th>Review note</th><th>Actions</th></tr></thead>
+            <tbody>{requests.map((request) => (
+              <tr key={request.id}>
+                <td>{request.employeeName}</td>
+                <td>{request.attendanceDate}</td>
+                <td>{request.requestedCheckIn}{request.requestedCheckOut ? ` – ${request.requestedCheckOut}` : ''}</td>
+                <td>{request.reason}</td>
+                <td><input className="form-control form-control-sm" aria-label={`Review note for ${request.employeeName}`} value={notes[request.id] || ''} maxLength={500} onChange={(event) => setNotes({ ...notes, [request.id]: event.target.value })} /></td>
+                <td><div className="d-flex gap-2"><Button size="sm" onClick={() => review.mutate({ id: request.id, approved: true })} loading={review.isPending}>Approve</Button><Button size="sm" variant="secondary" onClick={() => review.mutate({ id: request.id, approved: false })} disabled={review.isPending}>Reject</Button></div></td>
+              </tr>
+            ))}</tbody>
+          </table>
         </div>
       )}
     </Card>
@@ -131,14 +203,7 @@ function AttendanceManagement() {
             </Button>
           </Link>
           <div
-            className="d-inline-flex align-items-center gap-2 px-3 py-1"
-            style={{
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 600,
-              background: connectionState === 'live' ? 'var(--hz-success-50)' : 'var(--hz-gray-100)',
-              color: connectionState === 'live' ? 'var(--hz-success-600)' : 'var(--hz-text-secondary)',
-            }}
+            className={`hz-live-pill ${connectionState === 'live' ? 'hz-live-pill--on' : 'hz-live-pill--off'}`}
           >
             <Radio size={13} />
             {connectionState === 'live' ? 'Live' : connectionState === 'connecting' ? 'Connecting…' : 'Reconnecting…'}
@@ -153,6 +218,7 @@ function AttendanceManagement() {
       </div>
 
       <AttendanceExceptionsCard />
+      <AttendanceRegularizationReviewCard />
 
       <Card bodyClassName="p-0">
         {isLoading && (
@@ -180,6 +246,7 @@ function AttendanceManagement() {
                 <th>Department</th>
                 <th>Punch Time</th>
                 <th>Type</th>
+                <th>Source</th>
                 <th>Verify Mode</th>
                 <th className="pe-4">Device</th>
               </tr>
@@ -215,6 +282,7 @@ function AttendanceManagement() {
                   <td data-label="Type">
                     <PunchBadge type={r.punchType} />
                   </td>
+                  <td data-label="Source" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.source || 'BIOMETRIC'}</td>
                   <td data-label="Verify mode" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.verifyMode}</td>
                   <td data-label="Device" className="pe-4" style={{ fontSize: 'var(--hz-text-sm)' }}>
                     {r.deviceName}
