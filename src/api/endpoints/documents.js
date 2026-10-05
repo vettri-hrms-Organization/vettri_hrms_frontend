@@ -16,9 +16,7 @@ export const documentsApi = {
       formData.append('expiryDate', meta.expiryDate);
     }
     if (meta.notes) formData.append('notes', meta.notes);
-    return axiosClient.post(`/api/documents/employee/${employeeId}/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((res) => res.data);
+    return axiosClient.post(`/api/documents/employee/${employeeId}/upload`, formData).then((res) => res.data);
   },
   review: (documentId, approved, rejectionReason) => axiosClient.post(`/api/documents/${documentId}/review`, {
     approved,
