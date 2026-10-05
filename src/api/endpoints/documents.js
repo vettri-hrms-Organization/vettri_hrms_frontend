@@ -1,6 +1,11 @@
 import { axiosClient } from '../axiosClient';
+import {
+  DOCUMENT_TYPE_LABEL,
+  DOCUMENT_TYPE_METADATA,
+  EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES,
+} from '../documentPolicy';
 
-export const EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES = ['AADHAAR', 'PAN'];
+export { DOCUMENT_TYPE_LABEL, DOCUMENT_TYPE_METADATA, EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES };
 
 export const documentsApi = {
   byEmployee: (employeeId) => axiosClient.get(`/api/documents/employee/${employeeId}`).then((res) => res.data),
@@ -24,18 +29,6 @@ export const documentsApi = {
   }).then((res) => res.data),
   download: (documentId) => axiosClient.get(`/api/documents/${documentId}/download`, { responseType: 'blob' }),
   remove: (id) => axiosClient.delete(`/api/documents/${id}`),
-};
-
-export const DOCUMENT_TYPE_LABEL = {
-  ID_PROOF: 'ID Proof',
-  PASSPORT: 'Passport',
-  WORK_VISA: 'Work Visa',
-  PROFESSIONAL_CERTIFICATION: 'Professional Certification',
-  EMPLOYMENT_CONTRACT: 'Employment Contract',
-  OTHER: 'Other',
-  AADHAAR: 'Aadhaar',
-  PAN: 'PAN',
-  EXPERIENCE_LETTER: 'Experience Letter',
 };
 
 export const MANDATORY_DOCUMENTS = [

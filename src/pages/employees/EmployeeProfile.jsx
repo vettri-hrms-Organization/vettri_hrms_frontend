@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { employeesApi } from '../../api/endpoints/employees';
 import { leaveRequestsApi } from '../../api/endpoints/leave';
 import { attendanceApi } from '../../api/endpoints/attendance';
-import { documentsApi, DOCUMENT_TYPE_LABEL, MANDATORY_DOCUMENTS, EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES } from '../../api/endpoints/documents';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Users, ChevronDown, Fingerprint, Pencil, Check, X, CalendarDays, Clock, FileText, Plus, Trash2, AlertTriangle, Network, ClipboardList, Search, Send, UserX, CheckCircle2 } from 'lucide-react';
+import { documentsApi, DOCUMENT_TYPE_LABEL, MANDATORY_DOCUMENTS, DOCUMENT_TYPE_METADATA } from '../../api/endpoints/documents';
+import { canReviewDocuments, canUploadOwnDocuments, getExpiryPresentation } from '../../api/documentPolicy';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Users, ChevronDown, Fingerprint, Pencil, Check, X, CalendarDays, Clock, FileText, Plus, Trash2, AlertTriangle, Network, ClipboardList, Search, Send, UserX, CheckCircle2, Download } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Avatar from '../../components/ui/Avatar';
@@ -35,9 +36,9 @@ const EMPLOYEE_TAB_KEYS = ['overview', 'job', 'attendance', 'leave', 'documents'
 
 export default function EmployeeProfile() {
   const { id } = useParams();
-  const { user, hasRole } = useAuth();
+  const { user, hasPermission } = useAuth();
   const employeeId = id || user?.employeeId;
-  const isEmployee = !!user?.employeeId;
+  const isEmployee = !!user?.employeeId && !hasPermission('EMPLOYEE_MANAGE');
   const availableTabs = isEmployee ? TABS.filter((item) => EMPLOYEE_TAB_KEYS.includes(item.key)) : TABS;
   const availableTabKeys = isEmployee ? EMPLOYEE_TAB_KEYS : VALID_TAB_KEYS;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -166,7 +167,13 @@ export default function EmployeeProfile() {
       {tab === 'hierarchy' && <HierarchyTab employee={employee} />}
       {tab === 'attendance' && <AttendanceTab employee={employee} />}
       {tab === 'leave' && <LeaveTab employee={employee} onApplyLeave={() => setShowApplyLeave(true)} />}
-      {tab === 'documents' && <DocumentsTab employee={employee} isEmployee={isEmployee} />}
+      {tab === 'documents' && (
+        <DocumentsTab
+          employee={employee}
+          canUploadOwnDocument={canUploadOwnDocuments(user, employee.id)}
+          canReviewDocuments={canReviewDocuments(user)}
+        />
+      )}
 
       {showApplyLeave && <ApplyLeaveModal defaultEmployeeId={employee.id} onClose={() => setShowApplyLeave(false)} />}
     </div>
@@ -431,9 +438,12 @@ function AttendanceTab({ employee }) {
   );
 }
 
-function DocumentsTab({ employee, isEmployee }) {
+function DocumentsTab({ employee, canUploadOwnDocument, canReviewDocuments: canReview }) {
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
+  const [reviewingDocument, setReviewingDocument] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [reviewError, setReviewError] = useState('');
   const [documentSearch, setDocumentSearch] = useState('');
 
   const { data: documents, isLoading, isError, refetch } = useQuery({
@@ -446,7 +456,17 @@ function DocumentsTab({ employee, isEmployee }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employee-documents', String(employee.id)] }),
   });
 
-  const today = new Date();
+  const review = useMutation({
+    mutationFn: ({ documentId, approved, reason }) => documentsApi.review(documentId, approved, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-documents', String(employee.id)] });
+      setReviewingDocument(null);
+      setRejectionReason('');
+      setReviewError('');
+    },
+    onError: (error) => setReviewError(error.response?.data?.message || 'Could not update this document.'),
+  });
+
   const visibleDocuments = (documents || []).filter((docItem) => {
     const searchValue = documentSearch.trim().toLowerCase();
     if (!searchValue) return true;
@@ -454,21 +474,40 @@ function DocumentsTab({ employee, isEmployee }) {
       .filter(Boolean)
       .some((value) => value.toLowerCase().includes(searchValue));
   });
-  function daysUntil(dateStr) {
-    return Math.ceil((new Date(dateStr) - today) / 86400000);
-  }
   function docStatusLabel(status) {
     switch ((status || '').toUpperCase()) {
       case 'PENDING_REVIEW': return 'Pending review';
       case 'APPROVED': return 'Approved';
       case 'REJECTED': return 'Rejected';
-      default: return 'Pending review';
+      case 'MISSING': return 'Missing';
+      default: return 'Missing';
     }
   }
-  function expiryTone(days) {
-    if (days < 0) return { color: 'var(--hz-danger-600)', label: 'Expired' };
-    if (days <= 30) return { color: 'var(--hz-warning-600)', label: `${days}d left` };
-    return { color: 'var(--hz-text-secondary)', label: null };
+
+  async function downloadDocument(documentItem) {
+    const response = await documentsApi.download(documentItem.id);
+    const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = documentItem.originalFileName || 'document';
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  function submitReview(approved) {
+    const reason = rejectionReason.trim();
+    if (!approved && !reason) {
+      setReviewError('A rejection reason is required.');
+      return;
+    }
+    if (!reviewingDocument) return;
+    setReviewError('');
+    review.mutate({
+      documentId: reviewingDocument.id,
+      approved,
+      reason: approved ? null : reason,
+    });
   }
 
   return (
@@ -476,9 +515,11 @@ function DocumentsTab({ employee, isEmployee }) {
       title="Documents"
       subtitle="ID proof, visas, certifications, and contracts on file"
       actions={
-        <Button size="sm" variant="secondary" icon={Plus} onClick={() => setShowAdd(true)}>
-          {isEmployee ? 'Upload Document' : 'Add Document'}
-        </Button>
+        canUploadOwnDocument ? (
+          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setShowAdd(true)}>
+            Upload Document
+          </Button>
+        ) : null
       }
       bodyClassName="p-0"
     >
@@ -525,7 +566,13 @@ function DocumentsTab({ employee, isEmployee }) {
       )}
       {isError && <ErrorState description="Couldn't load documents." onRetry={refetch} />}
       {!isLoading && !isError && documents?.length === 0 && (
-        <EmptyState icon={FileText} title="No optional documents on file" description="Use Add Document to add the mandatory records or track visas, certifications, and contracts." />
+        <EmptyState
+          icon={FileText}
+          title="No documents on file"
+          description={canUploadOwnDocument
+            ? 'Upload your mandatory documents or track visas, certifications, and contracts.'
+            : 'Documents uploaded by this employee will appear here.'}
+        />
       )}
       {!isLoading && !isError && documents?.length > 0 && visibleDocuments.length === 0 && (
         <EmptyState icon={Search} title="No documents found" description={`Nothing matches "${documentSearch}".`} />
@@ -543,14 +590,17 @@ function DocumentsTab({ employee, isEmployee }) {
           </thead>
           <tbody>
             {visibleDocuments.map((d) => {
-              const days = daysUntil(d.expiryDate);
-              const tone = expiryTone(days);
+              const expiry = getExpiryPresentation(d);
+              const status = (d.status || '').toUpperCase();
               return (
                 <tr key={d.id}>
                   <td className="ps-4" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span>{DOCUMENT_TYPE_LABEL[d.documentType] || d.documentType}</span>
-                      <small style={{ color: 'var(--hz-text-muted)' }}>{docStatusLabel(d.status)}</small>
+                      <small style={{ color: 'var(--hz-text-muted)' }}>{docStatusLabel(status)}</small>
+                      {status === 'REJECTED' && d.rejectionReason && (
+                        <small style={{ color: 'var(--hz-danger-600)' }}>Reason: {d.rejectionReason}</small>
+                      )}
                     </div>
                   </td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{d.documentNumber || '—'}</td>
@@ -558,12 +608,12 @@ function DocumentsTab({ employee, isEmployee }) {
                     {d.issueDate ? new Date(d.issueDate).toLocaleDateString() : '—'}
                   </td>
                   <td style={{ fontSize: 'var(--hz-text-sm)' }}>
-                    <span style={{ color: tone.color, fontWeight: tone.label ? 600 : 400 }}>
-                      {new Date(d.expiryDate).toLocaleDateString()}
-                      {tone.label && (
+                    <span style={{ color: expiry.color, fontWeight: expiry.label ? 600 : 400 }}>
+                      {expiry.date}
+                      {expiry.label && (
                         <>
                           {' '}
-                          <AlertTriangle size={12} style={{ marginBottom: 2 }} /> {tone.label}
+                          <AlertTriangle size={12} style={{ marginBottom: 2 }} /> {expiry.label}
                         </>
                       )}
                     </span>
@@ -573,45 +623,25 @@ function DocumentsTab({ employee, isEmployee }) {
                       <button
                         type="button"
                         className="btn btn-sm btn-light border-0 me-2"
-                        onClick={async () => {
-                          const response = await documentsApi.download(d.id);
-                          const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
-                          const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = d.originalFileName || 'document';
-                          link.click();
-                          window.URL.revokeObjectURL(url);
-                        }}
+                        onClick={() => downloadDocument(d)}
                       >
                         Download
                       </button>
                     )}
-                    {!isEmployee && d.status !== 'APPROVED' && (
+                    {canReview && status === 'PENDING_REVIEW' && (
                       <button
                         type="button"
                         className="btn btn-sm btn-light border-0 me-2"
-                        onClick={() => documentsApi.review(d.id, true, null).then(() => refetch())}
-                        style={{ color: 'var(--hz-success-600)' }}
-                      >
-                        Approve
-                      </button>
-                    )}
-                    {!isEmployee && d.status !== 'APPROVED' && (
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-light border-0"
                         onClick={() => {
-                          const reason = window.prompt('Please provide the rejection reason for this document:');
-                          if (!reason || !reason.trim()) return;
-                          documentsApi.review(d.id, false, reason.trim()).then(() => refetch());
+                          setReviewingDocument(d);
+                          setRejectionReason('');
+                          setReviewError('');
                         }}
-                        style={{ color: 'var(--hz-danger-600)' }}
                       >
-                        Reject
+                        Review
                       </button>
                     )}
-                    {!isEmployee && <button
+                    {canReview && <button
                       className="btn btn-sm btn-light border-0"
                       style={{ color: 'var(--hz-danger-600)' }}
                       onClick={() => remove.mutate(d.id)}
@@ -628,7 +658,47 @@ function DocumentsTab({ employee, isEmployee }) {
         </table>
       )}
 
-      {showAdd && <AddDocumentModal employeeId={employee.id} onClose={() => setShowAdd(false)} />}
+      {showAdd && canUploadOwnDocument && <AddDocumentModal employeeId={employee.id} onClose={() => setShowAdd(false)} />}
+      {reviewingDocument && canReview && (
+        <Dialog open onClose={() => setReviewingDocument(null)} title="Review Employee Document" size="sm">
+          <div className="d-flex flex-column gap-3">
+            <div><strong>Employee:</strong> {employee.fullName}</div>
+            <div><strong>Document:</strong> {DOCUMENT_TYPE_LABEL[reviewingDocument.documentType] || reviewingDocument.documentType}</div>
+            <div><strong>Document number:</strong> {reviewingDocument.documentNumber || '—'}</div>
+            <div><strong>Issue date:</strong> {reviewingDocument.issueDate ? new Date(`${reviewingDocument.issueDate}T00:00:00`).toLocaleDateString() : '—'}</div>
+            <div><strong>Expiry date:</strong> {getExpiryPresentation(reviewingDocument).date}</div>
+            <div><strong>Status:</strong> {docStatusLabel(reviewingDocument.status)}</div>
+            {reviewingDocument.s3ObjectKey && (
+              <Button type="button" variant="secondary" icon={Download} onClick={() => downloadDocument(reviewingDocument)}>
+                Download document
+              </Button>
+            )}
+            <FormField
+              as="textarea"
+              label="Rejection reason (required to reject)"
+              rows={3}
+              value={rejectionReason}
+              onChange={(value) => {
+                setRejectionReason(value);
+                if (reviewError) setReviewError('');
+              }}
+            />
+            {reviewError && (
+              <div role="alert" className="px-3 py-2" style={{ background: 'var(--hz-danger-50)', color: 'var(--hz-danger-600)', borderRadius: 8, fontSize: 13 }}>
+                {reviewError}
+              </div>
+            )}
+            <div className="d-flex justify-content-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => submitReview(false)} loading={review.isPending}>
+                Reject
+              </Button>
+              <Button type="button" onClick={() => submitReview(true)} loading={review.isPending}>
+                Approve
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </Card>
   );
 }
@@ -638,7 +708,7 @@ function AddDocumentModal({ employeeId, onClose }) {
   const [form, setForm] = useState({ documentType: 'ID_PROOF', documentNumber: '', issueDate: '', expiryDate: '', notes: '' });
   const [file, setFile] = useState(null);
   const [error, setError] = useState(null);
-  const expiryNotApplicable = EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES.includes(form.documentType);
+  const expiryNotApplicable = DOCUMENT_TYPE_METADATA[form.documentType]?.expiryApplicable === false;
 
   const create = useMutation({
     mutationFn: () => documentsApi.upload(employeeId, file, form),
@@ -657,7 +727,7 @@ function AddDocumentModal({ employeeId, onClose }) {
     setForm((currentForm) => ({
       ...currentForm,
       documentType,
-      expiryDate: EXPIRY_NOT_APPLICABLE_DOCUMENT_TYPES.includes(documentType) ? '' : currentForm.expiryDate,
+      expiryDate: DOCUMENT_TYPE_METADATA[documentType]?.expiryApplicable === false ? '' : currentForm.expiryDate,
     }));
   }
 
