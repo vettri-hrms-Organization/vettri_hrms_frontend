@@ -25,6 +25,7 @@ import {
   LifeBuoy,
   Bell,
   PackageOpen,
+  Network,
 } from 'lucide-react';
 
 /**
@@ -134,6 +135,7 @@ export const NAV_SECTIONS = [
     collapsible: true,
     badge: null,
     items: [
+      { to: '/organization/structure', icon: Network, label: 'Organization Structure', permission: 'ORG_VIEW' },
       { to: '/employees/import', icon: FileSpreadsheet, label: 'Import Employees', permission: 'EMPLOYEE_IMPORT' },
       { to: '/settings/organization', icon: Building2, label: 'Departments', permission: 'ORG_VIEW' },
       { to: '/settings/organization', icon: Building2, label: 'Designations', permission: 'ORG_VIEW' },

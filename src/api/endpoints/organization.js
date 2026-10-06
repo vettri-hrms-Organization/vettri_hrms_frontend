@@ -1,5 +1,9 @@
 import { axiosClient } from '../axiosClient';
 
+export const organizationApi = {
+  structure: () => axiosClient.get('/api/organization/structure').then((res) => res.data),
+};
+
 export const departmentsApi = {
   list: () => axiosClient.get('/api/departments').then((res) => res.data),
   create: (payload) => axiosClient.post('/api/departments', payload).then((res) => res.data),

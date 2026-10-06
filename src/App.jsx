@@ -51,6 +51,7 @@ const Requirements = lazy(() => import('./pages/Requirements'));
 const MonitoringReports = lazy(() => import('./pages/monitoring/MonitoringReports'));
 const SettingsPlatform = lazy(() => import('./pages/SettingsPlatform'));
 const SoftwareManagement = lazy(() => import('./pages/software/SoftwareManagement'));
+const OrganizationStructure = lazy(() => import('./pages/organization/OrganizationStructure'));
 const CareersList = lazy(() => import('./pages/careers/CareersList'));
 const JobApply = lazy(() => import('./pages/careers/JobApply'));
 
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="employees" element={<EmployeeList />} />
           <Route path="employees/import" element={<EmployeeImport />} />
           <Route path="employees/:id" element={<EmployeeProfile />} />
+          <Route path="organization/structure" element={<OrganizationStructure />} />
           <Route path="attendance" element={<AttendanceList />} />
           <Route path="attendance/presence" element={<AttendancePresence />} />
           <Route path="attendance/devices" element={<Devices />} />

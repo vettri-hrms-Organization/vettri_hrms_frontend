@@ -13,6 +13,10 @@ const ROUTES = [
 
   { pattern: '/employees', crumbs: [{ label: 'Employees' }] },
   {
+    pattern: '/organization/structure',
+    crumbs: [{ label: 'Organization' }, { label: 'Organization Structure' }],
+  },
+  {
     pattern: '/employees/:id',
     crumbs: [{ label: 'Employees', path: '/employees' }, { label: 'Employee', dynamic: true }],
   },
