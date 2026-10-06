@@ -231,7 +231,9 @@
 }
 
 .hz-admin-settings-nav__item:hover,
-.hz-admin-settings-nav__item.active {
+.vettri-app-shell .hz-admin-settings-nav__item:hover,
+.hz-admin-settings-nav__item.active,
+.vettri-app-shell .hz-admin-settings-nav__item.active {
   background: var(--hz-primary-50);
   color: var(--hz-primary-700);
 }
