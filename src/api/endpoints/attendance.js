@@ -9,6 +9,7 @@ export const attendanceApi = {
   checkIn: (payload) => axiosClient.post('/api/attendance/check-in', payload).then((res) => res.data),
   checkOut: (payload) => axiosClient.post('/api/attendance/check-out', payload).then((res) => res.data),
   today: () => axiosClient.get('/api/attendance/today').then((res) => res.data),
+  myHistory: (from, to) => axiosClient.get('/api/attendance/me/history', { params: { from, to } }).then((res) => res.data),
   context: () => axiosClient.get('/api/attendance/policy/context').then((res) => res.data),
   policy: () => axiosClient.get('/api/attendance/policy').then((res) => res.data),
   updatePolicy: (payload) => axiosClient.put('/api/attendance/policy', payload).then((res) => res.data),

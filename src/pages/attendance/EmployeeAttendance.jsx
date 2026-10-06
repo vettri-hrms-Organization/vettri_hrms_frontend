@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, CheckCircle2, Clock3, Home, LogIn, LogOut, MapPin, RefreshCw } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Home, LogIn, LogOut, MapPin, RefreshCw } from 'lucide-react';
 import { attendanceApi } from '../../api/endpoints/attendance';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
@@ -9,7 +9,7 @@ import StatusBadge, { formatStatusLabel } from '../../components/ui/StatusBadge'
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
-import { formatTimeIST } from '../../utils/formatDateTime';
+import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
 
 const GOOD_ACCURACY_METERS = 100;
 const MAX_ACCEPTABLE_ACCURACY_METERS = 200;
@@ -159,9 +159,52 @@ function localDate(daysFromToday = 0) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+function currentMonthInIST() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  return `${year}-${month}`;
+}
+
+function shiftMonth(month, offset) {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year, monthNumber - 1 + offset, 1));
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthRange(month) {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  return {
+    from: `${month}-01`,
+    to: `${month}-${String(daysInMonth).padStart(2, '0')}`,
+  };
+}
+
+function monthLabel(month) {
+  const [year, monthNumber] = month.split('-').map(Number);
+  return new Intl.DateTimeFormat('en-IN', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(Date.UTC(year, monthNumber - 1, 1, 12)));
+}
+
+function formatDuration(minutes) {
+  if (minutes == null) return '—';
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return hours ? `${hours}h ${remainingMinutes}m` : `${remainingMinutes}m`;
+}
+
 export default function EmployeeAttendance() {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState('OFFICE');
+  const [historyMonth, setHistoryMonth] = useState(currentMonthInIST);
   const [workDate, setWorkDate] = useState(localDate(1));
   const [reason, setReason] = useState('');
   const [regularizationDate, setRegularizationDate] = useState(localDate());
@@ -172,6 +215,11 @@ export default function EmployeeAttendance() {
   const [locationStatus, setLocationStatus] = useState('idle');
 
   const today = useQuery({ queryKey: ['attendance-today'], queryFn: attendanceApi.today });
+  const historyRange = monthRange(historyMonth);
+  const history = useQuery({
+    queryKey: ['attendance-history', historyRange.from, historyRange.to],
+    queryFn: () => attendanceApi.myHistory(historyRange.from, historyRange.to),
+  });
   const context = useQuery({ queryKey: ['attendance-context'], queryFn: attendanceApi.context });
   const policy = useQuery({ queryKey: ['attendance-policy'], queryFn: attendanceApi.policy });
   const locations = useQuery({ queryKey: ['attendance-office-locations'], queryFn: attendanceApi.officeLocations });
@@ -210,6 +258,7 @@ export default function EmployeeAttendance() {
     onSuccess: () => {
       setMessage({ type: 'success', text: 'You are checked in.' });
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
     },
     onError: (error) => {
@@ -230,6 +279,7 @@ export default function EmployeeAttendance() {
     onSuccess: () => {
       setMessage({ type: 'success', text: 'You are checked out.' });
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
     },
     onError: (error) => setMessage({ type: 'error', text: error.response?.data?.message || error.message || 'Check-out could not be completed.' }),
@@ -253,6 +303,7 @@ export default function EmployeeAttendance() {
       setMessage({ type: 'success', text: request.status === 'APPROVED' ? 'Attendance regularization applied.' : 'Regularization request submitted for approval.' });
       queryClient.invalidateQueries({ queryKey: ['attendance-regularizations-mine'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
     },
     onError: (error) => setMessage({ type: 'error', text: error.response?.data?.message || 'Attendance regularization could not be submitted.' }),
@@ -278,7 +329,7 @@ export default function EmployeeAttendance() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Self service" title="My attendance" description="Check in when your organization’s attendance policy allows, request WFH, and see today’s status." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); context.refetch(); policy.refetch(); wfhRequests.refetch(); regularizations.refetch(); }}>Refresh</Button>} />
+      <PageHeader eyebrow="Self service" title="My attendance" description="Check in when your organization’s attendance policy allows, request WFH, and see your attendance history." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); history.refetch(); context.refetch(); policy.refetch(); wfhRequests.refetch(); regularizations.refetch(); }}>Refresh</Button>} />
 
       {message && <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'} mb-0`} role="status">{message.text}{message.type === 'error' && message.code?.startsWith('LOCATION_') && <button type="button" className="btn btn-link p-0 ms-2" onClick={() => checkIn.mutate()}>Try again</button>}</div>}
 
@@ -315,6 +366,68 @@ export default function EmployeeAttendance() {
         </div>
         <div className="col-12 col-lg-5"><Card title="Work location" subtitle="Your check-in options follow your organization’s attendance policy."><div className="btn-group w-100 mb-3" role="group"><button type="button" className={`btn ${mode === 'OFFICE' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setMode('OFFICE')}><MapPin size={16} className="me-2" />Office</button><button type="button" className={`btn ${mode === 'WFH' ? 'btn-primary' : 'btn-outline-secondary'}`} disabled={context.data?.wfhStatus !== 'APPROVED' || !context.data?.allowedWebCheckIn} onClick={() => setMode('WFH')}><Home size={16} className="me-2" />WFH</button></div><div className="text-muted-hz" style={{ fontSize: 13 }}>{mode === 'OFFICE' ? `${locations.data?.length || 0} active office location(s) available.` : 'Approved WFH is required before remote check-in.'}</div></Card></div>
       </div>
+
+      <Card
+        title="Attendance history"
+        subtitle={monthLabel(historyMonth)}
+        actions={(
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={ChevronLeft}
+              aria-label="Previous month"
+              onClick={() => setHistoryMonth((month) => shiftMonth(month, -1))}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={ChevronRight}
+              aria-label="Next month"
+              disabled={historyMonth >= currentMonthInIST()}
+              onClick={() => setHistoryMonth((month) => shiftMonth(month, 1))}
+            />
+          </>
+        )}
+      >
+        {history.isLoading && <SkeletonText lines={4} />}
+        {history.isError && <ErrorState description="Couldn’t load your attendance history." onRetry={() => history.refetch()} />}
+        {!history.isLoading && !history.isError && history.data?.length === 0 && (
+          <EmptyState icon={CalendarDays} title="No attendance records" description={`No check-in or check-out records were found for ${monthLabel(historyMonth)}.`} />
+        )}
+        {!history.isLoading && !history.isError && history.data?.length > 0 && (
+          <div className="table-responsive">
+            <table className="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Check-in</th>
+                  <th scope="col">Check-out</th>
+                  <th scope="col">Working hours</th>
+                  <th scope="col">Source</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.data.map((record) => (
+                  <tr key={record.id}>
+                    <td>{formatDateIST(`${record.attendanceDate}T12:00:00Z`)}</td>
+                    <td>{record.checkInTime ? formatTimeIST(record.checkInTime) : '—'}</td>
+                    <td>{record.checkOutTime ? formatTimeIST(record.checkOutTime) : '—'}</td>
+                    <td>{formatDuration(record.durationMinutes)}</td>
+                    <td>{record.wfh ? `WFH · ${record.source || '—'}` : record.source || '—'}</td>
+                    <td>
+                      <StatusBadge status={record.status} variant={record.status === 'CHECKED_OUT' ? 'success' : 'info'} dot>
+                        {formatStatusLabel(record.status)}
+                      </StatusBadge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       <Card title="Request work from home" subtitle="Submit a future-date request for manager approval."><div className="row g-3 align-items-end"><div className="col-12 col-md-3"><label className="form-label" htmlFor="wfh-date">Work date</label><input id="wfh-date" className="form-control" type="date" min={localDate(1)} value={workDate} onChange={(event) => setWorkDate(event.target.value)} /></div><div className="col-12 col-md-6"><label className="form-label" htmlFor="wfh-reason">Reason</label><input id="wfh-reason" className="form-control" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Optional reason" maxLength={500} /></div><div className="col-12 col-md-3"><Button className="w-100" icon={CalendarDays} onClick={() => requestWfh.mutate()} loading={requestWfh.isPending} disabled={!workDate}>Request approval</Button></div></div></Card>
 
