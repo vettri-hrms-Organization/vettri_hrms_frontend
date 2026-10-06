@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Search, FileSpreadsheet, History } from 'lucide-react';
 import { employeesApi } from '../../api/endpoints/employees';
 import { salaryStructuresApi } from '../../api/endpoints/salary';
+import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/ui/Card';
 import Avatar from '../../components/ui/Avatar';
 import EmptyState from '../../components/ui/EmptyState';
@@ -11,6 +12,8 @@ import AssignSalaryStructureModal from './components/AssignSalaryStructureModal'
 
 /** Pick-an-employee + define/revise-their-structure workspace. Also the entry point for browsing an employee's structure revision history. */
 export default function SalaryStructurePage() {
+  const { hasPermission } = useAuth();
+  const canManage = hasPermission('SALARY_MANAGE');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,7 +32,7 @@ export default function SalaryStructurePage() {
     enabled: !!selected,
   });
 
-  const filteredEmployees = useMemo(() => employees, [employees]);
+  const filteredEmployees = employees;
 
   return (
     <div className="hz-module-page hz-module-page--payroll d-flex flex-column gap-4">
@@ -93,11 +96,11 @@ export default function SalaryStructurePage() {
               <Card
                 title={selected.fullName}
                 subtitle={`${selected.employeeCode || ''}${selected.departmentName ? ' \u00b7 ' + selected.departmentName : ''}`}
-                actions={
+                actions={canManage && (
                   <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
                     {currentStructure ? 'Revise Structure' : 'Define Structure'}
                   </button>
-                }
+                )}
               >
                 {!currentStructure && (
                   <EmptyState icon={FileSpreadsheet} title="No salary structure yet" description="Define one to include this employee in payroll processing." />
@@ -147,7 +150,7 @@ export default function SalaryStructurePage() {
         </div>
       </div>
 
-      {modalOpen && selected && (
+      {modalOpen && selected && canManage && (
         <AssignSalaryStructureModal
           employee={selected}
           onClose={(saved) => {
