@@ -36,6 +36,7 @@ const MonitoringDeviceDetails = lazy(() => import('./pages/monitoring/DeviceDeta
 const VettriCli = lazy(() => import('./pages/monitoring/VettriCli'));
 const RemoteDesktop = lazy(() => import('./pages/monitoring/RemoteDesktop'));
 const MonitoringActivity = lazy(() => import('./pages/monitoring/Activity'));
+const DeviceEnrollment = lazy(() => import('./pages/monitoring/DeviceEnrollment'));
 import SettingsUsers from './pages/SettingsUsers';
 import SettingsOrganization from './pages/SettingsOrganization';
 import SettingsLeave from './pages/SettingsLeave';
@@ -66,6 +67,7 @@ export default function App() {
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/careers" element={<CareersList />} />
       <Route path="/careers/:jobId" element={<JobApply />} />
+      <Route path="/device-enrollment/:token" element={<DeviceEnrollment />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>

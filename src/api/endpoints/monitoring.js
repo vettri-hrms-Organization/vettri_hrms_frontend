@@ -1,4 +1,4 @@
-import { axiosClient } from '../axiosClient';
+import { API_BASE_URL, axiosClient } from '../axiosClient';
 
 /**
  * Employee Monitoring API
@@ -32,6 +32,29 @@ export const monitoringApi = {
     axiosClient
       .post('/api/monitoring/devices', payload)
       .then((res) => res.data),
+
+  deviceEnrollments: () =>
+    axiosClient
+      .get('/api/monitoring/devices/enrollments')
+      .then((res) => res.data),
+
+  sendDeviceEnrollmentEmail: (id) =>
+    axiosClient
+      .post(`/api/monitoring/devices/enrollments/${id}/send-email`)
+      .then((res) => res.data),
+
+  revokeDeviceEnrollment: (id) =>
+    axiosClient
+      .post(`/api/monitoring/devices/enrollments/${id}/revoke`)
+      .then((res) => res.data),
+
+  deviceEnrollmentStatus: (token) =>
+    axiosClient
+      .get(`/api/device-enrollments/${encodeURIComponent(token)}`, { headers: { 'Cache-Control': 'no-store' } })
+      .then((res) => res.data),
+
+  deviceEnrollmentInstallerUrl: (token) =>
+    `${API_BASE_URL}/api/device-enrollments/${encodeURIComponent(token)}/installer`,
 
   deviceById: (id) =>
     axiosClient

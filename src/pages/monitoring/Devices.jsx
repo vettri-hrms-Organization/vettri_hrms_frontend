@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Check, Copy, Download, Eye, Monitor, Plus, ShieldCheck, Search } from 'lucide-react';
+import { Copy, Eye, Link2, Mail, Monitor, Plus, ShieldCheck, Search, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   monitoringApi,
@@ -23,8 +23,6 @@ import FilterBar from '../../components/ui/FilterBar';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 
-const AGENT_DOWNLOAD_URL = import.meta.env.VITE_AGENT_DOWNLOAD_URL || '';
-
 const STATUS_FILTERS = [
   { value: 'all', label: 'All' },
   { value: 'online', label: 'Online' },
@@ -35,32 +33,47 @@ export default function Devices() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [connectOpen, setConnectOpen] = useState(false);
-  const [deviceName, setDeviceName] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [enrollment, setEnrollment] = useState(null);
+  const [emailSent, setEmailSent] = useState(false);
   const queryClient = useQueryClient();
   const { hasPermission } = useAuth();
   const canManageDevices = hasPermission('MONITORING_MANAGE');
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['monitoring-devices'], queryFn: monitoringApi.devices, refetchInterval: 30_000 });
   const employees = useQuery({ queryKey: ['monitoring-device-employee-options'], queryFn: monitoringApi.deviceEmployeeOptions, enabled: connectOpen && canManageDevices });
-  const enrollmentDevices = useQuery({ queryKey: ['monitoring-device-enrollment'], queryFn: monitoringApi.devices, enabled: connectOpen && Boolean(enrollment), refetchInterval: 5_000 });
+  const enrollmentQuery = useQuery({ queryKey: ['monitoring-device-enrollments'], queryFn: monitoringApi.deviceEnrollments, enabled: canManageDevices, refetchInterval: 10_000 });
   const enroll = useMutation({
-    mutationFn: () => monitoringApi.enrollDevice({ deviceName: deviceName.trim(), employeeId: employeeId ? Number(employeeId) : null }),
-    onSuccess: (result) => { setEnrollment(result); setDeviceName(''); setEmployeeId(''); queryClient.invalidateQueries({ queryKey: ['monitoring-devices'] }); },
+    mutationFn: () => monitoringApi.enrollDevice({ employeeId: Number(employeeId), deviceType: 'WINDOWS_PC' }),
+    onSuccess: (result) => { setEnrollment(result); setEmailSent(false); queryClient.invalidateQueries({ queryKey: ['monitoring-device-enrollments'] }); },
   });
-  const connectedDevice = useMemo(() => {
-    const enrolledId = enrollment?.device?.id ?? enrollment?.device?.deviceId;
-    return (enrollmentDevices.data || []).find((device) => String(getDeviceId(device)) === String(enrolledId));
-  }, [enrollment, enrollmentDevices.data]);
+  const sendEmail = useMutation({
+    mutationFn: (id) => monitoringApi.sendDeviceEnrollmentEmail(id),
+    onSuccess: () => setEmailSent(true),
+  });
+  const revoke = useMutation({
+    mutationFn: (id) => monitoringApi.revokeDeviceEnrollment(id),
+    onSuccess: () => {
+      setEnrollment(null);
+      queryClient.invalidateQueries({ queryKey: ['monitoring-device-enrollments'] });
+    },
+  });
+  const currentEnrollment = enrollment
+    ? (enrollmentQuery.data || []).find((item) => item.id === enrollment.id) || enrollment
+    : null;
+  const connectedDevice = currentEnrollment?.device;
 
   useEffect(() => {
-    if (connectedDevice) queryClient.invalidateQueries({ queryKey: ['monitoring-devices'] });
-  }, [connectedDevice, queryClient]);
+    if (connectedDevice) {
+      queryClient.invalidateQueries({ queryKey: ['monitoring-devices'] });
+    }
+  }, [connectedDevice?.deviceName, queryClient]);
 
-  function openConnect() { setEnrollment(null); enroll.reset(); setEmployeeId(''); setConnectOpen(true); }
-  function closeConnect() { setConnectOpen(false); setEnrollment(null); enroll.reset(); setEmployeeId(''); }
-  async function copyToken() { if (enrollment?.rawToken) await navigator.clipboard.writeText(enrollment.rawToken); }
+  function openConnect() { setEnrollment(null); enroll.reset(); sendEmail.reset(); revoke.reset(); setEmailSent(false); setEmployeeId(''); setConnectOpen(true); }
+  function closeConnect() { setConnectOpen(false); setEnrollment(null); enroll.reset(); setEmailSent(false); setEmployeeId(''); }
+  async function copyEnrollmentLink(item) {
+    if (item?.enrollmentUrl) await navigator.clipboard.writeText(item.enrollmentUrl);
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -126,6 +139,23 @@ export default function Devices() {
     },
   ];
 
+  const enrollmentColumns = [
+    { key: 'employee', label: 'Employee', render: (item) => item.employeeName },
+    { key: 'status', label: 'Enrollment', render: (item) => <StatusBadge status={item.status === 'PENDING' ? 'PENDING' : item.status === 'USED' ? 'ACTIVE' : 'INACTIVE'} variant={item.status === 'PENDING' ? 'warning' : item.status === 'USED' ? 'success' : 'neutral'}>{item.status}</StatusBadge> },
+    { key: 'expires', label: 'Expires', render: (item) => item.status === 'PENDING' ? timeAgoIST(item.expiresAt) : '—' },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (item) => item.status === 'PENDING' ? (
+        <div className="d-flex gap-2">
+          <Button type="button" variant="ghost" size="sm" icon={Copy} onClick={() => copyEnrollmentLink(item)}>Copy link</Button>
+          <Button type="button" variant="ghost" size="sm" icon={Mail} loading={sendEmail.isPending && sendEmail.variables === item.id} onClick={() => sendEmail.mutate(item.id)}>Email</Button>
+          <Button type="button" variant="ghost" size="sm" icon={X} loading={revoke.isPending && revoke.variables === item.id} onClick={() => revoke.mutate(item.id)}>Revoke</Button>
+        </div>
+      ) : '—',
+    },
+  ];
+
   return (
     <div className="d-flex flex-column gap-4">
       <PageHeader eyebrow="Monitoring" title="Monitored Devices" description="Every device enrolled with the Windows Agent" actions={canManageDevices && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>} />
@@ -170,7 +200,19 @@ export default function Devices() {
         />
       </Card>
 
-      <Dialog open={connectOpen} onClose={closeConnect} title="Provision a Windows device" description="Create a secure enrollment and connect a device to your workspace." size="md" footer={!enrollment ? <><Button variant="secondary" onClick={closeConnect}>Cancel</Button><Button form="device-provisioning-form" type="submit" icon={ShieldCheck} loading={enroll.isPending} disabled={!deviceName.trim()}>Create secure token</Button></> : <Button variant="secondary" onClick={closeConnect}>{connectedDevice ? 'Done' : 'Close'}</Button>}>
+      {canManageDevices && (
+        <Card>
+          <div className="hz-card__body">
+            <h2 className="h5 mb-3">Agent enrollments</h2>
+            {enrollmentQuery.isError && <ErrorBanner>{enrollmentQuery.error?.response?.data?.message || 'Could not load agent enrollment requests.'}</ErrorBanner>}
+            {sendEmail.isError && <ErrorBanner>{sendEmail.error?.response?.data?.message || 'Could not send enrollment instructions.'}</ErrorBanner>}
+            {revoke.isError && <ErrorBanner>{revoke.error?.response?.data?.message || 'Could not revoke this enrollment.'}</ErrorBanner>}
+            <Table columns={enrollmentColumns} rows={enrollmentQuery.data || []} getRowKey={(item) => item.id} isLoading={enrollmentQuery.isLoading} emptyTitle="No agent enrollments" emptyDescription="New one-time employee enrollment links will appear here." />
+          </div>
+        </Card>
+      )}
+
+      <Dialog open={connectOpen} onClose={closeConnect} title="Provision a Windows device" description="Create a secure, one-time enrollment for an employee's Windows computer." size="md" footer={!enrollment ? <><Button variant="secondary" onClick={closeConnect}>Cancel</Button><Button form="device-provisioning-form" type="submit" icon={ShieldCheck} loading={enroll.isPending} disabled={!employeeId}>Create enrollment</Button></> : <Button variant="secondary" onClick={closeConnect}>{connectedDevice ? 'Done' : 'Close'}</Button>}>
         <div className="hz-enrollment">
           <div className="hz-enrollment__progress" aria-label="Device enrollment progress">
             <span className="hz-enrollment__step is-complete"><i>1</i>Prepare</span>
@@ -179,18 +221,24 @@ export default function Devices() {
           </div>
           {!enrollment ? (
             <form id="device-provisioning-form" onSubmit={(event) => { event.preventDefault(); enroll.mutate(); }} className="hz-enrollment">
-              <div className="hz-enrollment__intro"><h3>Set up a trusted endpoint</h3><p>Name the device and optionally link it to an employee before issuing its one-time enrollment token.</p></div>
-              <div className="hz-enrollment__download"><div><strong>Vettri Windows Agent</strong><span>Install this lightweight agent on the computer first.</span></div>{AGENT_DOWNLOAD_URL ? <a className="btn btn-outline-primary d-inline-flex align-items-center gap-2" href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer"><Download size={16} /> Download agent</a> : <Button type="button" variant="secondary" icon={Download} disabled>Installer unavailable</Button>}</div>
-              <div className="hz-enrollment__fields"><label className="hz-form-label">Device name<input className="form-control" value={deviceName} onChange={(event) => setDeviceName(event.target.value)} placeholder="e.g. Priya's Windows PC" required maxLength={150} /></label><label className="hz-form-label">Assigned employee<select className="form-select" value={employeeId} onChange={(event) => setEmployeeId(event.target.value)}><option value="">Leave unassigned</option>{(employees.data || []).map((employee) => <option key={employee.id} value={employee.id}>{employee.fullName || `${employee.firstName || ''} ${employee.lastName || ''}`.trim()}</option>)}</select></label></div>
+              <div className="hz-enrollment__intro"><h3>Set up a trusted endpoint</h3><p>Select the employee who will use this computer. The one-time enrollment link expires after 24 hours and can register only one device.</p></div>
+              <div className="hz-enrollment__fields"><label className="hz-form-label">Assigned employee<select className="form-select" value={employeeId} onChange={(event) => setEmployeeId(event.target.value)} required><option value="">Choose an employee</option>{(employees.data || []).map((employee) => <option key={employee.id} value={employee.id}>{employee.fullName || `${employee.firstName || ''} ${employee.lastName || ''}`.trim()}</option>)}</select></label></div>
               {employees.isError && <ErrorBanner>{employees.error?.response?.data?.message || 'Could not load employees for device assignment.'}</ErrorBanner>}
               {enroll.isError && <ErrorBanner>{enroll.error?.response?.data?.message || 'Could not create the enrollment token.'}</ErrorBanner>}
             </form>
           ) : (
             <>
-              <div className="hz-enrollment__intro"><h3>Enrollment is ready</h3><p>Paste this one-time token into the Vettri Agent installer. It remains private to your company workspace.</p></div>
-              <div className="hz-enrollment__token"><div className="hz-enrollment__token-label"><span>One-time enrollment token</span><Button type="button" variant="ghost" size="sm" icon={Copy} onClick={copyToken}>Copy</Button></div><div className="hz-enrollment__token-value">{enrollment.rawToken || 'Token unavailable'}</div></div>
-              <div className={`hz-enrollment__signal ${connectedDevice ? 'is-connected' : ''}`}><span>{connectedDevice ? <Check size={17} /> : <span className="spinner-border spinner-border-sm" aria-hidden="true" />}</span><span>{connectedDevice ? 'Device connected and reporting to Vettri.' : 'Waiting for the first secure heartbeat from this device…'}</span></div>
-              {connectedDevice && <div className="hz-card"><div className="hz-card__body"><div className="row g-3" style={{ fontSize: 'var(--hz-text-sm)' }}><div className="col-6"><span className="text-secondary-hz d-block">Device</span>{getDeviceName(connectedDevice)}</div><div className="col-6"><span className="text-secondary-hz d-block">Employee</span>{getDeviceEmployeeName(connectedDevice) || 'Unassigned'}</div><div className="col-6"><span className="text-secondary-hz d-block">Platform</span>{getDeviceOS(connectedDevice)}</div><div className="col-6"><span className="text-secondary-hz d-block">Agent</span>{getDeviceAgentVersion(connectedDevice)}</div></div></div></div>}
+              <div className="hz-enrollment__intro"><h3>{connectedDevice ? 'Device connected' : 'Enrollment link is ready'}</h3><p>{connectedDevice ? 'The computer has securely enrolled and is reporting to Vettri.' : 'Share this private link with the employee or send the setup instructions by email.'}</p></div>
+              <div className="hz-enrollment__token"><div className="hz-enrollment__token-label"><span>Private enrollment link</span><Button type="button" variant="ghost" size="sm" icon={Copy} onClick={() => copyEnrollmentLink(currentEnrollment)}>Copy link</Button></div><div className="hz-enrollment__token-value">{currentEnrollment?.enrollmentUrl || 'Link unavailable'}</div></div>
+              <div className="d-flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" icon={Mail} loading={sendEmail.isPending} onClick={() => sendEmail.mutate(enrollment.id)}>{emailSent ? 'Instructions sent' : 'Email employee'}</Button>
+                {currentEnrollment?.enrollmentUrl && <a className="btn btn-outline-primary d-inline-flex align-items-center gap-2" href={currentEnrollment.enrollmentUrl} target="_blank" rel="noreferrer"><Link2 size={16} /> Open enrollment page</a>}
+                {currentEnrollment?.status === 'PENDING' && <Button type="button" variant="ghost" icon={X} loading={revoke.isPending} onClick={() => revoke.mutate(enrollment.id)}>Revoke link</Button>}
+              </div>
+              {sendEmail.isError && <ErrorBanner>{sendEmail.error?.response?.data?.message || 'Could not send enrollment instructions.'}</ErrorBanner>}
+              {revoke.isError && <ErrorBanner>{revoke.error?.response?.data?.message || 'Could not revoke this enrollment.'}</ErrorBanner>}
+              {!connectedDevice && currentEnrollment?.status === 'PENDING' && <div className="hz-enrollment__signal"><span><span className="spinner-border spinner-border-sm" aria-hidden="true" /></span><span>Waiting for the employee to install and run the Vettri Agent…</span></div>}
+              {connectedDevice && <div className="hz-card"><div className="hz-card__body"><div className="row g-3" style={{ fontSize: 'var(--hz-text-sm)' }}><div className="col-6"><span className="text-secondary-hz d-block">Device</span>{connectedDevice.deviceName}</div><div className="col-6"><span className="text-secondary-hz d-block">Employee</span>{currentEnrollment.employeeName}</div><div className="col-6"><span className="text-secondary-hz d-block">Platform</span>{connectedDevice.operatingSystem}</div><div className="col-6"><span className="text-secondary-hz d-block">Agent</span>{connectedDevice.agentVersion}</div></div></div></div>}
             </>
           )}
         </div>
