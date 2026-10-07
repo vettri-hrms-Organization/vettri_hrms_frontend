@@ -50,7 +50,7 @@ export const monitoringApi = {
 
   deviceEnrollmentStatus: (token) =>
     axiosClient
-      .get(`/api/device-enrollments/${encodeURIComponent(token)}`)
+      .get(`/api/device-enrollments/${encodeURIComponent(token)}`, { timeout: 15000 })
       .then((res) => res.data),
 
   deviceEnrollmentInstallerUrl: (token) =>
