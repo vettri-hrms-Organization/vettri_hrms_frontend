@@ -50,7 +50,7 @@ export const monitoringApi = {
 
   deviceEnrollmentStatus: (token) =>
     axiosClient
-      .get(`/api/device-enrollments/${encodeURIComponent(token)}`, { headers: { 'Cache-Control': 'no-store' } })
+      .get(`/api/device-enrollments/${encodeURIComponent(token)}`)
       .then((res) => res.data),
 
   deviceEnrollmentInstallerUrl: (token) =>
