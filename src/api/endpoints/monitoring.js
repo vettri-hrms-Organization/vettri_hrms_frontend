@@ -18,6 +18,16 @@ export const monitoringApi = {
       .get('/api/monitoring/devices')
       .then((res) => res.data),
 
+  deviceEmployeeOptions: () =>
+    axiosClient
+      .get('/api/monitoring/devices/employee-options')
+      .then((res) => res.data),
+
+  sessionEmployeeOptions: () =>
+    axiosClient
+      .get('/api/monitoring/sessions/employee-options')
+      .then((res) => res.data),
+
   enrollDevice: (payload) =>
     axiosClient
       .post('/api/monitoring/devices', payload)

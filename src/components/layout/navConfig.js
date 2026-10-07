@@ -50,24 +50,24 @@ export const NAV_SECTIONS = [
     id: 'employee-home',
     label: 'Home',
     description: 'Your Vettri HRMS workspace at a glance',
-    role: 'EMPLOYEE',
+    permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
-    items: [{ to: '/dashboard', icon: LayoutDashboard, label: 'Home', end: true }],
+    items: [{ to: '/dashboard', icon: LayoutDashboard, label: 'Home', end: true, permission: 'SELF_PROFILE_VIEW' }],
   },
   {
     id: 'employee-me',
     label: 'Me',
     description: 'Your profile, time, pay, and employee services',
-    role: 'EMPLOYEE',
+    permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
     items: [
-      { to: '/my-profile', icon: UserRound, label: 'My Profile', end: true },
-      { to: '/my-profile?tab=job', icon: Briefcase, label: 'My Job' },
-      { to: '/my-attendance', icon: Clock, label: 'My Attendance' },
-      { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave' },
-      { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents' },
+      { to: '/my-profile', icon: UserRound, label: 'My Profile', end: true, permission: 'SELF_PROFILE_VIEW' },
+      { to: '/my-profile?tab=job', icon: Briefcase, label: 'My Job', permission: 'SELF_PROFILE_VIEW' },
+      { to: '/my-attendance', icon: Clock, label: 'My Attendance', permission: 'SELF_ATTENDANCE_VIEW' },
+      { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave', permission: 'SELF_LEAVE_VIEW' },
+      { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents', permission: 'SELF_DOCUMENT_VIEW' },
       { to: '/my-interviews', icon: CalendarClock, label: 'My Interviews' },
     ],
   },
@@ -75,7 +75,7 @@ export const NAV_SECTIONS = [
     id: 'employee-inbox',
     label: 'Notifications',
     description: 'Updates and actions related to your account',
-    role: 'EMPLOYEE',
+    permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
     items: [
@@ -86,7 +86,6 @@ export const NAV_SECTIONS = [
     id: 'employee-team',
     label: 'My Team',
     description: 'Leave and team workflows assigned to you',
-    role: 'EMPLOYEE',
     permission: 'LEAVE_APPROVE',
     collapsible: true,
     badge: null,
@@ -96,7 +95,7 @@ export const NAV_SECTIONS = [
     id: 'employee-finances',
     label: 'My Finances',
     description: 'Your salary and payroll information',
-    role: 'EMPLOYEE',
+    permission: 'SELF_PAYSLIP_VIEW',
     collapsible: true,
     badge: null,
     items: [{ to: '/my-payslip', icon: Wallet, label: 'My Pay' }],
@@ -105,7 +104,6 @@ export const NAV_SECTIONS = [
     id: 'employee-performance',
     label: 'Performance',
     description: 'Your goals and performance reviews',
-    role: 'EMPLOYEE',
     permission: 'PERFORMANCE_VIEW',
     collapsible: true,
     badge: null,
@@ -115,7 +113,7 @@ export const NAV_SECTIONS = [
     id: 'employee-apps',
     label: 'Apps',
     description: 'Vettri HRMS services and support',
-    role: 'EMPLOYEE',
+    permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
     items: [{ to: '/support', icon: LifeBuoy, label: 'Support' }],
@@ -137,11 +135,11 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/organization/structure', icon: Network, label: 'Organization Structure', permission: 'ORG_VIEW' },
       { to: '/employees/import', icon: FileSpreadsheet, label: 'Import Employees', permission: 'EMPLOYEE_IMPORT' },
-      { to: '/settings/organization', icon: Building2, label: 'Departments', permission: 'ORG_VIEW' },
-      { to: '/settings/organization', icon: Building2, label: 'Designations', permission: 'ORG_VIEW' },
-      { to: '/settings/organization', icon: Building2, label: 'Teams', permission: 'ORG_VIEW' },
+      { to: '/settings/organization', icon: Building2, label: 'Departments', permission: 'ORG_MANAGE' },
+      { to: '/settings/organization', icon: Building2, label: 'Designations', permission: 'ORG_MANAGE' },
+      { to: '/settings/organization', icon: Building2, label: 'Teams', permission: 'ORG_MANAGE' },
       { to: '/settings/users', icon: ShieldCheck, label: 'Users & Roles', permission: 'USER_VIEW' },
-      { to: '/settings/organization', icon: Building2, label: 'Organization Settings', permission: 'ORG_VIEW' },
+      { to: '/settings/organization', icon: Building2, label: 'Organization Settings', permission: 'ORG_MANAGE' },
     ],
   },
   {
@@ -152,7 +150,6 @@ export const NAV_SECTIONS = [
     badge: null,
     items: [
       { to: '/attendance', icon: Clock, label: 'Attendance', permission: 'ATTENDANCE_VIEW' },
-      { to: '/attendance/devices', icon: Radio, label: 'Devices', permission: 'DEVICE_MANAGE' },
       { to: '/leave', icon: CalendarDays, label: 'Leave Management', permission: 'LEAVE_VIEW' },
     ],
   },
@@ -190,8 +187,9 @@ export const NAV_SECTIONS = [
     permission: 'IT_MANAGEMENT_ACCESS',
     badge: null,
     items: [
-      { to: '/monitoring', icon: MonitorSmartphone, label: 'Live Activity', end: true },
-      { to: '/monitoring/devices', icon: MonitorSmartphone, label: 'Devices' },
+      { to: '/monitoring', icon: MonitorSmartphone, label: 'Live Activity', end: true, permission: 'MONITORING_VIEW' },
+      { to: '/monitoring/devices', icon: MonitorSmartphone, label: 'Devices', permission: 'MONITORING_VIEW' },
+      { to: '/attendance/devices', icon: Radio, label: 'Biometric Devices', permission: 'DEVICE_MANAGE' },
       { to: '/software', icon: PackageOpen, label: 'Software', permission: 'SOFTWARE_VIEW' },
     ],
   },
@@ -262,23 +260,21 @@ export function findNavItemByPath(path) {
  *  check can actually reach. An item/section with no `permission` tag is
  *  assumed open to any authenticated user (matches today's backend reality
  *  for modules that haven't had permission codes carved out yet). */
-export function visibleNavSections(hasPermission, hasRole = () => false, hasEmployeeProfile = false) {
-  const isEmployeeScoped = hasEmployeeProfile || hasRole('EMPLOYEE');
+export function visibleNavSections(hasPermission, hasRole = () => false) {
   const hasAccessRole = (item) =>
     (!item.role && !item.roles) ||
     (item.role && hasRole(item.role)) ||
-    (item.roles && item.roles.some((role) => hasRole(role))) ||
-    (item.role === 'EMPLOYEE' && isEmployeeScoped);
+    (item.roles && item.roles.some((role) => hasRole(role)));
 
   const filtered = NAV_SECTIONS.map((section) => {
-    const sectionAllowed = !section.permission || hasPermission(section.permission);
+    const sectionAllowed = (!section.permission || hasPermission(section.permission))
+      && !(section.id === 'team-monitoring' && hasPermission('IT_MANAGEMENT_ACCESS'));
     const items = sectionAllowed
       ? section.items.filter((item) => (!item.permission || hasPermission(item.permission)) && hasAccessRole(item))
       : [];
     return { ...section, items };
   }).filter((section) => section.items.length > 0 && hasAccessRole(section));
 
-  const hasEmployeeHome = filtered.some((section) => section.id === 'employee-home');
   const employeeSelfIds = new Set(['employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps']);
   const employeeSelfItems = [];
   const peopleItems = hasPermission('EMPLOYEE_VIEW')
@@ -291,7 +287,7 @@ export function visibleNavSections(hasPermission, hasRole = () => false, hasEmpl
     // Notifications already have a dedicated topbar bell and notification center.
     if (section.id === 'employee-inbox') continue;
     // Home and Dashboard are the same destination; keep one sidebar entry.
-    if (section.id === 'root' && hasEmployeeHome) continue;
+    if (section.id === 'root' && filtered.some((item) => item.id === 'employee-home')) continue;
 
     if (employeeSelfIds.has(section.id)) {
       employeeSelfItems.push(...section.items);

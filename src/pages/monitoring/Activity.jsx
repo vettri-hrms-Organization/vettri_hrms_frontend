@@ -20,8 +20,6 @@ import {
   getSessionDurationSeconds,
 } from '../../api/endpoints/monitoring';
 
-import { employeesApi } from '../../api/endpoints/employees';
-
 import {
   formatDateTimeIST,
   formatDurationShort,
@@ -95,11 +93,11 @@ export default function Activity() {
     data: employees,
   } = useQuery({
     queryKey: [
-      'employees',
+      'monitoring-session-employee-options',
     ],
 
     queryFn: () =>
-      employeesApi.list(),
+      monitoringApi.sessionEmployeeOptions(),
   });
 
 

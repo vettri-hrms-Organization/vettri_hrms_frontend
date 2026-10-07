@@ -16,8 +16,8 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const sections = useMemo(
-    () => visibleNavSections(hasPermission, hasRole, !!user?.employeeId),
-    [hasPermission, hasRole, user?.employeeId]
+    () => visibleNavSections(hasPermission, hasRole),
+    [hasPermission, hasRole]
   );
 
   useEffect(() => {

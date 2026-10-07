@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Check, Copy, Download, Eye, Monitor, Plus, ShieldCheck, Search } from 'lucide-react';
-import { employeesApi } from '../../api/endpoints/employees';
+import { useAuth } from '../../hooks/useAuth';
 import {
   monitoringApi,
   getDeviceId,
@@ -39,9 +39,11 @@ export default function Devices() {
   const [employeeId, setEmployeeId] = useState('');
   const [enrollment, setEnrollment] = useState(null);
   const queryClient = useQueryClient();
+  const { hasPermission } = useAuth();
+  const canManageDevices = hasPermission('MONITORING_MANAGE');
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['monitoring-devices'], queryFn: monitoringApi.devices, refetchInterval: 30_000 });
-  const employees = useQuery({ queryKey: ['employees'], queryFn: employeesApi.list });
+  const employees = useQuery({ queryKey: ['monitoring-device-employee-options'], queryFn: monitoringApi.deviceEmployeeOptions, enabled: connectOpen && canManageDevices });
   const enrollmentDevices = useQuery({ queryKey: ['monitoring-device-enrollment'], queryFn: monitoringApi.devices, enabled: connectOpen && Boolean(enrollment), refetchInterval: 5_000 });
   const enroll = useMutation({
     mutationFn: () => monitoringApi.enrollDevice({ deviceName: deviceName.trim(), employeeId: employeeId ? Number(employeeId) : null }),
@@ -126,7 +128,7 @@ export default function Devices() {
 
   return (
     <div className="d-flex flex-column gap-4">
-      <PageHeader eyebrow="Monitoring" title="Monitored Devices" description="Every device enrolled with the Windows Agent" actions={<Button icon={Plus} onClick={openConnect}>Connect Device</Button>} />
+      <PageHeader eyebrow="Monitoring" title="Monitored Devices" description="Every device enrolled with the Windows Agent" actions={canManageDevices && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>} />
 
       <FilterBar>
         <div className="position-relative" style={{ maxWidth: 360, width: '100%' }}>
@@ -164,7 +166,7 @@ export default function Devices() {
               ? 'Try a different search term or status filter.'
               : 'Connect a Windows computer to start monitoring employee activity.'
           }
-          emptyAction={!search && statusFilter === 'all' && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>}
+          emptyAction={canManageDevices && !search && statusFilter === 'all' && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>}
         />
       </Card>
 
@@ -180,6 +182,7 @@ export default function Devices() {
               <div className="hz-enrollment__intro"><h3>Set up a trusted endpoint</h3><p>Name the device and optionally link it to an employee before issuing its one-time enrollment token.</p></div>
               <div className="hz-enrollment__download"><div><strong>Vettri Windows Agent</strong><span>Install this lightweight agent on the computer first.</span></div>{AGENT_DOWNLOAD_URL ? <a className="btn btn-outline-primary d-inline-flex align-items-center gap-2" href={AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer"><Download size={16} /> Download agent</a> : <Button type="button" variant="secondary" icon={Download} disabled>Installer unavailable</Button>}</div>
               <div className="hz-enrollment__fields"><label className="hz-form-label">Device name<input className="form-control" value={deviceName} onChange={(event) => setDeviceName(event.target.value)} placeholder="e.g. Priya's Windows PC" required maxLength={150} /></label><label className="hz-form-label">Assigned employee<select className="form-select" value={employeeId} onChange={(event) => setEmployeeId(event.target.value)}><option value="">Leave unassigned</option>{(employees.data || []).map((employee) => <option key={employee.id} value={employee.id}>{employee.fullName || `${employee.firstName || ''} ${employee.lastName || ''}`.trim()}</option>)}</select></label></div>
+              {employees.isError && <ErrorBanner>{employees.error?.response?.data?.message || 'Could not load employees for device assignment.'}</ErrorBanner>}
               {enroll.isError && <ErrorBanner>{enroll.error?.response?.data?.message || 'Could not create the enrollment token.'}</ErrorBanner>}
             </form>
           ) : (
