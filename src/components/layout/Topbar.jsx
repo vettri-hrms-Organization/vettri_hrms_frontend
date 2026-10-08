@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
 import { adminApi } from '../../api/endpoints/admin';
@@ -10,6 +10,7 @@ import Avatar from '../ui/Avatar';
 import { NAV_INDEX } from './navConfig';
 import { useTheme } from '../../contexts/ThemeContext';
 import CommandCenter from './CommandCenter';
+import AskVettriPanel from './AskVettriPanel';
 
 export default function Topbar({ onOpenMobileNav }) {
   const { user, logout, hasPermission, hasRole, selectedCompanyId, setSelectedCompanyId } = useAuth();
@@ -21,6 +22,8 @@ export default function Topbar({ onOpenMobileNav }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [commandCenterOpen, setCommandCenterOpen] = useState(false);
+  const [askVettriOpen, setAskVettriOpen] = useState(false);
+  const [askVettriQuery, setAskVettriQuery] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
   const currentPage = useMemo(() => {
     const currentQuery = location.search.replace(/^\?/, '');
@@ -63,6 +66,12 @@ export default function Topbar({ onOpenMobileNav }) {
     hasPermission('LEAVE_VIEW') && { label: 'Open leave', description: 'Review requests and balances', icon: CalendarDays, to: '/leave' },
     hasPermission('RECRUITMENT_VIEW') && { label: 'Open recruitment', description: 'Manage jobs and candidates', icon: Briefcase, to: '/recruitment' },
   ].filter(Boolean);
+
+  function openAskVettri(query = '') {
+    setAskVettriQuery(query);
+    setCommandCenterOpen(false);
+    setAskVettriOpen(true);
+  }
 
   // Global command center shortcut.
   useEffect(() => {
@@ -126,7 +135,11 @@ export default function Topbar({ onOpenMobileNav }) {
         <span>Search employees, pages, actions...</span>
         <kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'} K</kbd>
       </button>
-      <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} />
+      <button type="button" className="hz-icon-btn d-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }} onClick={() => openAskVettri()} aria-label="Ask Vettri" title="Ask Vettri">
+        <Sparkles size={18} />
+      </button>
+      <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} onAskVettri={openAskVettri} />
+      <AskVettriPanel open={askVettriOpen} initialQuery={askVettriQuery} onClose={() => setAskVettriOpen(false)} />
 
       <div className="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
         {quickActions.length > 0 && (

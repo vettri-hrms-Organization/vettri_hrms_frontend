@@ -14,6 +14,7 @@ import {
   LoaderCircle,
   Plus,
   Search,
+  Sparkles,
   UserRound,
   Users,
   Wallet,
@@ -51,7 +52,7 @@ function scoreText(text, query) {
   return score;
 }
 
-export default function CommandCenter({ open, onClose }) {
+export default function CommandCenter({ open, onClose, onAskVettri }) {
   const { hasPermission, hasRole } = useAuth();
   const { recentPaths, recordVisit } = useNavMemory();
   const navigate = useNavigate();
@@ -198,7 +199,10 @@ export default function CommandCenter({ open, onClose }) {
           {employeeSearchFailed && <div className="hz-command__notice">Search temporarily unavailable. Pages and actions are still available.</div>}
           {showEmpty && <EmptyState text="No results found. Try searching for an employee, page, or action." />}
         </div>
-        <footer className="hz-command__footer"><span><Keyboard size={14} /> Navigate with arrow keys</span><span><kbd>Enter</kbd> Select</span><span><kbd>Esc</kbd> Close</span></footer>
+        <footer className="hz-command__footer">
+          <span><Keyboard size={14} /> Navigate with arrow keys</span><span><kbd>Enter</kbd> Select</span><span><kbd>Esc</kbd> Close</span>
+          <button type="button" className="hz-command__footer-ask" onClick={() => onAskVettri?.(query.trim())}><Sparkles size={14} /> Ask Vettri</button>
+        </footer>
       </section>
     </div>,
     document.body
