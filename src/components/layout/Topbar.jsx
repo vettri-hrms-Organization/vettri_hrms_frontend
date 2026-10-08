@@ -5,9 +5,9 @@ import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Mo
 import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
 import { adminApi } from '../../api/endpoints/admin';
+import { notificationsApi } from '../../api/endpoints/notifications';
 import Avatar from '../ui/Avatar';
 import { NAV_INDEX } from './navConfig';
-import { selfServiceApi } from '../../api/endpoints/selfService';
 import { useTheme } from '../../contexts/ThemeContext';
 import CommandCenter from './CommandCenter';
 
@@ -37,16 +37,19 @@ export default function Topbar({ onOpenMobileNav }) {
     });
     return fallback?.label || 'Workspace';
   }, [location.pathname, location.search]);
-  const isEmployeeUser = !!user?.employeeId;
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: selfServiceApi.notifications,
-    enabled: !!user && isEmployeeUser,
+  const { data: notificationData = { items: [], unreadCount: 0 } } = useQuery({
+    queryKey: ['notifications', 'inbox', 0, 5],
+    queryFn: () => notificationsApi.inbox({ page: 0, size: 5 }),
+    enabled: !!user,
   });
-  const unreadNotifications = notifications.filter((notification) => !(notification.read_at || notification.readAt)).length;
-  const recentNotifications = notifications.slice(0, 5);
+  const unreadNotifications = notificationData.unreadCount || 0;
+  const recentNotifications = notificationData.items || [];
   const markRead = useMutation({
-    mutationFn: selfServiceApi.markNotificationRead,
+    mutationFn: notificationsApi.markRead,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+  const markAllRead = useMutation({
+    mutationFn: notificationsApi.markAllRead,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
@@ -201,7 +204,15 @@ export default function Topbar({ onOpenMobileNav }) {
             onClick={() => setNotificationsOpen((open) => !open)}
           >
             <Bell size={18} />
-            {unreadNotifications > 0 && <span className="hz-notification-dot" aria-label={`${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}`} />}
+            {unreadNotifications > 0 && (
+              <span
+                className="hz-notification-dot"
+                style={{ width: 'auto', minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8, color: '#fff', fontSize: 9, lineHeight: '12px', textAlign: 'center' }}
+                aria-label={`${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}`}
+              >
+                {unreadNotifications > 99 ? '99+' : unreadNotifications}
+              </span>
+            )}
           </button>
           {notificationsOpen && (
             <>
@@ -211,13 +222,18 @@ export default function Topbar({ onOpenMobileNav }) {
                   <strong>Notifications</strong>
                   {unreadNotifications > 0 && <span className="hz-topbar-notifications__count">{unreadNotifications} new</span>}
                 </div>
+                {unreadNotifications > 0 && (
+                  <button type="button" className="hz-topbar-notifications__viewall" onClick={() => markAllRead.mutate()} disabled={markAllRead.isPending}>
+                    Mark all as read
+                  </button>
+                )}
                 {recentNotifications.length === 0 && (
                   <div className="hz-topbar-notifications__empty">You&apos;re all caught up.</div>
                 )}
                 {recentNotifications.length > 0 && (
                   <div className="hz-topbar-notifications__list">
                     {recentNotifications.map((notification) => {
-                      const isRead = !!(notification.read_at || notification.readAt);
+                      const isRead = !!notification.read_at;
                       return (
                         <button
                           type="button"

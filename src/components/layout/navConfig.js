@@ -336,6 +336,14 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
   };
 
   addSection(filtered.find((section) => section.id === 'employee-home'));
+  addSection({
+    id: 'notifications',
+    label: 'Inbox',
+    description: 'Updates and actions for your account',
+    collapsible: true,
+    badge: null,
+    items: [{ to: '/notifications', icon: Bell, label: 'Notifications' }],
+  });
 
   if (employeeSelfItems.length) {
     addSection({
