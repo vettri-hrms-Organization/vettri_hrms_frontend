@@ -38,6 +38,21 @@ test('natural-language matching sends a personal payslip request to the existing
   assert.equal(results.some((item) => item.route === '/salary'), false);
 });
 
+test('document status suggestion requires both profile and document permissions', () => {
+  const missingProfilePermission = suggestions({
+    permissions: ['SELF_DOCUMENT_VIEW'],
+    query: 'check my document status',
+  });
+  const authorized = suggestions({
+    permissions: ['SELF_PROFILE_VIEW', 'SELF_DOCUMENT_VIEW'],
+    query: 'check my document status',
+  });
+
+  assert.equal(missingProfilePermission.some((item) => item.id === 'personal-documents'), false);
+  assert.equal(authorized[0].id, 'personal-documents');
+  assert.equal(authorized[0].route, '/my-profile?tab=documents');
+});
+
 test('IT device suggestions require the IT management and monitoring permissions', () => {
   const results = suggestions({
     permissions: ['MONITORING_VIEW'],

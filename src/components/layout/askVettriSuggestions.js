@@ -46,6 +46,17 @@ const ASK_VETTRI_INTENTS = [
     icon: CalendarDays,
   },
   {
+    id: 'personal-documents',
+    label: 'Check my documents',
+    description: 'Review your document status and expiry details',
+    route: '/my-profile?tab=documents',
+    permissions: ['SELF_PROFILE_VIEW', 'SELF_DOCUMENT_VIEW'],
+    keywords: ['my documents', 'document status', 'document expiry', 'pending documents'],
+    audiences: ['employee'],
+    defaultPriority: 7,
+    icon: FileText,
+  },
+  {
     id: 'team-leave',
     label: 'Review team leave',
     description: 'Review and approve employee time-off requests',
