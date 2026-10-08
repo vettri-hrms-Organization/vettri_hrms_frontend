@@ -1121,6 +1121,325 @@ body {
   margin-top: 10px !important;
 }
 
+/* Keep the composer anchored to the panel while only the transcript scrolls. */
+.vettri-assistant-panel {
+  width: min(460px, calc(100vw - 24px)) !important;
+  height: min(820px, calc(100dvh - 32px)) !important;
+  min-height: 360px !important;
+  max-height: calc(100dvh - 32px) !important;
+}
+
+.vettri-assistant-panel__header,
+.vettri-assistant-panel__footer {
+  flex: 0 0 auto !important;
+}
+
+.vettri-assistant-panel__body {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.vettri-assistant-panel__conversation-heading {
+  flex: 0 0 auto !important;
+  min-height: 42px !important;
+  padding: 8px 16px !important;
+  border-bottom: 1px solid var(--hz-divider) !important;
+}
+
+.vettri-assistant-panel__messages {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  min-height: 0 !important;
+  padding: 16px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scroll-behavior: smooth !important;
+  scrollbar-gutter: stable !important;
+}
+
+.vettri-assistant-panel__welcome {
+  justify-content: center !important;
+  flex: 1 0 auto !important;
+  min-height: 100% !important;
+  padding: 24px 8px !important;
+}
+
+.vettri-assistant-message {
+  flex: 0 0 auto !important;
+  width: fit-content !important;
+  max-width: 90% !important;
+  padding: 11px 13px !important;
+  border-radius: 15px !important;
+  background: #F7F9FC !important;
+}
+
+.vettri-assistant-message--user {
+  align-self: flex-end !important;
+  margin: 0 !important;
+  border-color: rgba(37,99,235,.12) !important;
+  border-bottom-right-radius: 5px !important;
+  background: #F1F6FF !important;
+}
+
+.vettri-assistant-message--assistant {
+  align-self: flex-start !important;
+  border-bottom-left-radius: 5px !important;
+  background: #FFFFFF !important;
+}
+
+.vettri-assistant-message__identity {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin-bottom: 7px !important;
+}
+
+.vettri-assistant-message__avatar {
+  display: inline-flex !important;
+  flex: 0 0 24px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 8px !important;
+}
+
+.vettri-assistant-message__avatar--user {
+  background: #E7EDF6 !important;
+  color: #53657D !important;
+}
+
+.vettri-assistant-message__avatar--assistant {
+  background: rgba(37,99,235,.09) !important;
+  color: #2563EB !important;
+}
+
+.vettri-assistant-message__identity strong {
+  margin: 0 !important;
+  color: #53657D !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.vettri-assistant-message--assistant .vettri-assistant-message__identity strong {
+  color: #2457B8 !important;
+}
+
+.vettri-assistant-message p {
+  overflow-wrap: anywhere !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+.vettri-assistant-panel__typing {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  align-self: flex-start !important;
+  gap: 9px !important;
+  width: fit-content !important;
+  padding: 9px 12px !important;
+  border: 1px solid var(--hz-border) !important;
+  border-radius: 14px !important;
+  background: #FFFFFF !important;
+  color: var(--hz-text-secondary) !important;
+  font-size: 12px !important;
+}
+
+.vettri-assistant-panel__typing-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.vettri-assistant-panel__typing-copy strong {
+  color: #2457B8 !important;
+  font-size: 11px !important;
+}
+
+.vettri-assistant-panel__typing-indicator {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  margin-left: 2px !important;
+}
+
+.vettri-assistant-panel__typing-indicator i {
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: #6F91D7 !important;
+  animation: vettri-assistant-typing 1s ease-in-out infinite !important;
+}
+
+.vettri-assistant-panel__typing-indicator i:nth-child(2) { animation-delay: 120ms !important; }
+.vettri-assistant-panel__typing-indicator i:nth-child(3) { animation-delay: 240ms !important; }
+
+@keyframes vettri-assistant-typing {
+  0%, 60%, 100% { opacity: .35; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.vettri-assistant-panel__latest {
+  position: absolute !important;
+  right: 16px !important;
+  bottom: 12px !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 8px 11px !important;
+  border: 1px solid rgba(37,99,235,.17) !important;
+  border-radius: 999px !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 3px 12px rgba(15,27,61,.12) !important;
+  color: #2457B8 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.vettri-assistant-panel__error {
+  flex: 0 0 auto !important;
+  margin: 8px 12px !important;
+}
+
+.vettri-assistant-panel__quick-actions {
+  flex: 0 0 auto !important;
+  max-height: none !important;
+  margin: 0 0 10px !important;
+  overflow: visible !important;
+}
+
+.vettri-assistant-panel__footer {
+  padding: 11px 14px max(10px, env(safe-area-inset-bottom)) !important;
+  border-top: 1px solid var(--hz-divider) !important;
+  background: #FFFFFF !important;
+}
+
+.vettri-assistant-panel__composer {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin: 0 !important;
+}
+
+.vettri-assistant-panel__composer-box {
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 9px !important;
+  min-height: 50px !important;
+  padding: 8px 9px 8px 13px !important;
+  border: 1px solid #D9E1EC !important;
+  border-radius: 17px !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 2px 7px rgba(15,27,61,.04) !important;
+  transition: border-color 140ms ease, box-shadow 140ms ease !important;
+}
+
+.vettri-assistant-panel__composer-box:focus-within {
+  border-color: rgba(37,99,235,.55) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1) !important;
+}
+
+.vettri-assistant-panel__composer-icon {
+  flex: 0 0 auto !important;
+  margin: 7px 0 4px !important;
+  color: #5680CD !important;
+}
+
+.vettri-assistant-panel__composer textarea {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-height: 128px !important;
+  min-height: 28px !important;
+  padding: 4px 0 !important;
+  resize: none !important;
+  overflow-y: auto !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: var(--hz-text-primary) !important;
+  font: inherit !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.vettri-assistant-panel__composer textarea:disabled {
+  cursor: wait !important;
+  opacity: .75 !important;
+}
+
+.vettri-assistant-panel__composer-box > button {
+  display: inline-flex !important;
+  flex: 0 0 34px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  transition: background 140ms ease, transform 140ms ease, opacity 140ms ease !important;
+}
+
+.vettri-assistant-panel__composer-box > button:hover:not(:disabled) {
+  background: #1D4ED8 !important;
+  transform: translateY(-1px) !important;
+}
+
+.vettri-assistant-panel__composer-box > button:disabled {
+  cursor: not-allowed !important;
+  opacity: .42 !important;
+}
+
+.vettri-assistant-panel__composer > small {
+  padding-left: 4px !important;
+  color: var(--hz-text-muted) !important;
+  font-size: 10px !important;
+}
+
+.vettri-assistant-panel button:focus-visible {
+  outline: 3px solid rgba(37,99,235,.55) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 600px) {
+  .vettri-assistant-backdrop {
+    align-items: stretch !important;
+    padding: 0 !important;
+  }
+
+  .vettri-assistant-panel {
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: 100dvh !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .vettri-assistant-panel__header {
+    padding-top: max(14px, env(safe-area-inset-top)) !important;
+  }
+
+  .vettri-assistant-panel__messages {
+    padding: 13px !important;
+  }
+
+  .vettri-assistant-message {
+    max-width: 94% !important;
+  }
+}
+
 .hz-command__footer-ask {
   display: inline-flex !important;
   align-items: center !important;
