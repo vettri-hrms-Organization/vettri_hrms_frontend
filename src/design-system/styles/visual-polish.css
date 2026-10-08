@@ -1020,6 +1020,107 @@ body {
   min-width: 0 !important;
 }
 
+.vettri-assistant-panel__welcome {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 30px 12px 20px !important;
+  text-align: center !important;
+}
+
+.vettri-assistant-panel__welcome-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  border: 1px solid rgba(37,99,235,.14) !important;
+  border-radius: 14px !important;
+  background: rgba(37,99,235,.07) !important;
+  color: var(--hz-primary-600) !important;
+}
+
+.vettri-assistant-panel__welcome h3 {
+  margin: 0 !important;
+  color: var(--hz-text-primary) !important;
+  font-size: 18px !important;
+  font-weight: 750 !important;
+}
+
+.vettri-assistant-panel__welcome p {
+  max-width: 300px !important;
+  margin: 0 !important;
+  color: var(--hz-text-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.vettri-assistant-panel__starter-prompts {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  margin-top: 7px !important;
+}
+
+.vettri-assistant-panel__starter-prompts button {
+  padding: 7px 10px !important;
+  border: 1px solid var(--hz-border) !important;
+  border-radius: 999px !important;
+  background: var(--hz-surface-subtle) !important;
+  color: var(--hz-text-secondary) !important;
+  font-size: 11px !important;
+}
+
+.vettri-assistant-panel__starter-prompts button:hover {
+  border-color: rgba(37,99,235,.25) !important;
+  color: var(--hz-primary-600) !important;
+}
+
+.vettri-assistant-panel__starter-prompts button:disabled,
+.vettri-assistant-panel__conversation-heading button:disabled {
+  cursor: not-allowed !important;
+  opacity: .5 !important;
+}
+
+.vettri-assistant-panel__error {
+  justify-content: space-between !important;
+}
+
+.vettri-assistant-panel__error button {
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+}
+
+.vettri-assistant-panel__quick-actions {
+  border-top: 1px solid var(--hz-border) !important;
+  padding-top: 10px !important;
+}
+
+.vettri-assistant-panel__quick-actions summary {
+  display: flex !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  color: var(--hz-text-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.vettri-assistant-panel__quick-actions summary span {
+  color: var(--hz-text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.vettri-assistant-panel__quick-actions .vettri-assistant-panel__list {
+  margin-top: 10px !important;
+}
+
 .hz-command__footer-ask {
   display: inline-flex !important;
   align-items: center !important;

@@ -61,6 +61,11 @@ export const monitoringApi = {
       .get(`/api/monitoring/devices/${id}`)
       .then((res) => res.data),
 
+  updateDeviceAssignment: (id, employeeId) =>
+    axiosClient
+      .put(`/api/monitoring/devices/${id}/assignment`, { employeeId })
+      .then((res) => res.data),
+
   // ============================================================
   // SESSIONS
   // ============================================================

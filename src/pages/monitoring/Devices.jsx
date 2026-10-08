@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Copy, Eye, Link2, Mail, Monitor, Plus, ShieldCheck, Search, X } from 'lucide-react';
+import { Copy, Eye, Link2, Mail, Monitor, Plus, ShieldCheck, Search, UserRoundPen, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   monitoringApi,
@@ -36,12 +36,15 @@ export default function Devices() {
   const [employeeId, setEmployeeId] = useState('');
   const [enrollment, setEnrollment] = useState(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [assignmentDevice, setAssignmentDevice] = useState(null);
+  const [assignmentEmployeeId, setAssignmentEmployeeId] = useState('');
   const queryClient = useQueryClient();
   const { hasPermission } = useAuth();
-  const canManageDevices = hasPermission('MONITORING_MANAGE');
+  const canManageDevices = hasPermission('IT_MANAGEMENT_ACCESS')
+    && hasPermission('MONITORING_MANAGE');
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['monitoring-devices'], queryFn: monitoringApi.devices, refetchInterval: 30_000 });
-  const employees = useQuery({ queryKey: ['monitoring-device-employee-options'], queryFn: monitoringApi.deviceEmployeeOptions, enabled: connectOpen && canManageDevices });
+  const employees = useQuery({ queryKey: ['monitoring-device-employee-options'], queryFn: monitoringApi.deviceEmployeeOptions, enabled: (connectOpen || Boolean(assignmentDevice)) && canManageDevices });
   const enrollmentQuery = useQuery({ queryKey: ['monitoring-device-enrollments'], queryFn: monitoringApi.deviceEnrollments, enabled: canManageDevices, refetchInterval: 10_000 });
   const enroll = useMutation({
     mutationFn: () => monitoringApi.enrollDevice({ employeeId: Number(employeeId), deviceType: 'WINDOWS_PC' }),
@@ -58,6 +61,14 @@ export default function Devices() {
       queryClient.invalidateQueries({ queryKey: ['monitoring-device-enrollments'] });
     },
   });
+  const updateAssignment = useMutation({
+    mutationFn: () => monitoringApi.updateDeviceAssignment(getDeviceId(assignmentDevice), Number(assignmentEmployeeId)),
+    onSuccess: () => {
+      setAssignmentDevice(null);
+      setAssignmentEmployeeId('');
+      queryClient.invalidateQueries({ queryKey: ['monitoring-devices'] });
+    },
+  });
   const currentEnrollment = enrollment
     ? (enrollmentQuery.data || []).find((item) => item.id === enrollment.id) || enrollment
     : null;
@@ -71,6 +82,17 @@ export default function Devices() {
 
   function openConnect() { setEnrollment(null); enroll.reset(); sendEmail.reset(); revoke.reset(); setEmailSent(false); setEmployeeId(''); setConnectOpen(true); }
   function closeConnect() { setConnectOpen(false); setEnrollment(null); enroll.reset(); setEmailSent(false); setEmployeeId(''); }
+  function openAssignment(device) {
+    updateAssignment.reset();
+    setAssignmentEmployeeId(String(device.employeeId || ''));
+    setAssignmentDevice(device);
+  }
+  function closeAssignment() {
+    if (updateAssignment.isPending) return;
+    setAssignmentDevice(null);
+    setAssignmentEmployeeId('');
+    updateAssignment.reset();
+  }
   async function copyEnrollmentLink(item) {
     if (item?.enrollmentUrl) await navigator.clipboard.writeText(item.enrollmentUrl);
   }
@@ -127,14 +149,21 @@ export default function Devices() {
       headerClassName: 'pe-4',
       className: 'pe-4',
       render: (d) => (
-        <Link
-          to={`/monitoring/devices/${getDeviceId(d)}`}
-          className="hz-icon-btn d-inline-flex align-items-center justify-content-center border-0"
-          style={{ width: 32, height: 32 }}
-          aria-label={`View ${getDeviceName(d)}`}
-        >
-          <Eye size={15} />
-        </Link>
+        <div className="d-flex align-items-center gap-2">
+          {canManageDevices && (
+            <Button type="button" variant="ghost" size="sm" icon={UserRoundPen} onClick={() => openAssignment(d)}>
+              {d.employeeId ? 'Change employee' : 'Map device'}
+            </Button>
+          )}
+          <Link
+            to={`/monitoring/devices/${getDeviceId(d)}`}
+            className="hz-icon-btn d-inline-flex align-items-center justify-content-center border-0"
+            style={{ width: 32, height: 32 }}
+            aria-label={`View ${getDeviceName(d)}`}
+          >
+            <Eye size={15} />
+          </Link>
+        </div>
       ),
     },
   ];
@@ -241,6 +270,49 @@ export default function Devices() {
               {connectedDevice && <div className="hz-card"><div className="hz-card__body"><div className="row g-3" style={{ fontSize: 'var(--hz-text-sm)' }}><div className="col-6"><span className="text-secondary-hz d-block">Device</span>{connectedDevice.deviceName}</div><div className="col-6"><span className="text-secondary-hz d-block">Employee</span>{currentEnrollment.employeeName}</div><div className="col-6"><span className="text-secondary-hz d-block">Platform</span>{connectedDevice.operatingSystem}</div><div className="col-6"><span className="text-secondary-hz d-block">Agent</span>{connectedDevice.agentVersion}</div></div></div></div>}
             </>
           )}
+        </div>
+      </Dialog>
+      <Dialog
+        open={Boolean(assignmentDevice)}
+        onClose={closeAssignment}
+        title={assignmentDevice?.employeeId ? 'Change device assignment' : 'Map device to employee'}
+        description={`Choose the employee associated with ${assignmentDevice ? getDeviceName(assignmentDevice) : 'this device'}.`}
+        size="md"
+        footer={(
+          <>
+            <Button variant="secondary" onClick={closeAssignment}>Cancel</Button>
+            <Button
+              type="button"
+              icon={UserRoundPen}
+              loading={updateAssignment.isPending}
+              disabled={!assignmentEmployeeId || String(assignmentDevice?.employeeId || '') === assignmentEmployeeId}
+              onClick={() => updateAssignment.mutate()}
+            >
+              Confirm assignment
+            </Button>
+          </>
+        )}
+      >
+        <div className="hz-enrollment">
+          <p className="mb-1">Review both the device and employee before confirming. This uses Vettri's existing device-assignment operation.</p>
+          <label className="hz-form-label">
+            Employee
+            <select
+              className="form-select"
+              value={assignmentEmployeeId}
+              onChange={(event) => setAssignmentEmployeeId(event.target.value)}
+              disabled={employees.isLoading || updateAssignment.isPending}
+            >
+              <option value="">Choose an employee</option>
+              {(employees.data || []).map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.fullName || `${employee.firstName || ''} ${employee.lastName || ''}`.trim()}
+                </option>
+              ))}
+            </select>
+          </label>
+          {employees.isError && <ErrorBanner>{employees.error?.response?.data?.message || 'Could not load employees for device assignment.'}</ErrorBanner>}
+          {updateAssignment.isError && <ErrorBanner>{updateAssignment.error?.response?.data?.message || 'Could not update this device assignment.'}</ErrorBanner>}
         </div>
       </Dialog>
     </div>
