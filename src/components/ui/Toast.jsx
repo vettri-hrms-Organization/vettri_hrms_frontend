@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { isPublicAuthRoute } from '../../auth/authRoutes';
+import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
 
 /**
  * Minimal in-app toast system - the Salary module is the first feature
@@ -65,7 +66,7 @@ export function ToastProvider({ children }) {
 
   const api = useMemo(
     () => ({
-      success: (message) => push(message, 'success'),
+      success: (message = vettriMicrocopy.success.saved) => push(message, 'success'),
       error: (message) => push(message, 'error'),
       info: (message) => push(message, 'info'),
     }),

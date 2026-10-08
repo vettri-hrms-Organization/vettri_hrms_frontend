@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { assistantApi } from '../../api/endpoints/assistant';
 import { useAuth } from '../../hooks/useAuth';
+import { getAssistantWelcome, getDisplayName, vettriMicrocopy } from '../../utils/vettriMicrocopy';
 import { getAskVettriSuggestions } from './askVettriSuggestions';
 
 export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
@@ -36,11 +37,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
     () => getAskVettriSuggestions({ query, user, hasPermission, hasRole }),
     [query, user, hasPermission, hasRole]
   );
-  const userDisplayName = [
-    user?.fullName,
-    [user?.firstName, user?.lastName].filter(Boolean).join(' '),
-    user?.name,
-  ].find((name) => typeof name === 'string' && name.trim())?.trim() || 'You';
+  const userDisplayName = getDisplayName(user, 'You');
 
   useEffect(() => {
     if (!open) return undefined;
@@ -51,8 +48,12 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
       .then((items) => {
         if (active) setConversations(items);
       })
-      .catch(() => {
-        if (active) setConversationError('Conversation history is unavailable right now.');
+      .catch((error) => {
+        console.error('[Ask Vettri] conversation list failed', {
+          status: error?.response?.status,
+          code: error?.code,
+        });
+        if (active) setConversationError(vettriMicrocopy.assistant.historyUnavailable);
       });
 
     function handleKeyDown(event) {
@@ -117,9 +118,13 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
         action: response.actions?.[0] || null,
       }]);
       setRetryText('');
-    } catch {
+    } catch (error) {
+      console.error('[Ask Vettri] chat request failed', {
+        status: error?.response?.status,
+        code: error?.code,
+      });
       setRetryText(message);
-      setChatError('Vettri Bot is temporarily unavailable. Please try again.');
+      setChatError(vettriMicrocopy.error.assistant);
     } finally {
       sendingRef.current = false;
       setIsSending(false);
@@ -186,8 +191,12 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
           content: message.content,
           action: null,
         })));
-    } catch {
-      setChatError('Conversation history is unavailable right now.');
+    } catch (error) {
+      console.error('[Ask Vettri] conversation load failed', {
+        status: error?.response?.status,
+        code: error?.code,
+      });
+      setChatError(vettriMicrocopy.assistant.historyUnavailable);
     } finally {
       sendingRef.current = false;
       setIsSending(false);
@@ -203,7 +212,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
       <section className="vettri-assistant-panel" aria-label="Ask Vettri" role="dialog" aria-modal="true">
         <div className="vettri-assistant-panel__header">
           <div className="vettri-assistant-panel__title-wrap">
-            <span className="vettri-assistant-panel__badge"><Sparkles size={12} /> Vettri Bot</span>
+            <span className="vettri-assistant-panel__badge"><Sparkles size={12} /> {vettriMicrocopy.assistant.title}</span>
             <h2>Your AI workplace assistant</h2>
           </div>
           <button type="button" aria-label="Close Ask Vettri" className="vettri-assistant-panel__close" onClick={onClose}>
@@ -232,10 +241,10 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
             {messages.length === 0 ? (
               <div className="vettri-assistant-panel__welcome">
                 <span className="vettri-assistant-panel__welcome-icon"><Sparkles size={20} /></span>
-                <h3>Hi there 👋</h3>
-                <p>I'm your Vettri workplace assistant. How can I help you today?</p>
+                <h3>{getAssistantWelcome(user)}</h3>
+                <p>Your AI workplace assistant.</p>
                 <div className="vettri-assistant-panel__starter-prompts" aria-label="Suggested questions">
-                  {['How do I request leave?', 'How can I map devices?', 'Which devices are offline?'].map((prompt) => (
+                  {vettriMicrocopy.assistant.suggestions.map((prompt) => (
                     <button key={prompt} type="button" disabled={isSending} onClick={() => void sendMessage(prompt)}>
                       {prompt}
                     </button>
@@ -280,7 +289,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
                 </span>
                 <span className="vettri-assistant-panel__typing-copy">
                   <strong>Ask Vettri</strong>
-                  <span>Thinking<span className="vettri-assistant-panel__typing-dots" aria-hidden="true">...</span></span>
+                  <span>{vettriMicrocopy.loading.assistant}</span>
                 </span>
                 <span className="vettri-assistant-panel__typing-indicator" aria-hidden="true"><i /><i /><i /></span>
               </div>

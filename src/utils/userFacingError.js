@@ -1,3 +1,5 @@
+import { vettriMicrocopy } from './vettriMicrocopy.js';
+
 const AUTH_PATHS = [
   '/api/auth/login',
   '/api/auth/register',
@@ -19,7 +21,19 @@ function rawMessage(error) {
 }
 
 function isBusinessSafe(message) {
-  return /invitation|employee.*already exists|already registered|subscription is inactive|invoice.*not found|account has been|account is already|email.*verified|plan selection|payment.*unavailable|billing cycle|employee count|permission|access|super admin|company admin|cannot assign|not authorized|role assignment/i.test(message);
+  return isSafeUserMessage(message)
+    && /invitation|employee.*already exists|already registered|subscription is inactive|invoice.*not found|account has been|account is already|email.*verified|plan selection|payment.*unavailable|billing cycle|employee count|permission|access|super admin|company admin|cannot assign|not authorized|role assignment/i.test(message);
+}
+
+function containsTechnicalDetail(message) {
+  return /(?:exception|stack trace|traceback|sql\b|select\s+.+\s+from|database|postgres(?:ql)?|aws\b|s3\b|axios|http\s?\d{3}|\b[1-5]\d{2}\s+(?:bad gateway|internal server error|service unavailable)\b|java\.|org\.spring|internal server|connection refused|econn(?:refused|reset)|(?:^|\n)\s*at\s+[\w.$]+|[A-Z]:\\|(?:^|\s)\/(?:var|home|usr|etc|opt|app|tmp|srv)\/\S+)/i.test(message);
+}
+
+function isSafeUserMessage(message) {
+  return Boolean(message)
+    && message.length <= 240
+    && !/[{}<>]/.test(message)
+    && !containsTechnicalDetail(message);
 }
 
 export function userFacingError(error) {
@@ -27,7 +41,7 @@ export function userFacingError(error) {
   const message = rawMessage(error);
 
   if (!error?.response || error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
-    return 'Connection Problem: We could not connect to Vettri right now. Please check your internet connection and try again.';
+    return vettriMicrocopy.error.network;
   }
 
   if (status === 401) {
@@ -35,39 +49,37 @@ export function userFacingError(error) {
       return 'Invalid email, employee ID, or password. Please try again.';
     }
     return AUTH_PATHS.includes(requestPath(error))
-      ? (message || 'Authentication could not be completed. Please try again.')
-      : 'Session Expired: Your session has expired. Please sign in again to continue.';
+      ? (isSafeUserMessage(message) ? message : vettriMicrocopy.error.authentication)
+      : vettriMicrocopy.error.sessionExpired;
   }
 
   if (status === 403) {
-    if (message && isBusinessSafe(message)) return message;
-    return "Access Restricted: You don't have permission to access this page or perform this action. Please contact your HR/Admin if you need access.";
+    return vettriMicrocopy.permission.generic;
   }
 
   if (status === 404) {
-    return "Not Found: We couldn't find the requested information. It may have been removed or you may no longer have access to it.";
+    return vettriMicrocopy.error.notFound;
   }
 
   if (status === 409) {
     if (isBusinessSafe(message)) return message;
-    return 'Already Exists: This information is already registered. Please use a different value.';
+    return vettriMicrocopy.error.conflict;
   }
 
   if (status === 400 || status === 422) {
     if (isBusinessSafe(message)) return message;
-    if (message) return message;
-    return 'Please check the highlighted fields and try again.';
+    return isSafeUserMessage(message) ? message : vettriMicrocopy.error.validation;
   }
 
   if (status === 429) {
-    return 'Too Many Requests: Please wait a moment and try again.';
+    return vettriMicrocopy.error.rateLimit;
   }
 
   if (status >= 500) {
-    return "Something Went Wrong: We couldn't complete your request right now. Please try again in a moment.";
+    return vettriMicrocopy.error.generic;
   }
 
-  return message && isBusinessSafe(message) ? message : 'We could not complete your request. Please try again.';
+  return isBusinessSafe(message) ? message : vettriMicrocopy.error.request;
 }
 
 export function notifyableStatus(error) {

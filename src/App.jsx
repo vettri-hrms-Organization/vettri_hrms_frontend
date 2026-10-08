@@ -43,6 +43,7 @@ import SettingsLeave from './pages/SettingsLeave';
 import SettingsAudit from './pages/SettingsAudit';
 import NotFound from './pages/NotFound';
 import Onboarding from './pages/Onboarding';
+import PageLoader from './components/ui/PageLoader';
 import SupportInfo from './pages/SupportInfo';
 import SettingsPreferences from './pages/SettingsPreferences';
 import Welcome from './pages/Welcome';
@@ -58,7 +59,7 @@ const JobApply = lazy(() => import('./pages/careers/JobApply'));
 
 export default function App() {
   return (
-    <Suspense fallback={<div className="p-4 text-secondary-hz">Loading...</div>}><Routes>
+    <Suspense fallback={<PageLoader />}><Routes>
       <Route path="/" element={<RootRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -129,7 +130,7 @@ function RootRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="p-4 text-secondary-hz">Loading...</div>;
+    return <PageLoader />;
   }
 
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;

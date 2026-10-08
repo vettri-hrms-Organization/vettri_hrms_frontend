@@ -1,7 +1,12 @@
 import { AlertTriangle } from 'lucide-react';
 import Button from './Button';
+import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
 
-export default function ErrorState({ title = 'Something went wrong', description, onRetry }) {
+export default function ErrorState({
+  title = vettriMicrocopy.error.genericTitle,
+  description = vettriMicrocopy.error.generic,
+  onRetry,
+}) {
   return (
     <div className="hz-state hz-state--error" role="alert">
       <div className="hz-state__icon-wrap">

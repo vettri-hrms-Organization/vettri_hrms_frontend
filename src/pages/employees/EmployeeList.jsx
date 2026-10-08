@@ -22,6 +22,7 @@ import FilterBar from '../../components/ui/FilterBar';
 import SearchField from '../../components/ui/SearchField';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
+import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
 
 const COLUMNS = [
   {
@@ -359,16 +360,8 @@ export default function EmployeeList() {
           isLoading={isLoading}
           isError={isError}
           onRetry={refetch}
-          emptyTitle={
-            search
-              ? 'No matches'
-              : 'No employees yet'
-          }
-          emptyDescription={
-            search
-              ? `Nothing matches "${search}"`
-              : 'Onboard your first employee to populate the directory.'
-          }
+          emptyTitle={search ? vettriMicrocopy.empty.employeesSearchTitle : vettriMicrocopy.empty.employeesTitle}
+          emptyDescription={search ? vettriMicrocopy.empty.employeesSearchDescription : vettriMicrocopy.empty.employeesDescription}
         />
 
         {!isLoading &&

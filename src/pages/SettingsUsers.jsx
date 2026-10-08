@@ -10,6 +10,7 @@ import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import Dialog from '../components/ui/Dialog';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { userFacingError } from '../utils/userFacingError.js';
 import FormField from '../components/ui/FormField';
 import Tabs from '../components/ui/Tabs';
 import { SkeletonText } from '../components/ui/Skeleton';
@@ -58,15 +59,10 @@ function scopesForSave(selected, scopes) {
 
 function roleOperationError(error) {
   const status = error?.response?.status;
-  const backendMessage = error?.apiMessage;
+  const safeMessage = error?.userMessage || userFacingError(error);
 
-  if (status === 400) return backendMessage || 'The role request was invalid. Please review the selected roles and try again.';
-  if (status === 401) return error.userMessage || 'Your session has expired. Please sign in again to continue.';
   if (status === 403) return "You don't have permission to manage this user's roles.";
-  if (status === 404) return 'User not found.';
-  if (status === 409) return backendMessage || 'The role update conflicts with the current user state.';
-  if (status >= 500) return 'Something went wrong while updating roles. Please try again.';
-  return backendMessage || error.userMessage || 'Could not update roles.';
+  return safeMessage;
 }
 
 export default function SettingsUsers() {

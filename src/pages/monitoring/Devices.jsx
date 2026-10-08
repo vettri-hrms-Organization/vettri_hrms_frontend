@@ -22,6 +22,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import FilterBar from '../../components/ui/FilterBar';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'All' },
@@ -219,12 +220,8 @@ export default function Devices() {
           isError={isError}
           onRetry={refetch}
           emptyIcon={Monitor}
-          emptyTitle={search || statusFilter !== 'all' ? 'No matching devices' : 'No devices connected yet'}
-          emptyDescription={
-            search || statusFilter !== 'all'
-              ? 'Try a different search term or status filter.'
-              : 'Connect a Windows computer to start monitoring employee activity.'
-          }
+          emptyTitle={search || statusFilter !== 'all' ? vettriMicrocopy.empty.devicesSearchTitle : vettriMicrocopy.empty.devicesTitle}
+          emptyDescription={search || statusFilter !== 'all' ? vettriMicrocopy.empty.devicesSearchDescription : vettriMicrocopy.empty.devicesDescription}
           emptyAction={canManageDevices && !search && statusFilter === 'all' && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>}
         />
       </Card>

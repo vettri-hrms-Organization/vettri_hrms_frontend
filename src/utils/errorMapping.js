@@ -1,3 +1,5 @@
+import { vettriMicrocopy } from './vettriMicrocopy.js';
+
 /**
  * mapLoginError
  * Converts backend API errors into user-friendly messages
@@ -7,7 +9,7 @@
 export function mapLoginError(error, step = 'login') {
   // Handle network errors
   if (error.message === 'Network Error' || !error.response) {
-    return 'Unable to connect. Please check your internet connection and try again.';
+    return vettriMicrocopy.error.network;
   }
 
   const status = error.response?.status;
@@ -56,7 +58,7 @@ export function mapLoginError(error, step = 'login') {
     if (message.includes('permission')) {
       return 'Your account does not have permission to access VETTRI HRMS.';
     }
-    return 'Access denied. Contact your administrator.';
+    return vettriMicrocopy.permission.generic;
   }
 
   // 429 - Too many attempts
@@ -66,11 +68,11 @@ export function mapLoginError(error, step = 'login') {
 
   // 500+ - Server errors
   if (status >= 500) {
-    return 'The service is temporarily unavailable. Please try again in a moment.';
+    return vettriMicrocopy.error.generic;
   }
 
   // Fallback
-  return 'Unable to sign in. Please try again.';
+  return vettriMicrocopy.error.request;
 }
 
 /**
@@ -78,6 +80,10 @@ export function mapLoginError(error, step = 'login') {
  * Specific error handling for the identifier/username step
  */
 export function mapIdentifierError(error) {
+  if (!error?.response || error?.message === 'Network Error') {
+    return vettriMicrocopy.error.network;
+  }
+
   const status = error.response?.status;
   const message = error.response?.data?.message || '';
 
@@ -94,10 +100,10 @@ export function mapIdentifierError(error) {
   }
 
   if (status >= 500) {
-    return 'Service temporarily unavailable. Please try again.';
+    return vettriMicrocopy.error.generic;
   }
 
-  return 'Unable to proceed. Please try again.';
+  return vettriMicrocopy.error.request;
 }
 
 /**
@@ -105,6 +111,10 @@ export function mapIdentifierError(error) {
  * Specific error handling for the password step
  */
 export function mapPasswordError(error) {
+  if (!error?.response || error?.message === 'Network Error') {
+    return vettriMicrocopy.error.network;
+  }
+
   const status = error.response?.status;
   const message = error.response?.data?.message || '';
 
@@ -119,7 +129,7 @@ export function mapPasswordError(error) {
   }
 
   if (status === 403) {
-    return 'Your account does not have access to this workspace.';
+    return vettriMicrocopy.permission.generic;
   }
 
   if (status === 429) {
@@ -127,8 +137,8 @@ export function mapPasswordError(error) {
   }
 
   if (status >= 500) {
-    return 'Unable to sign in. Please try again.';
+    return vettriMicrocopy.error.generic;
   }
 
-  return 'An error occurred. Please try again.';
+  return vettriMicrocopy.error.request;
 }

@@ -13,6 +13,7 @@ import Avatar from '../components/ui/Avatar';
 import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
+import { getDisplayName, getWelcomeGreeting } from '../utils/vettriMicrocopy';
 import { EmployeeMetric, AttendanceWidget, LeaveWidget, FinanceWidget } from './dashboard/components/EmployeeWidgets';
 
 async function safeAuthorizedQuery(request, fallbackValue = null) {
@@ -30,7 +31,7 @@ export default function Dashboard() {
   const { user, hasPermission, hasRole, hasAnyRole } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const firstName = user?.fullName?.split(' ')[0];
+  const firstName = getDisplayName(user).split(' ')[0] || '';
 
   const isAdminDashboardUser = hasAnyRole(['SUPER_ADMIN', 'HR_ADMIN', 'COMPANY_ADMIN', 'MANAGER'])
     || hasPermission('EMPLOYEE_VIEW')
@@ -136,7 +137,7 @@ export default function Dashboard() {
 
   const now = new Date();
   const today = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
+  const greeting = getWelcomeGreeting(user, now);
 
   if (!isAdminDashboardUser && (user?.employeeId || hasRole('EMPLOYEE'))) {
     return <EmployeeDashboard employeeId={user?.employeeId} firstName={firstName} greeting={greeting} today={today} />;
@@ -170,7 +171,7 @@ export default function Dashboard() {
       <header className="hz-dashboard__hero">
         <div className="hz-dashboard__hero-copy">
           <p className="hz-dashboard__eyebrow">{today}</p>
-          <h1>{greeting}, {firstName || 'there'}</h1>
+          <h1>{greeting}</h1>
           <p>Here&apos;s what&apos;s happening across your workspace today.</p>
         </div>
         <div className="hz-dashboard__hero-meta">
@@ -447,7 +448,7 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
       <header className="hz-dashboard__hero">
         <div className="hz-dashboard__hero-copy">
           <p className="hz-dashboard__eyebrow">{today}</p>
-          <h1>{greeting}, {firstName || 'there'}</h1>
+          <h1>{greeting}</h1>
           <p>Here&apos;s what&apos;s happening across your workspace today.</p>
         </div>
         <div className="hz-dashboard__hero-meta">

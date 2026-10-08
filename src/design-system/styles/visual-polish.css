@@ -1440,6 +1440,16 @@ body {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .vettri-assistant-panel__messages {
+    scroll-behavior: auto !important;
+  }
+
+  .vettri-assistant-panel__typing-indicator i {
+    animation: none !important;
+  }
+}
+
 .hz-command__footer-ask {
   display: inline-flex !important;
   align-items: center !important;

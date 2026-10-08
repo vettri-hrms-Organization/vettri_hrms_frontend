@@ -38,6 +38,7 @@ function renderPanel(user = null) {
 describe('AskVettriPanel chat experience', () => {
   beforeEach(() => {
     HTMLElement.prototype.scrollTo = vi.fn();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     mocks.assistantApi.chat.mockReset().mockResolvedValue({
       conversationId: 'conversation-1',
       message: 'Vettri response',
@@ -188,5 +189,9 @@ describe('AskVettriPanel chat experience', () => {
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     await screen.findByText('Recovered');
     expect(mocks.assistantApi.chat).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenCalledWith('[Ask Vettri] chat request failed', {
+      status: undefined,
+      code: undefined,
+    });
   });
 });

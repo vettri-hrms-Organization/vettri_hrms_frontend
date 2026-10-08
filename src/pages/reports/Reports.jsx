@@ -18,6 +18,7 @@ import StatCard from '../../components/ui/StatCard';
 import ChartCard from '../../components/ui/ChartCard';
 import ExportMenu from '../../components/ui/ExportMenu';
 import { toISTDateInputValue } from '../../utils/formatDateTime';
+import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
 
 const TABS = [
   { key: 'employees', label: 'Employee', icon: Users },
@@ -171,7 +172,7 @@ function Bar({ label, value, max, to }) {
 }
 
 function ReportBarChart({ data, color = 'var(--hz-primary-500)' }) {
-  if (!data?.length) return <p className="hz-report-empty">No data available for this view.</p>;
+  if (!data?.length) return <p className="hz-report-empty">{vettriMicrocopy.empty.reports}</p>;
   return (
     <div className="hz-report-chart" aria-label="Report chart">
       <ResponsiveContainer width="100%" height={190}>
