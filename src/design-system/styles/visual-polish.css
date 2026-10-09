@@ -1464,6 +1464,257 @@ body {
   font-weight: 700 !important;
 }
 
+.vettri-assistant-backdrop {
+  align-items: flex-end !important;
+  padding: 20px !important;
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+.vettri-assistant-panel {
+  width: min(460px, calc(100vw - 40px)) !important;
+  height: min(680px, calc(100dvh - 40px)) !important;
+  min-height: min(560px, calc(100dvh - 40px)) !important;
+  max-height: calc(100dvh - 40px) !important;
+  pointer-events: auto !important;
+}
+
+.vettri-assistant-panel__header {
+  gap: 10px !important;
+  padding: 12px 14px !important;
+}
+
+.vettri-assistant-panel__title-wrap {
+  min-width: 0 !important;
+  gap: 5px !important;
+}
+
+.vettri-assistant-panel__title-wrap h2 {
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
+.vettri-assistant-panel__badge {
+  padding: 4px 7px !important;
+  font-size: 9px !important;
+}
+
+.vettri-assistant-panel__header-actions {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.vettri-assistant-panel__header-actions > button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  border: 1px solid var(--hz-border) !important;
+  border-radius: 10px !important;
+  background: var(--hz-surface-subtle) !important;
+  color: var(--hz-text-secondary) !important;
+}
+
+.vettri-assistant-panel__header-actions .vettri-assistant-panel__new-chat {
+  gap: 6px !important;
+  padding: 0 9px !important;
+  color: #2457B8 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.vettri-assistant-panel__body {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.vettri-assistant-panel__messages {
+  align-items: stretch !important;
+  gap: 10px !important;
+  padding: 14px !important;
+}
+
+.vettri-assistant-panel__welcome {
+  justify-content: flex-start !important;
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  padding: 10px 4px 16px !important;
+}
+
+.vettri-assistant-panel__welcome h3 {
+  margin: 9px 0 3px !important;
+  font-size: 18px !important;
+}
+
+.vettri-assistant-panel__welcome > p {
+  margin-bottom: 14px !important;
+  font-size: 12px !important;
+}
+
+.vettri-assistant-panel__starter-prompts {
+  gap: 7px !important;
+}
+
+.vettri-assistant-panel__starter-prompts button {
+  padding: 7px 10px !important;
+  font-size: 11px !important;
+}
+
+.vettri-assistant-panel__quick-actions {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin: 2px 0 4px !important;
+}
+
+.vettri-assistant-panel__quick-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  max-width: 100% !important;
+  padding: 6px 8px !important;
+  border: 1px solid rgba(37,99,235,.14) !important;
+  border-radius: 999px !important;
+  background: rgba(37,99,235,.045) !important;
+  color: #2457B8 !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+}
+
+.vettri-assistant-panel__quick-link > span {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.vettri-assistant-panel__footer {
+  flex: 0 0 auto !important;
+  padding: 10px 12px max(10px, env(safe-area-inset-bottom)) !important;
+}
+
+.vettri-assistant-minimized {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  min-height: 48px !important;
+  padding: 0 17px !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  border-radius: 999px !important;
+  background: #2563EB !important;
+  box-shadow: 0 8px 24px rgba(15,27,61,.24) !important;
+  color: #FFFFFF !important;
+  font: inherit !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  pointer-events: auto !important;
+}
+
+.vettri-assistant-leave-confirmation {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin-top: 11px !important;
+  padding: 12px !important;
+  border: 1px solid rgba(37,99,235,.16) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(145deg, #F8FAFF, #FFFFFF) !important;
+  color: var(--hz-text-secondary) !important;
+  font-size: 11px !important;
+}
+
+.vettri-assistant-leave-confirmation__heading {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  color: #2457B8 !important;
+  font-size: 12px !important;
+}
+
+.vettri-assistant-leave-confirmation__type {
+  margin: 2px 0 0 !important;
+  color: var(--hz-text-primary) !important;
+  font-size: 13px !important;
+}
+
+.vettri-assistant-leave-confirmation__actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin-top: 6px !important;
+}
+
+.vettri-assistant-leave-confirmation__actions button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 34px !important;
+  padding: 0 11px !important;
+  border: 1px solid #2563EB !important;
+  border-radius: 9px !important;
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.vettri-assistant-leave-confirmation__actions button + button {
+  border-color: var(--hz-border) !important;
+  background: #FFFFFF !important;
+  color: var(--hz-text-secondary) !important;
+}
+
+.vettri-assistant-leave-confirmation__actions button:disabled {
+  cursor: not-allowed !important;
+  opacity: .5 !important;
+}
+
+.vettri-assistant-panel__minimize:hover,
+.vettri-assistant-panel__close:hover,
+.vettri-assistant-panel__new-chat:hover {
+  border-color: rgba(37,99,235,.32) !important;
+  background: rgba(37,99,235,.07) !important;
+  color: #1D4ED8 !important;
+}
+
+@media (max-width: 600px) {
+  .vettri-assistant-backdrop {
+    align-items: flex-end !important;
+    padding: 10px !important;
+  }
+
+  .vettri-assistant-panel {
+    width: calc(100vw - 20px) !important;
+    height: calc(100dvh - 20px) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 20px) !important;
+    border: 1px solid rgba(148,163,184,.18) !important;
+    border-radius: 18px !important;
+  }
+
+  .vettri-assistant-panel__header {
+    padding-top: max(12px, env(safe-area-inset-top)) !important;
+  }
+
+  .vettri-assistant-minimized {
+    margin: 0 4px 4px 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vettri-assistant-panel *,
+  .vettri-assistant-minimized {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Account button gets a distinct identity treatment without becoming a card. */
 .vettri-topbar .hz-icon-btn[aria-label="Account menu"] {
   width: auto !important;

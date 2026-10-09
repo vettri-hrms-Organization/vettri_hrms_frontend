@@ -177,6 +177,71 @@ describe('AskVettriPanel chat experience', () => {
     await waitFor(() => expect(transcript.scrollTo).toHaveBeenCalled());
   });
 
+  it('renders a backend leave confirmation card and sends only the explicit confirmation text', async () => {
+    const user = userEvent.setup();
+    mocks.assistantApi.chat
+      .mockResolvedValueOnce({
+        conversationId: 'conversation-1',
+        message: 'I have prepared the request.',
+        actions: [{
+          type: 'LEAVE_CONFIRMATION',
+          label: 'Submit Leave',
+          route: null,
+          data: {
+            leaveType: 'Casual Leave',
+            startDate: '2026-10-09',
+            endDate: '2026-10-09',
+            days: 1,
+            remainingDays: 3,
+            duration: 'Full day',
+          },
+        }],
+      })
+      .mockResolvedValueOnce({
+        conversationId: 'conversation-1',
+        message: 'Your request is pending approval.',
+        actions: [],
+      });
+    renderPanel();
+    await user.type(screen.getByRole('textbox', { name: 'Message Ask Vettri' }), 'Apply leave{Enter}');
+
+    const confirmation = await screen.findByRole('group', { name: 'Confirm leave request' });
+    expect(within(confirmation).getByText('Casual Leave')).toBeTruthy();
+    expect(within(confirmation).getByText(/October 9, 2026/)).toBeTruthy();
+    expect(within(confirmation).getByText(/Available balance: 3 days/)).toBeTruthy();
+    await user.click(within(confirmation).getByRole('button', { name: 'Submit Leave' }));
+
+    await waitFor(() => expect(mocks.assistantApi.chat).toHaveBeenCalledTimes(2));
+    expect(mocks.assistantApi.chat).toHaveBeenLastCalledWith({
+      message: 'Yes, submit it.',
+      conversationId: 'conversation-1',
+    });
+    await screen.findByText('Your request is pending approval.');
+  });
+
+  it('minimizes and restores without losing chat state or reloading conversations', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await waitFor(() => expect(mocks.assistantApi.conversations).toHaveBeenCalledTimes(1));
+    const input = screen.getByRole('textbox', { name: 'Message Ask Vettri' });
+    await user.type(input, 'Earlier message{Enter}');
+    await screen.findByText('Vettri response');
+    await user.type(input, 'Keep this draft');
+    await user.click(screen.getByRole('button', { name: 'Minimize Ask Vettri' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Ask Vettri' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Restore Ask Vettri' }));
+
+    expect(screen.getByRole('dialog', { name: 'Ask Vettri' })).toBeTruthy();
+    expect(screen.getByText('Earlier message')).toBeTruthy();
+    expect(screen.getByText('Vettri response')).toBeTruthy();
+    const restoredInput = screen.getByRole('textbox', { name: 'Message Ask Vettri' });
+    expect(restoredInput.value).toBe('Keep this draft');
+    expect(document.activeElement).toBe(restoredInput);
+    expect(mocks.assistantApi.conversations).toHaveBeenCalledTimes(1);
+    expect(mocks.assistantApi.chat).toHaveBeenCalledTimes(1);
+  });
+
   it('retains the existing request error and retry behavior', async () => {
     const user = userEvent.setup();
     mocks.assistantApi.chat

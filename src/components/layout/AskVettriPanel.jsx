@@ -5,6 +5,7 @@ import {
   ArrowRight,
   ChevronDown,
   LoaderCircle,
+  Minus,
   RotateCcw,
   Send,
   Sparkles,
@@ -16,11 +17,23 @@ import { useAuth } from '../../hooks/useAuth';
 import { getAssistantWelcome, getDisplayName, vettriMicrocopy } from '../../utils/vettriMicrocopy';
 import { getAskVettriSuggestions } from './askVettriSuggestions';
 
+function formatLeaveDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return value || '';
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
   const navigate = useNavigate();
   const { user, hasPermission, hasRole } = useAuth();
   const inputRef = useRef(null);
   const messagesRef = useRef(null);
+  const restoreButtonRef = useRef(null);
   const sendingRef = useRef(false);
   const followLatestRef = useRef(true);
   const [query, setQuery] = useState(initialQuery);
@@ -32,6 +45,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
   const [conversationId, setConversationId] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [conversationError, setConversationError] = useState('');
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const suggestions = useMemo(
     () => getAskVettriSuggestions({ query, user, hasPermission, hasRole }),
@@ -67,7 +81,16 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
   }, [open, initialQuery, onClose]);
 
   useEffect(() => {
-    if (!open || !followLatestRef.current) return undefined;
+    if (!open) setIsMinimized(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (isMinimized) restoreButtonRef.current?.focus();
+    else if (open) inputRef.current?.focus();
+  }, [isMinimized, open]);
+
+  useEffect(() => {
+    if (!open || isMinimized || !followLatestRef.current) return undefined;
     const frame = requestAnimationFrame(() => {
       const container = messagesRef.current;
       if (!container) return;
@@ -75,7 +98,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
       setIsAwayFromLatest(false);
     });
     return () => cancelAnimationFrame(frame);
-  }, [open, messages, isSending, conversationId]);
+  }, [open, isMinimized, messages, isSending, conversationId]);
 
   useEffect(() => {
     const textarea = inputRef.current;
@@ -170,6 +193,14 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
     inputRef.current?.focus();
   }
 
+  function respondToLeaveAction(messageIndex, response) {
+    if (sendingRef.current) return;
+    setMessages((current) => current.map((message, index) => index === messageIndex
+      ? { ...message, action: { ...message.action, resolved: true } }
+      : message));
+    void sendMessage(response);
+  }
+
   async function openConversation(id) {
     if (sendingRef.current) return;
     sendingRef.current = true;
@@ -206,38 +237,64 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
   if (!open) return null;
 
   return createPortal(
-    <div className="vettri-assistant-backdrop" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose();
-    }}>
-      <section className="vettri-assistant-panel" aria-label="Ask Vettri" role="dialog" aria-modal="true">
-        <div className="vettri-assistant-panel__header">
-          <div className="vettri-assistant-panel__title-wrap">
-            <span className="vettri-assistant-panel__badge"><Sparkles size={12} /> {vettriMicrocopy.assistant.title}</span>
-            <h2>Your AI workplace assistant</h2>
-          </div>
-          <button type="button" aria-label="Close Ask Vettri" className="vettri-assistant-panel__close" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="vettri-assistant-panel__body">
-          {messages.length > 0 && (
-            <div className="vettri-assistant-panel__conversation-heading">
-              <strong>Conversation</strong>
-              <button type="button" disabled={isSending} onClick={startNewConversation}>
-                <RotateCcw size={13} /> New chat
+    <div className="vettri-assistant-backdrop">
+      {isMinimized ? (
+        <button
+          ref={restoreButtonRef}
+          type="button"
+          className="vettri-assistant-minimized"
+          aria-label="Restore Ask Vettri"
+          onClick={() => setIsMinimized(false)}
+        >
+          <Sparkles size={18} aria-hidden="true" />
+          <span>Ask Vettri</span>
+        </button>
+      ) : (
+        <section className="vettri-assistant-panel" aria-label="Ask Vettri" role="dialog" aria-modal="false">
+          <div className="vettri-assistant-panel__header">
+            <div className="vettri-assistant-panel__title-wrap">
+              <span className="vettri-assistant-panel__badge"><Sparkles size={12} /> {vettriMicrocopy.assistant.title}</span>
+              <h2>Your AI workplace assistant</h2>
+            </div>
+            <div className="vettri-assistant-panel__header-actions">
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  className="vettri-assistant-panel__new-chat"
+                  aria-label="New chat"
+                  title="New chat"
+                  disabled={isSending}
+                  onClick={startNewConversation}
+                >
+                  <RotateCcw size={14} />
+                  <span>New chat</span>
+                </button>
+              )}
+              <button
+                type="button"
+                aria-label="Minimize Ask Vettri"
+                title="Minimize"
+                className="vettri-assistant-panel__minimize"
+                onClick={() => setIsMinimized(true)}
+              >
+                <Minus size={16} />
+              </button>
+              <button type="button" aria-label="Close Ask Vettri" className="vettri-assistant-panel__close" onClick={onClose}>
+                <X size={16} />
               </button>
             </div>
-          )}
-          <div
-            ref={messagesRef}
-            className="vettri-assistant-panel__messages"
-            onScroll={handleMessagesScroll}
-            role="log"
-            aria-live="polite"
-            aria-relevant="additions text"
-            aria-label="Conversation messages"
-          >
+          </div>
+
+          <div className="vettri-assistant-panel__body">
+            <div
+              ref={messagesRef}
+              className="vettri-assistant-panel__messages"
+              onScroll={handleMessagesScroll}
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions text"
+              aria-label="Conversation messages"
+            >
             {messages.length === 0 ? (
               <div className="vettri-assistant-panel__welcome">
                 <span className="vettri-assistant-panel__welcome-icon"><Sparkles size={20} /></span>
@@ -278,6 +335,37 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
                         {message.action.label || 'Open page'} <ArrowRight size={14} />
                       </button>
                     )}
+                    {message.action?.type === 'LEAVE_CONFIRMATION' && (
+                      <div className="vettri-assistant-leave-confirmation" role="group" aria-label="Confirm leave request">
+                        <div className="vettri-assistant-leave-confirmation__heading">
+                          <span aria-hidden="true">🌴</span>
+                          <strong>Leave request</strong>
+                        </div>
+                        <strong className="vettri-assistant-leave-confirmation__type">{message.action.data?.leaveType}</strong>
+                        <span>{formatLeaveDate(message.action.data?.startDate)}
+                          {message.action.data?.endDate !== message.action.data?.startDate
+                            ? ` to ${formatLeaveDate(message.action.data?.endDate)}` : ''}
+                        </span>
+                        <span>{message.action.data?.duration || 'Full day'} · {message.action.data?.days} {Number(message.action.data?.days) === 1 ? 'day' : 'days'}</span>
+                        <span>Available balance: {message.action.data?.remainingDays} {Number(message.action.data?.remainingDays) === 1 ? 'day' : 'days'}</span>
+                        <div className="vettri-assistant-leave-confirmation__actions">
+                          <button
+                            type="button"
+                            disabled={isSending || message.action.resolved}
+                            onClick={() => respondToLeaveAction(index, 'Yes, submit it.')}
+                          >
+                            Submit Leave
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isSending || message.action.resolved}
+                            onClick={() => respondToLeaveAction(index, 'Cancel')}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </article>
                 ))}
               </>
@@ -300,61 +388,56 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
                 <button type="button" disabled={isSending} onClick={() => void sendMessage(retryText, true)}>Retry</button>
               </div>
             )}
-            {messages.length > 0 && suggestions.length > 0 && (
-              <details className="vettri-assistant-panel__quick-actions">
-                <summary>Optional quick links <span>{suggestions.length} available</span></summary>
-                <div className="vettri-assistant-panel__list" role="listbox" aria-label="Authorized quick links">
+              {messages.length > 0 && suggestions.length > 0 && (
+                <div className="vettri-assistant-panel__quick-actions" role="group" aria-label="Authorized quick links">
                   {suggestions.map((item) => {
                     const Icon = item.icon || Sparkles;
                     return (
                       <button
                         type="button"
                         key={item.id}
-                        className="vettri-assistant-panel__item"
+                        className="vettri-assistant-panel__quick-link"
+                        aria-label={`${item.label}: ${item.description}`}
                         onClick={() => handleNavigate(item.route)}
-                        role="option"
                       >
-                        <span className="vettri-assistant-panel__item-icon"><Icon size={16} /></span>
-                        <span className="vettri-assistant-panel__item-copy">
-                          <strong>{item.label}</strong>
-                          <small>{item.description}</small>
-                        </span>
-                        <ArrowRight size={15} />
+                        <Icon size={14} aria-hidden="true" />
+                        <span>{item.label}</span>
+                        <ArrowRight size={13} aria-hidden="true" />
                       </button>
                     );
                   })}
                 </div>
-              </details>
+              )}
+            </div>
+            {messages.length > 0 && isAwayFromLatest && (
+              <button type="button" className="vettri-assistant-panel__latest" onClick={scrollToLatest}>
+                <ChevronDown size={15} /> Scroll to latest
+              </button>
             )}
           </div>
-          {messages.length > 0 && isAwayFromLatest && (
-            <button type="button" className="vettri-assistant-panel__latest" onClick={scrollToLatest}>
-              <ChevronDown size={15} /> Scroll to latest
-            </button>
-          )}
-        </div>
-        <footer className="vettri-assistant-panel__footer">
-          <form className="vettri-assistant-panel__composer" onSubmit={submitMessage}>
-            <div className="vettri-assistant-panel__composer-box">
-              <Sparkles className="vettri-assistant-panel__composer-icon" size={17} aria-hidden="true" />
-              <textarea
-                ref={inputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={handleComposerKeyDown}
-                disabled={isSending}
-                placeholder="Ask Vettri anything..."
-                aria-label="Message Ask Vettri"
-                rows={1}
-              />
-              <button type="submit" aria-label="Send message" title="Send message" disabled={!query.trim() || isSending}>
-                {isSending ? <LoaderCircle size={17} className="vettri-assistant-spin" /> : <Send size={17} />}
-              </button>
-            </div>
-            <small>Enter to send · Shift+Enter for a new line</small>
-          </form>
-        </footer>
-      </section>
+          <footer className="vettri-assistant-panel__footer">
+            <form className="vettri-assistant-panel__composer" onSubmit={submitMessage}>
+              <div className="vettri-assistant-panel__composer-box">
+                <Sparkles className="vettri-assistant-panel__composer-icon" size={17} aria-hidden="true" />
+                <textarea
+                  ref={inputRef}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={handleComposerKeyDown}
+                  disabled={isSending}
+                  placeholder="Ask Vettri anything..."
+                  aria-label="Message Ask Vettri"
+                  rows={1}
+                />
+                <button type="submit" aria-label="Send message" title="Send message" disabled={!query.trim() || isSending}>
+                  {isSending ? <LoaderCircle size={17} className="vettri-assistant-spin" /> : <Send size={17} />}
+                </button>
+              </div>
+              <small>Enter to send · Shift+Enter for a new line</small>
+            </form>
+          </footer>
+        </section>
+      )}
     </div>,
     document.body
   );
