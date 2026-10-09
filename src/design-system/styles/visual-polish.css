@@ -1673,6 +1673,37 @@ body {
   opacity: .5 !important;
 }
 
+.vettri-assistant-leave-confirmation__editor {
+  display: grid !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+}
+
+.vettri-assistant-leave-confirmation__editor label {
+  display: grid !important;
+  gap: 4px !important;
+  color: var(--hz-text-secondary) !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+
+.vettri-assistant-leave-confirmation__editor input,
+.vettri-assistant-leave-confirmation__editor textarea {
+  width: 100% !important;
+  min-height: 34px !important;
+  padding: 7px 9px !important;
+  border: 1px solid var(--hz-border) !important;
+  border-radius: 8px !important;
+  background: #FFFFFF !important;
+  color: var(--hz-text-primary) !important;
+  font: inherit !important;
+  font-size: 12px !important;
+}
+
+.vettri-assistant-leave-confirmation__editor textarea {
+  resize: vertical !important;
+}
+
 .vettri-assistant-panel__minimize:hover,
 .vettri-assistant-panel__close:hover,
 .vettri-assistant-panel__new-chat:hover {

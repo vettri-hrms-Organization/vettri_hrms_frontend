@@ -219,6 +219,124 @@ describe('AskVettriPanel chat experience', () => {
     await screen.findByText('Your request is pending approval.');
   });
 
+  it('lets an employee edit leave details and asks the backend to prepare a fresh confirmation', async () => {
+    const user = userEvent.setup();
+    const confirmation = (startDate, endDate, reason) => ({
+      type: 'LEAVE_CONFIRMATION',
+      label: 'Submit Leave',
+      route: null,
+      data: {
+        leaveType: 'Casual Leave',
+        startDate,
+        endDate,
+        days: 2,
+        remainingDays: 3,
+        reason,
+      },
+    });
+    mocks.assistantApi.chat
+      .mockResolvedValueOnce({
+        conversationId: 'conversation-1',
+        message: 'Please review the leave request.',
+        actions: [confirmation('2026-10-12', '2026-10-13', 'Personal work')],
+      })
+      .mockResolvedValueOnce({
+        conversationId: 'conversation-1',
+        message: 'I updated the request. Please confirm the new details.',
+        actions: [confirmation('2026-10-14', '2026-10-15', 'Family event')],
+      });
+    renderPanel();
+
+    await user.type(screen.getByRole('textbox', { name: 'Message Ask Vettri' }), 'Apply casual leave{Enter}');
+    const initialCard = await screen.findByRole('group', { name: 'Confirm leave request' });
+    expect(within(initialCard).getByText('Reason: Personal work')).toBeTruthy();
+    await user.click(within(initialCard).getByRole('button', { name: 'Edit' }));
+
+    const editor = within(initialCard).getByRole('form', { name: 'Edit leave request' });
+    await user.clear(within(editor).getByLabelText('Start date'));
+    await user.type(within(editor).getByLabelText('Start date'), '2026-10-14');
+    await user.clear(within(editor).getByLabelText('End date'));
+    await user.type(within(editor).getByLabelText('End date'), '2026-10-15');
+    await user.clear(within(editor).getByLabelText('Reason'));
+    await user.type(within(editor).getByLabelText('Reason'), 'Family event');
+    await user.click(within(editor).getByRole('button', { name: 'Review updated request' }));
+
+    await waitFor(() => expect(mocks.assistantApi.chat).toHaveBeenCalledTimes(2));
+    expect(mocks.assistantApi.chat).toHaveBeenLastCalledWith({
+      message: 'Please update the pending leave request: Casual Leave from 2026-10-14 to 2026-10-15. Reason: Family event.',
+      conversationId: 'conversation-1',
+    });
+    const updatedCard = (await screen.findAllByRole('group', { name: 'Confirm leave request' })).at(-1);
+    expect(within(updatedCard).getByText(/October 14, 2026/)).toBeTruthy();
+    expect(within(updatedCard).getByText('Reason: Family event')).toBeTruthy();
+  });
+
+  it('keeps a leave confirmation available when the chat API fails during submission', async () => {
+    const user = userEvent.setup();
+    mocks.assistantApi.chat
+      .mockResolvedValueOnce({
+        conversationId: 'conversation-1',
+        message: 'Please review the request.',
+        actions: [{
+          type: 'LEAVE_CONFIRMATION',
+          data: {
+            leaveType: 'Casual Leave',
+            startDate: '2026-10-09',
+            endDate: '2026-10-09',
+            days: 1,
+            remainingDays: 3,
+          },
+        }],
+      })
+      .mockRejectedValueOnce(new Error('network unavailable'));
+    renderPanel();
+    await user.type(screen.getByRole('textbox', { name: 'Message Ask Vettri' }), 'Apply casual leave{Enter}');
+
+    const confirmation = await screen.findByRole('group', { name: 'Confirm leave request' });
+    await user.click(within(confirmation).getByRole('button', { name: 'Submit Leave' }));
+
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(within(confirmation).getByRole('button', { name: 'Submit Leave' }).disabled).toBe(false);
+    expect(screen.queryByText('Your request is pending approval.')).toBeNull();
+  });
+
+  it('sends cancellation only after the employee selects the cancel request control', async () => {
+    const user = userEvent.setup();
+    mocks.assistantApi.chat
+      .mockResolvedValueOnce({
+        conversationId: 'conversation-1',
+        message: 'Please review the request.',
+        actions: [{
+          type: 'LEAVE_CONFIRMATION',
+          data: {
+            leaveType: 'Sick Leave',
+            startDate: '2026-10-09',
+            endDate: '2026-10-10',
+            days: 2,
+            remainingDays: 5,
+          },
+        }],
+      })
+      .mockResolvedValueOnce({
+        conversationId: 'conversation-1',
+        message: 'The pending leave request was cancelled.',
+        actions: [],
+      });
+    renderPanel();
+    await user.type(screen.getByRole('textbox', { name: 'Message Ask Vettri' }), 'Apply sick leave{Enter}');
+
+    const confirmation = await screen.findByRole('group', { name: 'Confirm leave request' });
+    await user.click(within(confirmation).getByRole('button', { name: 'Cancel request' }));
+
+    await waitFor(() => expect(mocks.assistantApi.chat).toHaveBeenCalledTimes(2));
+    expect(mocks.assistantApi.chat).toHaveBeenLastCalledWith({
+      message: 'Cancel',
+      conversationId: 'conversation-1',
+    });
+    await screen.findByText('The pending leave request was cancelled.');
+    expect(within(confirmation).getByRole('button', { name: 'Submit Leave' }).disabled).toBe(true);
+  });
+
   it('minimizes and restores without losing chat state or reloading conversations', async () => {
     const user = userEvent.setup();
     renderPanel();

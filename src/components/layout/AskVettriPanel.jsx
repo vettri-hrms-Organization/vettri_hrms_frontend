@@ -46,6 +46,8 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
   const [conversations, setConversations] = useState([]);
   const [conversationError, setConversationError] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
+  const [editingLeaveIndex, setEditingLeaveIndex] = useState(null);
+  const [leaveEditDraft, setLeaveEditDraft] = useState(null);
 
   const suggestions = useMemo(
     () => getAskVettriSuggestions({ query, user, hasPermission, hasRole }),
@@ -141,6 +143,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
         action: response.actions?.[0] || null,
       }]);
       setRetryText('');
+      return response;
     } catch (error) {
       console.error('[Ask Vettri] chat request failed', {
         status: error?.response?.status,
@@ -148,6 +151,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
       });
       setRetryText(message);
       setChatError(vettriMicrocopy.error.assistant);
+      return null;
     } finally {
       sendingRef.current = false;
       setIsSending(false);
@@ -190,15 +194,72 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
     setQuery('');
     setRetryText('');
     setConversationId(null);
+    setEditingLeaveIndex(null);
+    setLeaveEditDraft(null);
     inputRef.current?.focus();
   }
 
-  function respondToLeaveAction(messageIndex, response) {
+  async function respondToLeaveAction(messageIndex, response) {
     if (sendingRef.current) return;
     setMessages((current) => current.map((message, index) => index === messageIndex
-      ? { ...message, action: { ...message.action, resolved: true } }
+      ? {
+          ...message,
+          action: {
+            ...message.action,
+            operation: response === 'Cancel' ? 'cancel' : 'submit',
+            status: 'submitting',
+          },
+        }
       : message));
-    void sendMessage(response);
+    const result = await sendMessage(response);
+    setMessages((current) => current.map((message, index) => index === messageIndex
+      ? {
+          ...message,
+          action: {
+            ...message.action,
+            status: result ? 'resolved' : undefined,
+            operation: result ? message.action.operation : undefined,
+            resolved: Boolean(result),
+          },
+        }
+      : message));
+  }
+
+  function beginLeaveEdit(messageIndex, action) {
+    setEditingLeaveIndex(messageIndex);
+    setLeaveEditDraft({
+      leaveType: action.data?.leaveType || '',
+      startDate: action.data?.startDate || '',
+      endDate: action.data?.endDate || '',
+      reason: action.data?.reason || '',
+    });
+  }
+
+  function cancelLeaveEdit() {
+    setEditingLeaveIndex(null);
+    setLeaveEditDraft(null);
+  }
+
+  async function submitLeaveEdit(event, messageIndex) {
+    event.preventDefault();
+    if (!leaveEditDraft || sendingRef.current) return;
+
+    const reason = leaveEditDraft.reason.trim();
+    const message = `Please update the pending leave request: ${leaveEditDraft.leaveType.trim()} from ${leaveEditDraft.startDate} to ${leaveEditDraft.endDate}.${reason ? ` Reason: ${reason}.` : ''}`;
+    setMessages((current) => current.map((item, index) => index === messageIndex
+      ? { ...item, action: { ...item.action, operation: 'edit', status: 'submitting' } }
+      : item));
+    const result = await sendMessage(message);
+    if (result) {
+      setMessages((current) => current.map((item, index) => index === messageIndex
+        ? { ...item, action: { ...item.action, status: 'resolved', resolved: true } }
+        : item));
+      cancelLeaveEdit();
+    } else {
+      setMessages((current) => current.map((item, index) => index === messageIndex
+        ? { ...item, action: { ...item.action, status: undefined } }
+        : item));
+    }
   }
 
   async function openConversation(id) {
@@ -211,6 +272,8 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
     try {
       const snapshot = await assistantApi.conversation(id);
       setConversationId(snapshot.conversation.id);
+      setEditingLeaveIndex(null);
+      setLeaveEditDraft(null);
       setMessages([...snapshot.messages]
         .sort((left, right) => {
           const leftTime = Date.parse(left.createdAt || '');
@@ -348,22 +411,83 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
                         </span>
                         <span>{message.action.data?.duration || 'Full day'} · {message.action.data?.days} {Number(message.action.data?.days) === 1 ? 'day' : 'days'}</span>
                         <span>Available balance: {message.action.data?.remainingDays} {Number(message.action.data?.remainingDays) === 1 ? 'day' : 'days'}</span>
-                        <div className="vettri-assistant-leave-confirmation__actions">
-                          <button
-                            type="button"
-                            disabled={isSending || message.action.resolved}
-                            onClick={() => respondToLeaveAction(index, 'Yes, submit it.')}
+                        {message.action.data?.reason && <span>Reason: {message.action.data.reason}</span>}
+                        {editingLeaveIndex === index && !message.action.resolved ? (
+                          <form
+                            className="vettri-assistant-leave-confirmation__editor"
+                            aria-label="Edit leave request"
+                            onSubmit={(event) => void submitLeaveEdit(event, index)}
                           >
-                            Submit Leave
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isSending || message.action.resolved}
-                            onClick={() => respondToLeaveAction(index, 'Cancel')}
-                          >
-                            Cancel
-                          </button>
-                        </div>
+                            <label>
+                              Leave type
+                              <input
+                                required
+                                value={leaveEditDraft?.leaveType || ''}
+                                onChange={(event) => setLeaveEditDraft((current) => ({ ...current, leaveType: event.target.value }))}
+                              />
+                            </label>
+                            <label>
+                              Start date
+                              <input
+                                required
+                                type="date"
+                                value={leaveEditDraft?.startDate || ''}
+                                onChange={(event) => setLeaveEditDraft((current) => ({ ...current, startDate: event.target.value }))}
+                              />
+                            </label>
+                            <label>
+                              End date
+                              <input
+                                required
+                                type="date"
+                                value={leaveEditDraft?.endDate || ''}
+                                onChange={(event) => setLeaveEditDraft((current) => ({ ...current, endDate: event.target.value }))}
+                              />
+                            </label>
+                            <label>
+                              Reason
+                              <textarea
+                                value={leaveEditDraft?.reason || ''}
+                                onChange={(event) => setLeaveEditDraft((current) => ({ ...current, reason: event.target.value }))}
+                                rows={2}
+                              />
+                            </label>
+                            <div className="vettri-assistant-leave-confirmation__actions">
+                              <button type="submit" disabled={isSending || message.action.status === 'submitting'}>
+                                                  {message.action.status === 'submitting' ? 'Updating request…' : 'Review updated request'}
+                              </button>
+                              <button type="button" disabled={isSending} onClick={cancelLeaveEdit}>
+                                Keep current request
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="vettri-assistant-leave-confirmation__actions">
+                            <button
+                              type="button"
+                              disabled={isSending || message.action.resolved || message.action.status === 'submitting'}
+                              onClick={() => void respondToLeaveAction(index, 'Yes, submit it.')}
+                            >
+                              {message.action.status === 'submitting'
+                                ? message.action.operation === 'cancel' ? 'Processing…' : 'Submitting…'
+                                : 'Submit Leave'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isSending || message.action.resolved || message.action.status === 'submitting'}
+                              onClick={() => beginLeaveEdit(index, message.action)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isSending || message.action.resolved || message.action.status === 'submitting'}
+                              onClick={() => void respondToLeaveAction(index, 'Cancel')}
+                            >
+                              {message.action.status === 'submitting' ? 'Processing…' : 'Cancel request'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </article>
