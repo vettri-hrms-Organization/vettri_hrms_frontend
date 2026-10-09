@@ -411,7 +411,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
                         </span>
                         <span>{message.action.data?.duration || 'Full day'} · {message.action.data?.days} {Number(message.action.data?.days) === 1 ? 'day' : 'days'}</span>
                         <span>Available balance: {message.action.data?.remainingDays} {Number(message.action.data?.remainingDays) === 1 ? 'day' : 'days'}</span>
-                        {message.action.data?.reason && <span>Reason: {message.action.data.reason}</span>}
+                        <span>Reason: {message.action.data?.reason || 'Not provided (optional)'}</span>
                         {editingLeaveIndex === index && !message.action.resolved ? (
                           <form
                             className="vettri-assistant-leave-confirmation__editor"

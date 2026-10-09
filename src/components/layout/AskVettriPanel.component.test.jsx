@@ -209,6 +209,7 @@ describe('AskVettriPanel chat experience', () => {
     expect(within(confirmation).getByText('Casual Leave')).toBeTruthy();
     expect(within(confirmation).getByText(/October 9, 2026/)).toBeTruthy();
     expect(within(confirmation).getByText(/Available balance: 3 days/)).toBeTruthy();
+    expect(within(confirmation).getByText('Reason: Not provided (optional)')).toBeTruthy();
     await user.click(within(confirmation).getByRole('button', { name: 'Submit Leave' }));
 
     await waitFor(() => expect(mocks.assistantApi.chat).toHaveBeenCalledTimes(2));
