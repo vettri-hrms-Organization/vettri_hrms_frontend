@@ -24,7 +24,10 @@ const TABS = [
 
 export default function SettingsOrganization() {
   const [tab, setTab] = useState('departments');
-  const { hasPermission } = useAuth();
+  const { user, hasPermission, hasRole } = useAuth();
+  const canManageOfficeLocations = hasRole('SUPER_ADMIN') || ['ORG_MANAGE', 'ATTENDANCE_MANAGE'].some(
+    (code) => hasPermission(code) && user?.scopes?.[code]?.includes('ORGANIZATION')
+  );
   const visibleTabs = TABS.filter((item) => item.key !== 'attendance-policy' || hasPermission('ATTENDANCE_MANAGE'));
 
   return (
@@ -36,7 +39,7 @@ export default function SettingsOrganization() {
       {tab === 'departments' && <DepartmentsPanel />}
       {tab === 'designations' && <DesignationsPanel />}
       {tab === 'teams' && <TeamsPanel />}
-      {tab === 'locations' && <OfficeLocationsPanel />}
+      {tab === 'locations' && <OfficeLocationsPanel canManage={canManageOfficeLocations} />}
       {tab === 'attendance-policy' && <AttendancePolicyPanel canManage={hasPermission('ATTENDANCE_MANAGE')} />}
     </div>
   );
@@ -338,7 +341,7 @@ function TeamsPanel() {
   );
 }
 
-function OfficeLocationsPanel() {
+function OfficeLocationsPanel({ canManage }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -472,7 +475,7 @@ function OfficeLocationsPanel() {
   }
 
   return (
-    <Panel title="Office locations" showForm={showForm} onToggleForm={() => { if (showForm) resetForm(); else setShowForm(true); }} form={(
+    <Panel canManage={canManage} title="Office locations" showForm={showForm} onToggleForm={() => { if (showForm) resetForm(); else setShowForm(true); }} form={(
       <form className="office-location-form" onSubmit={submit}>
         <div className="office-location-form__section">
           <div className="office-location-form__section-heading">
@@ -531,7 +534,7 @@ function OfficeLocationsPanel() {
     )}>
     {isLoading && <SkeletonText lines={4} />}
     {!isLoading && locations?.length === 0 && <EmptyState icon={MapPin} title="No office locations yet" description="Add your first office and its GPS coordinates above." />}
-    {!isLoading && locations?.map((location) => <Row key={location.id} left={location.name} sub={`${location.latitude}, ${location.longitude} · ${location.allowedRadiusMeters}m radius`} right={location.address || 'No address'} active={location.active} onEdit={() => editLocation(location)} onToggleActive={() => toggle.mutate({ id: location.id, active: location.active })} toggling={toggle.isPending} />)}
+    {!isLoading && locations?.map((location) => <Row key={location.id} left={location.name} sub={`${location.latitude}, ${location.longitude} · ${location.allowedRadiusMeters}m radius`} right={location.address || 'No address'} active={location.active} onEdit={canManage ? () => editLocation(location) : undefined} onToggleActive={canManage ? () => toggle.mutate({ id: location.id, active: location.active }) : undefined} toggling={toggle.isPending} />)}
   </Panel>
   );
 }
@@ -540,17 +543,17 @@ function emptyOfficeLocation() {
   return { name: '', address: '', city: '', state: '', country: '', latitude: '', longitude: '', allowedRadiusMeters: 150 };
 }
 
-function Panel({ title, showForm, onToggleForm, form, children }) {
+function Panel({ title, showForm, onToggleForm, form, children, canManage = true }) {
   return (
     <Card
       title={title}
-      actions={
+      actions={canManage && (
         <Button size="sm" variant="secondary" icon={Plus} onClick={onToggleForm}>
           {showForm ? 'Close' : 'Add'}
         </Button>
-      }
+      )}
     >
-      {showForm && <div className="mb-4 pb-3" style={{ borderBottom: '1px solid var(--hz-border)' }}>{form}</div>}
+      {canManage && showForm && <div className="mb-4 pb-3" style={{ borderBottom: '1px solid var(--hz-border)' }}>{form}</div>}
       <div className="d-flex flex-column gap-1">{children}</div>
     </Card>
   );

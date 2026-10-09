@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UserPlus, ShieldCheck, ShieldPlus, Trash2, Lock } from 'lucide-react';
 import { usersApi } from '../api/endpoints/users';
@@ -94,8 +94,10 @@ export default function SettingsUsers() {
 function UsersPanel() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingRolesFor, setEditingRolesFor] = useState(null);
+  const [managingPermissionsFor, setManagingPermissionsFor] = useState(null);
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { user: currentUser, hasPermission } = useAuth();
 
   const { data: users, isLoading, isError, refetch } = useQuery({
     queryKey: ['users'],
@@ -114,7 +116,9 @@ function UsersPanel() {
   return (
     <div className="d-flex flex-column gap-4">
       <div className="d-flex justify-content-end">
-        <Button icon={UserPlus} onClick={() => setShowCreate(true)}>New User</Button>
+        {hasPermission('USER_CREATE') && (
+          <Button icon={UserPlus} onClick={() => setShowCreate(true)}>New User</Button>
+        )}
       </div>
 
       <Card bodyClassName="p-0">
@@ -173,22 +177,36 @@ function UsersPanel() {
                   </td>
                   <td className="text-end pe-4">
                     <div className="d-flex justify-content-end gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon={ShieldCheck}
-                        onClick={() => setEditingRolesFor(u)}
-                      >
-                        Edit Roles
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        loading={toggleActive.isPending && toggleActive.variables?.id === u.id}
-                        onClick={() => toggleActive.mutate({ id: u.id, active: u.active })}
-                      >
-                        {u.active ? 'Deactivate' : 'Activate'}
-                      </Button>
+                      {(hasPermission('ROLE_ASSIGN') || hasPermission('USER_MANAGE')) && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={ShieldCheck}
+                          onClick={() => setEditingRolesFor(u)}
+                        >
+                          Edit Roles
+                        </Button>
+                      )}
+                      {hasPermission('USER_PERMISSION_GRANT') && currentUser?.id !== u.id && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={ShieldPlus}
+                          onClick={() => setManagingPermissionsFor(u)}
+                        >
+                          Permissions
+                        </Button>
+                      )}
+                      {(hasPermission('USER_MANAGE')) && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          loading={toggleActive.isPending && toggleActive.variables?.id === u.id}
+                          onClick={() => toggleActive.mutate({ id: u.id, active: u.active })}
+                        >
+                          {u.active ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -200,6 +218,12 @@ function UsersPanel() {
       </Card>
 
       {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} />}
+      {managingPermissionsFor && (
+        <UserPermissionsModal
+          user={managingPermissionsFor}
+          onClose={() => setManagingPermissionsFor(null)}
+        />
+      )}
       {editingRolesFor && (
         <EditRolesModal
           user={editingRolesFor}
@@ -208,6 +232,198 @@ function UsersPanel() {
         />
       )}
     </div>
+  );
+}
+
+const GRANT_ORGANIZATION_ONLY = new Set([
+  'USER_VIEW', 'USER_CREATE', 'USER_MANAGE', 'USER_PERMISSION_GRANT',
+  'ROLE_VIEW', 'ROLE_ASSIGN', 'ROLE_MANAGE', 'ORG_VIEW', 'ORG_MANAGE',
+  'EMPLOYEE_IMPORT', 'DEVICE_MANAGE', 'ATTENDANCE_MANAGE', 'LEAVE_MANAGE',
+  'REQUIREMENT_VIEW', 'REQUIREMENT_MANAGE', 'AUDIT_VIEW', 'REPORTS_VIEW',
+  'IT_MANAGEMENT_ACCESS', 'SOFTWARE_VIEW', 'SOFTWARE_DEPLOY', 'SOFTWARE_MANAGE',
+]);
+const GRANT_SCOPES = ['SELF', 'TEAM', 'DEPARTMENT', 'ORGANIZATION'];
+
+function UserPermissionsModal({ user, onClose }) {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const { user: currentUser } = useAuth();
+  const [permissionCode, setPermissionCode] = useState('');
+  const [scope, setScope] = useState('SELF');
+  const [grantToRevoke, setGrantToRevoke] = useState(null);
+
+  const grantsQuery = useQuery({
+    queryKey: ['user-permission-grants', user.id],
+    queryFn: () => usersApi.permissionGrants(user.id),
+  });
+  const permissionsQuery = useQuery({
+    queryKey: ['permissions'],
+    queryFn: permissionsApi.list,
+  });
+
+  const assignablePermissions = (permissionsQuery.data || []).filter((permission) => (
+    currentUser?.permissions?.includes(permission.code)
+      && (GRANT_ORGANIZATION_ONLY.has(permission.code)
+        ? currentUser?.scopes?.[permission.code]?.includes('ORGANIZATION')
+        : (currentUser?.scopes?.[permission.code] || []).some((item) => GRANT_SCOPES.includes(item)))
+  ));
+  const actorScopes = currentUser?.scopes?.[permissionCode] || [];
+  const maxScopeIndex = Math.max(...actorScopes.map((actorScope) => GRANT_SCOPES.indexOf(actorScope)), -1);
+  const availableScopes = GRANT_ORGANIZATION_ONLY.has(permissionCode)
+    ? ['ORGANIZATION']
+    : GRANT_SCOPES.slice(0, maxScopeIndex + 1);
+
+  useEffect(() => {
+    if (!assignablePermissions.some((permission) => permission.code === permissionCode)) {
+      setPermissionCode(assignablePermissions[0]?.code || '');
+    }
+  }, [assignablePermissions, permissionCode]);
+
+  useEffect(() => {
+    if (availableScopes.length && !availableScopes.includes(scope)) {
+      setScope(availableScopes[availableScopes.length - 1]);
+    } else if (!availableScopes.length && scope !== 'SELF') {
+      setScope('SELF');
+    }
+  }, [availableScopes, scope]);
+
+  const grant = useMutation({
+    mutationFn: () => usersApi.grantPermission(user.id, { permissionCode, scope }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-permission-grants', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success(`Granted ${permissionCode} to ${user.fullName}.`);
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not grant this permission.'),
+  });
+
+  const revoke = useMutation({
+    mutationFn: () => usersApi.revokePermission(user.id, grantToRevoke.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-permission-grants', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success(`Revoked ${grantToRevoke.permissionCode} from ${user.fullName}.`);
+      setGrantToRevoke(null);
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not revoke this permission.'),
+  });
+
+  const activeCodes = new Set((grantsQuery.data || []).filter((item) => item.active).map((item) => item.permissionCode));
+  const errorMessage = (error) => error.response?.data?.message || userFacingError(error);
+
+  return (
+    <>
+      <Dialog open onClose={onClose} title="User permissions" description={user.fullName} size="lg">
+        <p className="text-muted-hz mb-3" style={{ fontSize: 13 }}>
+          Direct permissions supplement the user’s roles. You can only delegate permissions and scopes already available to your account.
+        </p>
+        <div className="row g-2 align-items-end mb-4">
+          <div className="col-12 col-md-6">
+            <label className="form-label" htmlFor="grant-permission">Permission</label>
+            <select
+              id="grant-permission"
+              className="form-select"
+              value={permissionCode}
+              onChange={(event) => setPermissionCode(event.target.value)}
+              disabled={permissionsQuery.isLoading || assignablePermissions.length === 0}
+            >
+              {assignablePermissions.map((permission) => (
+                <option key={permission.code} value={permission.code}>
+                  {permission.code}{permission.description ? ` — ${permission.description}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="form-label" htmlFor="grant-scope">Scope</label>
+            <select
+              id="grant-scope"
+              className="form-select"
+              value={availableScopes.includes(scope) ? scope : ''}
+              onChange={(event) => setScope(event.target.value)}
+              disabled={!permissionCode || availableScopes.length === 0}
+            >
+              {availableScopes.map((item) => (
+                <option key={item} value={item}>{SCOPE_LABELS[item] || item}</option>
+              ))}
+            </select>
+          </div>
+          <div className="col-12 col-md-3">
+            <Button
+              icon={ShieldPlus}
+              loading={grant.isPending}
+              disabled={!permissionCode || !availableScopes.includes(scope) || activeCodes.has(permissionCode)}
+              onClick={() => grant.mutate()}
+            >
+              Grant
+            </Button>
+          </div>
+        </div>
+
+        {permissionsQuery.isLoading && <SkeletonText lines={2} />}
+        {permissionsQuery.isError && <ErrorState description={errorMessage(permissionsQuery.error)} onRetry={permissionsQuery.refetch} />}
+        {!permissionsQuery.isLoading && !permissionsQuery.isError && assignablePermissions.length === 0 && (
+          <p className="alert alert-info">There are no permissions you can delegate with your current access.</p>
+        )}
+
+        <h3 className="h6">Permission grant history</h3>
+        {grantsQuery.isLoading && <SkeletonText lines={3} />}
+        {grantsQuery.isError && <ErrorState description={errorMessage(grantsQuery.error)} onRetry={grantsQuery.refetch} />}
+        {!grantsQuery.isLoading && !grantsQuery.isError && (grantsQuery.data || []).length === 0 && (
+          <p className="text-muted-hz mb-0">No direct permission grants have been recorded.</p>
+        )}
+        {!grantsQuery.isLoading && !grantsQuery.isError && (grantsQuery.data || []).length > 0 && (
+          <div className="table-responsive">
+            <table className="table align-middle mb-0 hz-table" aria-label="User permission grants">
+              <thead>
+                <tr>
+                  <th>Permission</th>
+                  <th>Scope</th>
+                  <th>Status</th>
+                  <th>Granted</th>
+                  <th className="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grantsQuery.data.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <strong>{item.permissionCode}</strong>
+                      {item.permissionDescription && <small className="d-block text-muted-hz">{item.permissionDescription}</small>}
+                    </td>
+                    <td>{SCOPE_LABELS[item.scope] || item.scope}</td>
+                    <td><StatusBadge status={item.active ? 'ACTIVE' : 'INACTIVE'} variant={item.active ? 'success' : 'neutral'}>{item.active ? 'Active' : 'Revoked'}</StatusBadge></td>
+                    <td>{item.grantedAt ? new Date(item.grantedAt).toLocaleString() : '—'}</td>
+                    <td className="text-end">
+                      {item.active && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={Trash2}
+                          disabled={revoke.isPending}
+                          onClick={() => setGrantToRevoke(item)}
+                        >
+                          Revoke
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Dialog>
+      <ConfirmDialog
+        open={!!grantToRevoke}
+        onClose={() => setGrantToRevoke(null)}
+        onConfirm={() => revoke.mutate()}
+        title={`Revoke ${grantToRevoke?.permissionCode || 'permission'}?`}
+        description={`This removes the direct permission grant from ${user.fullName}. Permissions granted by their roles remain unchanged.`}
+        confirmLabel="Revoke Permission"
+        loading={revoke.isPending}
+      />
+    </>
   );
 }
 
@@ -251,7 +467,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
       {!isLoading && !isError && (
         <>
           <div className="d-flex flex-column gap-2 mb-3">
-            {roles?.filter((role) => role.name !== 'SUPER_ADMIN' || hasRole('SUPER_ADMIN')).map((r) => (
+            {roles?.filter((role) => hasRole('SUPER_ADMIN') || !['SUPER_ADMIN', 'COMPANY_ADMIN'].includes(role.name) || user.roles.includes(role.name)).map((r) => (
               <label
                 key={r.id}
                 className="d-flex align-items-start gap-2 p-2 rounded-3"
@@ -366,6 +582,8 @@ function RolesPanel() {
   const [deletingRole, setDeletingRole] = useState(null);
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { hasPermission } = useAuth();
+  const canManageRoles = hasPermission('ROLE_MANAGE');
 
   const { data: roles, isLoading, isError, refetch } = useQuery({ queryKey: ['roles'], queryFn: rolesApi.list });
 
@@ -385,7 +603,7 @@ function RolesPanel() {
         <p className="mb-0" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
           Roles bundle permissions together. Build a custom role for a team that needs an access pattern the built-in roles don't cover.
         </p>
-        <Button icon={ShieldPlus} onClick={() => setShowCreate(true)}>New Role</Button>
+        {canManageRoles && <Button icon={ShieldPlus} onClick={() => setShowCreate(true)}>New Role</Button>}
       </div>
 
       <Card bodyClassName="p-0">
@@ -433,9 +651,9 @@ function RolesPanel() {
                     <td className="text-end pe-4">
                       <div className="d-flex justify-content-end gap-2">
                         <Button variant="secondary" size="sm" icon={ShieldCheck} onClick={() => setEditingPermissionsFor(r)}>
-                          {r.systemDefined ? 'View Permissions' : 'Edit Permissions'}
+                          {r.systemDefined || !canManageRoles ? 'View Permissions' : 'Edit Permissions'}
                         </Button>
-                        {!r.systemDefined && (
+                        {!r.systemDefined && canManageRoles && (
                           <Button
                             variant="secondary"
                             size="sm"
@@ -458,7 +676,7 @@ function RolesPanel() {
 
       {showCreate && <CreateRoleModal onClose={() => setShowCreate(false)} />}
       {editingPermissionsFor && (
-        <EditPermissionsModal role={editingPermissionsFor} onClose={() => setEditingPermissionsFor(null)} />
+        <EditPermissionsModal role={editingPermissionsFor} onClose={() => setEditingPermissionsFor(null)} canManage={canManageRoles} />
       )}
       <ConfirmDialog
         open={!!deletingRole}
@@ -521,12 +739,12 @@ function PermissionMatrix({ permissions, selected, onToggle, scopes = {}, onScop
   );
 }
 
-function EditPermissionsModal({ role, onClose }) {
+function EditPermissionsModal({ role, onClose, canManage = true }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [selected, setSelected] = useState(() => new Set((role.permissions || []).map((p) => p.code)));
   const [scopes, setScopes] = useState(() => ({ ...role.scopes }));
-  const readOnly = role.systemDefined;
+  const readOnly = role.systemDefined || !canManage;
 
   const { data: permissions, isLoading, isError } = useQuery({ queryKey: ['permissions'], queryFn: permissionsApi.list });
 
