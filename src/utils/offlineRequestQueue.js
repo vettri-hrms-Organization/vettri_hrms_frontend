@@ -112,11 +112,17 @@ function stableStringify(value) {
     .join('|');
 }
 
+function getTenantScope(request) {
+  const headers = request?.headers || {};
+  const companyId = headers['X-Company-Id'] || headers['x-company-id'] || headers['X-Tenant-Id'] || headers['x-tenant-id'];
+  return companyId ? String(companyId) : 'global';
+}
+
 function computeIdempotencyKey(request) {
   const headers = request.headers || {};
   const fromHeader = headers['Idempotency-Key'] || headers['X-Idempotency-Key'] || headers['idempotency-key'];
   if (fromHeader) return String(fromHeader);
-  return `queue:${request.method}:${request.url}:${stableStringify(request.params || {})}:${stableStringify(request.data || {})}`;
+  return `queue:${request.method}:${request.url}:${getTenantScope(request)}:${stableStringify(request.params || {})}:${stableStringify(request.data || {})}`;
 }
 
 function getRetryDelayMs(retryCount, error) {
