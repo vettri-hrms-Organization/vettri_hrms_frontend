@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UserPlus, ShieldCheck, ShieldPlus, Trash2, Lock } from 'lucide-react';
 import { usersApi } from '../api/endpoints/users';
 import { rolesApi, permissionsApi } from '../api/endpoints/roles';
+import { auditApi } from '../api/endpoints/audit';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -43,17 +44,11 @@ const SCOPE_LABELS = {
   DEPARTMENT: 'Department',
   ORGANIZATION: 'Company',
 };
-const COMPANY_SCOPED_PERMISSIONS = new Set([
-  'IT_MANAGEMENT_ACCESS',
-  'SOFTWARE_VIEW',
-  'SOFTWARE_DEPLOY',
-  'SOFTWARE_MANAGE',
-]);
-
-function scopesForSave(selected, scopes) {
+function scopesForSave(selected, scopes, permissions = []) {
+  const metadata = new Map(permissions.map((permission) => [permission.code, permission]));
   return Object.fromEntries([...selected].map((code) => [
     code,
-    COMPANY_SCOPED_PERMISSIONS.has(code) ? 'ORGANIZATION' : scopes[code] || 'ORGANIZATION',
+    metadata.get(code)?.requiredScope === 'ORGANIZATION' ? 'ORGANIZATION' : scopes[code] || 'ORGANIZATION',
   ]));
 }
 
@@ -65,8 +60,30 @@ function roleOperationError(error) {
   return safeMessage;
 }
 
+function hasOrganizationScope(user, code) {
+  return (user?.scopes?.[code] || []).includes('ORGANIZATION');
+}
+
+function canAssignRoles(user, hasPermission, hasRole) {
+  return hasRole('SUPER_ADMIN')
+    || (['ROLE_ASSIGN', 'USER_MANAGE'].some((code) => (
+      hasPermission(code) && hasOrganizationScope(user, code)
+    )));
+}
+
 export default function SettingsUsers() {
   const [tab, setTab] = useState('users');
+  const { hasPermission } = useAuth();
+  const items = [
+    ...(hasPermission('USER_VIEW') || hasPermission('USER_MANAGE') ? [{ key: 'users', label: 'Users & Access' }] : []),
+    ...(hasPermission('ROLE_VIEW') ? [{ key: 'roles', label: 'Roles' }, { key: 'permissions', label: 'Permission Catalog' }] : []),
+    ...(hasPermission('AUDIT_VIEW') ? [{ key: 'audit', label: 'Audit History' }] : []),
+  ];
+  const firstTab = items[0]?.key || '';
+
+  useEffect(() => {
+    if (!items.some((item) => item.key === tab)) setTab(firstTab);
+  }, [tab, firstTab]);
 
   return (
     <div className="hz-admin-page hz-admin-page--users hz-settings-page d-flex flex-column gap-4">
@@ -77,16 +94,17 @@ export default function SettingsUsers() {
       />
 
       <Tabs
-        value={tab}
+        value={items.some((item) => item.key === tab) ? tab : items[0]?.key || ''}
         onChange={setTab}
         ariaLabel="Users and roles sections"
-        items={[
-          { key: 'users', label: 'Users' },
-          { key: 'roles', label: 'Roles & Permissions' },
-        ]}
+        items={items}
       />
 
-      {tab === 'users' ? <UsersPanel /> : <RolesPanel />}
+      {tab === 'users' && items.some((item) => item.key === tab) && <UsersPanel />}
+      {tab === 'roles' && items.some((item) => item.key === tab) && <RolesPanel />}
+      {tab === 'permissions' && items.some((item) => item.key === tab) && <PermissionCatalogPanel />}
+      {tab === 'audit' && items.some((item) => item.key === tab) && <AuditHistoryPanel />}
+      {items.length === 0 && <p className="alert alert-info mb-0">You do not have access to user, role, or audit administration.</p>}
     </div>
   );
 }
@@ -97,7 +115,7 @@ function UsersPanel() {
   const [managingPermissionsFor, setManagingPermissionsFor] = useState(null);
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { user: currentUser, hasPermission } = useAuth();
+  const { user: currentUser, hasPermission, hasRole } = useAuth();
 
   const { data: users, isLoading, isError, refetch } = useQuery({
     queryKey: ['users'],
@@ -177,7 +195,7 @@ function UsersPanel() {
                   </td>
                   <td className="text-end pe-4">
                     <div className="d-flex justify-content-end gap-2">
-                      {(hasPermission('ROLE_ASSIGN') || hasPermission('USER_MANAGE')) && (
+                      {canAssignRoles(currentUser, hasPermission, hasRole) && (
                         <Button
                           variant="secondary"
                           size="sm"
@@ -235,13 +253,6 @@ function UsersPanel() {
   );
 }
 
-const GRANT_ORGANIZATION_ONLY = new Set([
-  'USER_VIEW', 'USER_CREATE', 'USER_MANAGE', 'USER_PERMISSION_GRANT',
-  'ROLE_VIEW', 'ROLE_ASSIGN', 'ROLE_MANAGE', 'ORG_VIEW', 'ORG_MANAGE',
-  'EMPLOYEE_IMPORT', 'DEVICE_MANAGE', 'ATTENDANCE_MANAGE', 'LEAVE_MANAGE',
-  'REQUIREMENT_VIEW', 'REQUIREMENT_MANAGE', 'AUDIT_VIEW', 'REPORTS_VIEW',
-  'IT_MANAGEMENT_ACCESS', 'SOFTWARE_VIEW', 'SOFTWARE_DEPLOY', 'SOFTWARE_MANAGE',
-]);
 const GRANT_SCOPES = ['SELF', 'TEAM', 'DEPARTMENT', 'ORGANIZATION'];
 
 function UserPermissionsModal({ user, onClose }) {
@@ -262,14 +273,17 @@ function UserPermissionsModal({ user, onClose }) {
   });
 
   const assignablePermissions = (permissionsQuery.data || []).filter((permission) => (
-    currentUser?.permissions?.includes(permission.code)
-      && (GRANT_ORGANIZATION_ONLY.has(permission.code)
-        ? currentUser?.scopes?.[permission.code]?.includes('ORGANIZATION')
-        : (currentUser?.scopes?.[permission.code] || []).some((item) => GRANT_SCOPES.includes(item)))
+    permission.delegable !== false
+    && !permission.platformOnly
+    && currentUser?.permissions?.includes(permission.code)
+    && (permission.requiredScope === 'ORGANIZATION'
+      ? currentUser?.scopes?.[permission.code]?.includes('ORGANIZATION')
+      : (currentUser?.scopes?.[permission.code] || []).some((item) => GRANT_SCOPES.includes(item)))
   ));
   const actorScopes = currentUser?.scopes?.[permissionCode] || [];
   const maxScopeIndex = Math.max(...actorScopes.map((actorScope) => GRANT_SCOPES.indexOf(actorScope)), -1);
-  const availableScopes = GRANT_ORGANIZATION_ONLY.has(permissionCode)
+  const selectedPermission = (permissionsQuery.data || []).find((permission) => permission.code === permissionCode);
+  const availableScopes = selectedPermission?.requiredScope === 'ORGANIZATION'
     ? ['ORGANIZATION']
     : GRANT_SCOPES.slice(0, maxScopeIndex + 1);
 
@@ -317,6 +331,13 @@ function UserPermissionsModal({ user, onClose }) {
         <p className="text-muted-hz mb-3" style={{ fontSize: 13 }}>
           Direct permissions supplement the user’s roles. You can only delegate permissions and scopes already available to your account.
         </p>
+        <div className="border rounded-3 p-3 mb-4">
+          <h3 className="h6">Effective access</h3>
+          <p className="small text-muted-hz mb-2">Base role: {(user.roles || []).map(displayRole).join(', ') || 'None'}</p>
+          <p className="small mb-1"><strong>Role permissions:</strong> {(user.rolePermissions || []).join(', ') || 'None'}</p>
+          <p className="small mb-1"><strong>Direct grants:</strong> {(user.directPermissions || []).join(', ') || 'None'}</p>
+          <p className="small mb-0"><strong>Effective permissions:</strong> {(user.permissions || []).join(', ') || 'None'}</p>
+        </div>
         <div className="row g-2 align-items-end mb-4">
           <div className="col-12 col-md-6">
             <label className="form-label" htmlFor="grant-permission">Permission</label>
@@ -467,7 +488,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
       {!isLoading && !isError && (
         <>
           <div className="d-flex flex-column gap-2 mb-3">
-            {roles?.filter((role) => hasRole('SUPER_ADMIN') || !['SUPER_ADMIN', 'COMPANY_ADMIN'].includes(role.name) || user.roles.includes(role.name)).map((r) => (
+            {roles?.filter((role) => hasRole('SUPER_ADMIN') || role.name !== 'SUPER_ADMIN' || user.roles.includes(role.name)).map((r) => (
               <label
                 key={r.id}
                 className="d-flex align-items-start gap-2 p-2 rounded-3"
@@ -514,6 +535,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
 function CreateUserModal({ onClose }) {
   const queryClient = useQueryClient();
   const { hasRole } = useAuth();
+  const rolesQuery = useQuery({ queryKey: ['roles'], queryFn: rolesApi.list });
   const [form, setForm] = useState({ username: '', email: '', fullName: '', temporaryPassword: '', roleNames: [] });
   const [error, setError] = useState(null);
 
@@ -549,10 +571,14 @@ function CreateUserModal({ onClose }) {
             value={form.roleNames[0] || 'EMPLOYEE'}
             onChange={(event) => setForm({ ...form, roleNames: [event.target.value] })}
           >
-            <option value="EMPLOYEE">Employee</option>
-            {hasRole('SUPER_ADMIN') && <option value="COMPANY_ADMIN">Organization Administrator</option>}
+            {(rolesQuery.data || [{ name: 'EMPLOYEE', label: 'Employee' }])
+              .filter((role) => hasRole('SUPER_ADMIN') || role.name !== 'SUPER_ADMIN')
+              .map((role) => (
+                <option key={role.id || role.name} value={role.name}>{displayRole(role)}</option>
+              ))}
           </select>
         </div>
+        {rolesQuery.isError && <p className="text-muted-hz small">Role options could not be loaded; Employee remains available.</p>}
         <FormField
           label="Temporary Password"
           type="password"
@@ -582,8 +608,9 @@ function RolesPanel() {
   const [deletingRole, setDeletingRole] = useState(null);
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { hasPermission } = useAuth();
-  const canManageRoles = hasPermission('ROLE_MANAGE');
+  const { user: currentUser, hasPermission, hasRole } = useAuth();
+  const canManageRoles = hasPermission('ROLE_MANAGE')
+    && (hasRole('SUPER_ADMIN') || hasOrganizationScope(currentUser, 'ROLE_MANAGE'));
 
   const { data: roles, isLoading, isError, refetch } = useQuery({ queryKey: ['roles'], queryFn: rolesApi.list });
 
@@ -626,6 +653,7 @@ function RolesPanel() {
                 <tr style={{ fontSize: 'var(--hz-text-xs)', color: 'var(--hz-text-muted)', textTransform: 'uppercase' }}>
                   <th className="ps-4">Role</th>
                   <th>Permissions</th>
+                  <th>Users</th>
                   <th className="text-end pe-4">Actions</th>
                 </tr>
               </thead>
@@ -648,6 +676,7 @@ function RolesPanel() {
                         {r.permissions?.length || 0} permission{r.permissions?.length === 1 ? '' : 's'}
                       </StatusBadge>
                     </td>
+                    <td>{r.assignedUserCount ?? 0}</td>
                     <td className="text-end pe-4">
                       <div className="d-flex justify-content-end gap-2">
                         <Button variant="secondary" size="sm" icon={ShieldCheck} onClick={() => setEditingPermissionsFor(r)}>
@@ -691,10 +720,156 @@ function RolesPanel() {
   );
 }
 
+function PermissionCatalogPanel() {
+  const [search, setSearch] = useState('');
+  const [moduleFilter, setModuleFilter] = useState('');
+  const { data: permissions, isLoading, isError, refetch } = useQuery({
+    queryKey: ['permissions'],
+    queryFn: permissionsApi.list,
+  });
+  const modules = [...new Set((permissions || []).map((permission) => permission.module || 'General'))]
+    .sort((left, right) => left.localeCompare(right));
+  const filtered = (permissions || []).filter((permission) => (
+    (!moduleFilter || (permission.module || 'General') === moduleFilter)
+      && `${permission.code} ${permission.displayName || ''} ${permission.description || ''}`
+        .toLowerCase().includes(search.trim().toLowerCase())
+  ));
+
+  return (
+    <div className="d-flex flex-column gap-3">
+      <p className="mb-0 text-muted-hz">This catalog is served by the backend and contains permissions registered for implemented modules.</p>
+      <div className="row g-3">
+        <div className="col-12 col-md-8">
+          <label className="form-label" htmlFor="catalog-permission-search">Search permissions</label>
+          <input id="catalog-permission-search" className="form-control" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </div>
+        <div className="col-12 col-md-4">
+          <label className="form-label" htmlFor="catalog-module-filter">Module</label>
+          <select id="catalog-module-filter" className="form-select" value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)}>
+            <option value="">All modules</option>
+            {modules.map((module) => <option key={module} value={module}>{module}</option>)}
+          </select>
+        </div>
+      </div>
+      {isLoading && <SkeletonText lines={5} />}
+      {isError && <ErrorState description="Couldn't load the permission catalog." onRetry={refetch} />}
+      {!isLoading && !isError && filtered.length === 0 && (
+        <EmptyState title="No matching permissions" description="Try a different search term or module." />
+      )}
+      {!isLoading && !isError && filtered.length > 0 && (
+        <Card bodyClassName="p-0">
+          <div className="table-responsive">
+            <table className="table align-middle mb-0 hz-table" aria-label="Permission catalog">
+              <thead>
+                <tr>
+                  <th className="ps-4">Permission</th>
+                  <th>Module</th>
+                  <th>Scope</th>
+                  <th>Risk</th>
+                  <th>Delegation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((permission) => (
+                  <tr key={permission.code}>
+                    <td className="ps-4">
+                      <strong>{permission.displayName || permission.code}</strong>
+                      <small className="d-block text-muted-hz">{permission.code}</small>
+                      {permission.description && <small className="d-block text-muted-hz">{permission.description}</small>}
+                    </td>
+                    <td>{permission.module || 'General'}</td>
+                    <td>{permission.requiredScope === 'ORGANIZATION' ? 'Company' : permission.requiredScope === 'SELF' ? 'Self' : 'Scoped'}</td>
+                    <td><Badge variant={permission.risk === 'CRITICAL' || permission.risk === 'HIGH' ? 'danger' : 'neutral'}>{permission.risk || 'MEDIUM'}</Badge></td>
+                    <td>{permission.platformOnly ? 'Platform only' : permission.delegable ? 'Delegable' : 'Restricted'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function AuditHistoryPanel() {
+  const [entityName, setEntityName] = useState('');
+  const [page, setPage] = useState(0);
+  const query = useQuery({
+    queryKey: ['role-permission-audit', entityName, page],
+    queryFn: () => auditApi.logs({ page, size: 50, entityName }),
+  });
+  const records = query.data?.content || [];
+  const totalPages = query.data?.totalPages || 0;
+
+  return (
+    <div className="d-flex flex-column gap-3">
+      <p className="mb-0 text-muted-hz">Role assignments, role edits, and direct permission grants are recorded in the organization audit log.</p>
+      <div className="d-flex align-items-end gap-2">
+        <div>
+          <label className="form-label" htmlFor="audit-entity-filter">Change type</label>
+          <select
+            id="audit-entity-filter"
+            className="form-select"
+            value={entityName}
+            onChange={(event) => { setEntityName(event.target.value); setPage(0); }}
+          >
+            <option value="">All audit events</option>
+            <option value="Role">Role changes</option>
+            <option value="User">User and role assignments</option>
+            <option value="UserPermissionGrant">Direct permission grants</option>
+          </select>
+        </div>
+      </div>
+      {query.isLoading && <SkeletonText lines={4} />}
+      {query.isError && <ErrorState description="Couldn't load organization audit history." onRetry={query.refetch} />}
+      {!query.isLoading && !query.isError && records.length === 0 && (
+        <EmptyState title="No audit events" description="No matching role or permission changes were found." />
+      )}
+      {!query.isLoading && !query.isError && records.length > 0 && (
+        <>
+          <Card bodyClassName="p-0">
+            <div className="table-responsive">
+              <table className="table align-middle mb-0 hz-table" aria-label="Role and permission audit history">
+                <thead><tr><th>When</th><th>Actor</th><th>Change</th><th>Target</th><th>Details</th></tr></thead>
+                <tbody>
+                  {records.map((record) => (
+                    <tr key={record.id}>
+                      <td>{record.performedAt ? new Date(record.performedAt).toLocaleString() : '—'}</td>
+                      <td>{record.performedBy || 'System'}</td>
+                      <td>{record.action}</td>
+                      <td>{record.entityName} {record.entityId ?? ''}</td>
+                      <td>{record.details || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+          <div className="d-flex justify-content-end align-items-center gap-2">
+            <span className="small text-muted-hz">Page {page + 1} of {Math.max(totalPages, 1)}</span>
+            <Button variant="secondary" size="sm" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>Previous</Button>
+            <Button variant="secondary" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((value) => value + 1)}>Next</Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 const ROLE_SCOPES = ['SELF', 'TEAM', 'DEPARTMENT', 'ORGANIZATION'];
 
 function PermissionMatrix({ permissions, selected, onToggle, scopes = {}, onScopeChange = () => {}, readOnly = false }) {
-  const grouped = (permissions || []).reduce((acc, p) => {
+  const { user, hasRole } = useAuth();
+  const [search, setSearch] = useState('');
+  const [moduleFilter, setModuleFilter] = useState('');
+  const availableModules = [...new Set((permissions || []).map((permission) => permission.module || 'General'))].sort();
+  const visiblePermissions = (permissions || []).filter((permission) => (
+    (!moduleFilter || (permission.module || 'General') === moduleFilter)
+      && `${permission.code} ${permission.displayName || ''} ${permission.description || ''}`
+        .toLowerCase().includes(search.trim().toLowerCase())
+  ));
+  const grouped = visiblePermissions.reduce((acc, p) => {
     const module = p.module || 'General';
     (acc[module] ||= []).push(p);
     return acc;
@@ -703,6 +878,20 @@ function PermissionMatrix({ permissions, selected, onToggle, scopes = {}, onScop
 
   return (
     <div className="hz-permission-matrix">
+      <div className="d-flex flex-wrap align-items-end gap-2 mb-3">
+        <div className="flex-grow-1">
+          <label className="form-label" htmlFor="permission-search">Search permissions</label>
+          <input id="permission-search" className="form-control" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </div>
+        <div>
+          <label className="form-label" htmlFor="permission-module-filter">Module</label>
+          <select id="permission-module-filter" className="form-select" value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)}>
+            <option value="">All modules</option>
+            {availableModules.map((module) => <option key={module} value={module}>{module}</option>)}
+          </select>
+        </div>
+        <span className="small text-muted-hz">{selected.size} selected</span>
+      </div>
       {moduleNames.map((module) => (
         <div className="hz-permission-matrix__group" key={module}>
           <h4>{module}</h4>
@@ -713,18 +902,26 @@ function PermissionMatrix({ permissions, selected, onToggle, scopes = {}, onScop
                   type="checkbox"
                   className="form-check-input"
                   checked={selected.has(permission.code)}
-                  disabled={readOnly}
+                  disabled={readOnly || (!selected.has(permission.code) && (
+                    permission.delegable === false || permission.platformOnly
+                    || (!hasRole('SUPER_ADMIN') && !user?.permissions?.includes(permission.code))
+                  ))}
                   onChange={() => onToggle(permission.code)}
                 />
                 <span>
-                  <span className="hz-permission-matrix__code">{permission.code}</span>
+                  <span className="hz-permission-matrix__code">{permission.displayName || permission.code}</span>
+                  {permission.code !== permission.displayName && <small className="d-block text-muted-hz">{permission.code}</small>}
                   {permission.description && <span className="hz-permission-matrix__desc">{permission.description}</span>}
+                  <small className="d-block text-muted-hz">
+                    {permission.risk || 'MEDIUM'} risk{permission.readOnly ? ' · read-only' : ' · changes data'}
+                    {permission.delegable === false ? ' · non-delegable' : ''}
+                  </small>
                 </span>
                 <select
                   className="form-select form-select-sm ms-auto"
                   style={{ maxWidth: 150 }}
-                  value={COMPANY_SCOPED_PERMISSIONS.has(permission.code) ? 'ORGANIZATION' : scopes?.[permission.code] || 'ORGANIZATION'}
-                  disabled={readOnly || !selected.has(permission.code) || COMPANY_SCOPED_PERMISSIONS.has(permission.code)}
+                  value={permission.requiredScope === 'ORGANIZATION' ? 'ORGANIZATION' : scopes?.[permission.code] || 'ORGANIZATION'}
+                  disabled={readOnly || !selected.has(permission.code) || permission.requiredScope === 'ORGANIZATION'}
                   onChange={(event) => onScopeChange(permission.code, event.target.value)}
                   aria-label={`${permission.code} scope`}
                 >
@@ -749,7 +946,7 @@ function EditPermissionsModal({ role, onClose, canManage = true }) {
   const { data: permissions, isLoading, isError } = useQuery({ queryKey: ['permissions'], queryFn: permissionsApi.list });
 
   const save = useMutation({
-    mutationFn: () => rolesApi.updatePermissionsAndScopes(role.id, Array.from(selected), scopesForSave(selected, scopes)),
+    mutationFn: () => rolesApi.updatePermissionsAndScopes(role.id, Array.from(selected), scopesForSave(selected, scopes, permissions || [])),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success(`Updated permissions for ${displayRole(role)}.`);
@@ -788,7 +985,7 @@ function EditPermissionsModal({ role, onClose, canManage = true }) {
       {isLoading && <SkeletonText lines={6} />}
       {isError && <ErrorState description="Couldn't load the permission list." />}
       {!isLoading && !isError && (
-                <PermissionMatrix permissions={permissions} selected={selected} onToggle={toggle} scopes={scopes} onScopeChange={changeScope} readOnly={readOnly} />
+        <PermissionMatrix permissions={permissions} selected={selected} onToggle={toggle} scopes={scopes} onScopeChange={changeScope} readOnly={readOnly} />
       )}
     </Dialog>
   );
@@ -805,7 +1002,7 @@ function CreateRoleModal({ onClose }) {
   const { data: permissions, isLoading, isError } = useQuery({ queryKey: ['permissions'], queryFn: permissionsApi.list });
 
   const createRole = useMutation({
-    mutationFn: () => rolesApi.create({ name: form.name, description: form.description, permissionCodes: Array.from(selected), permissionScopes: scopesForSave(selected, scopes) }),
+    mutationFn: () => rolesApi.create({ name: form.name, description: form.description, permissionCodes: Array.from(selected), permissionScopes: scopesForSave(selected, scopes, permissions || []) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success(`Created role "${form.name}".`);

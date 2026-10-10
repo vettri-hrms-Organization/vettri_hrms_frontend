@@ -61,8 +61,8 @@ describe('SettingsUsers direct permission grants', () => {
       active: true,
     });
     permissionsApi.list.mockResolvedValue([
-      { code: 'ATTENDANCE_MANAGE', description: 'Manage attendance' },
-      { code: 'MONITORING_VIEW', description: 'View monitoring' },
+      { code: 'ATTENDANCE_MANAGE', description: 'Manage attendance', requiredScope: 'ORGANIZATION' },
+      { code: 'MONITORING_VIEW', description: 'View monitoring', requiredScope: null },
     ]);
   });
 
