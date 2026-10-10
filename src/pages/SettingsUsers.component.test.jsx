@@ -21,11 +21,12 @@ const { usersApi, permissionsApi, rolesApi, authUser } = vi.hoisted(() => ({
   rolesApi: { list: vi.fn(), create: vi.fn(), remove: vi.fn() },
   authUser: {
     id: 10,
-    permissions: ['USER_VIEW', 'USER_PERMISSION_GRANT', 'ROLE_VIEW', 'ATTENDANCE_MANAGE'],
+    permissions: ['USER_VIEW', 'USER_PERMISSION_GRANT', 'ROLE_VIEW', 'ROLE_ASSIGN', 'ATTENDANCE_MANAGE'],
     scopes: {
       USER_VIEW: ['ORGANIZATION'],
       USER_PERMISSION_GRANT: ['ORGANIZATION'],
       ROLE_VIEW: ['ORGANIZATION'],
+      ROLE_ASSIGN: ['ORGANIZATION'],
       ATTENDANCE_MANAGE: ['ORGANIZATION'],
     },
   },
@@ -88,6 +89,8 @@ describe('SettingsUsers direct permission grants', () => {
     expect(permissionSelect.options).toHaveLength(1);
     expect(permissionSelect.value).toBe('ATTENDANCE_MANAGE');
     expect(screen.getByLabelText('Scope').value).toBe('ORGANIZATION');
+    const expiryInput = screen.getByLabelText('Expires (optional)');
+    await user.type(expiryInput, '2030-01-01T12:00');
 
     await user.click(screen.getByRole('button', { name: 'Grant' }));
 
@@ -95,6 +98,7 @@ describe('SettingsUsers direct permission grants', () => {
       expect(usersApi.grantPermission).toHaveBeenCalledWith(11, {
         permissionCode: 'ATTENDANCE_MANAGE',
         scope: 'ORGANIZATION',
+        expiresAt: new Date('2030-01-01T12:00').toISOString(),
       });
     });
   });

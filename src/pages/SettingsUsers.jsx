@@ -71,6 +71,18 @@ function canAssignRoles(user, hasPermission, hasRole) {
     )));
 }
 
+function canDelegateRole(role, user, hasRole) {
+  if (hasRole('SUPER_ADMIN')) return true;
+  if (role.name === 'SUPER_ADMIN') return false;
+  if (user?.roles?.includes('COMPANY_ADMIN')) return true;
+  return (role.permissions || []).every((permission) => {
+    if (permission.delegable !== true || permission.platformOnly) return false;
+    const actorScopes = user?.scopes?.[permission.code] || [];
+    const roleScope = role.scopes?.[permission.code] || 'ORGANIZATION';
+    return actorScopes.includes('ORGANIZATION') || actorScopes.includes(roleScope);
+  });
+}
+
 export default function SettingsUsers() {
   const [tab, setTab] = useState('users');
   const { hasPermission } = useAuth();
@@ -261,6 +273,7 @@ function UserPermissionsModal({ user, onClose }) {
   const { user: currentUser } = useAuth();
   const [permissionCode, setPermissionCode] = useState('');
   const [scope, setScope] = useState('SELF');
+  const [expiresAt, setExpiresAt] = useState('');
   const [grantToRevoke, setGrantToRevoke] = useState(null);
 
   const grantsQuery = useQuery({
@@ -302,7 +315,11 @@ function UserPermissionsModal({ user, onClose }) {
   }, [availableScopes, scope]);
 
   const grant = useMutation({
-    mutationFn: () => usersApi.grantPermission(user.id, { permissionCode, scope }),
+    mutationFn: () => usersApi.grantPermission(user.id, {
+      permissionCode,
+      scope,
+      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-permission-grants', user.id] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -369,7 +386,18 @@ function UserPermissionsModal({ user, onClose }) {
               ))}
             </select>
           </div>
-          <div className="col-12 col-md-3">
+          <div className="col-12 col-md-4">
+            <label className="form-label" htmlFor="grant-expires-at">Expires (optional)</label>
+            <input
+              id="grant-expires-at"
+              className="form-control"
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(event) => setExpiresAt(event.target.value)}
+              disabled={!permissionCode}
+            />
+          </div>
+          <div className="col-12 col-md-2">
             <Button
               icon={ShieldPlus}
               loading={grant.isPending}
@@ -402,6 +430,7 @@ function UserPermissionsModal({ user, onClose }) {
                   <th>Scope</th>
                   <th>Status</th>
                   <th>Granted</th>
+                  <th>Expires</th>
                   <th className="text-end">Action</th>
                 </tr>
               </thead>
@@ -413,8 +442,16 @@ function UserPermissionsModal({ user, onClose }) {
                       {item.permissionDescription && <small className="d-block text-muted-hz">{item.permissionDescription}</small>}
                     </td>
                     <td>{SCOPE_LABELS[item.scope] || item.scope}</td>
-                    <td><StatusBadge status={item.active ? 'ACTIVE' : 'INACTIVE'} variant={item.active ? 'success' : 'neutral'}>{item.active ? 'Active' : 'Revoked'}</StatusBadge></td>
+                    <td>
+                      <StatusBadge
+                        status={item.active ? 'ACTIVE' : 'INACTIVE'}
+                        variant={item.active ? 'success' : 'neutral'}
+                      >
+                        {item.active ? 'Active' : item.expiresAt && new Date(item.expiresAt) <= new Date() ? 'Expired' : 'Revoked'}
+                      </StatusBadge>
+                    </td>
                     <td>{item.grantedAt ? new Date(item.grantedAt).toLocaleString() : '—'}</td>
+                    <td>{item.expiresAt ? new Date(item.expiresAt).toLocaleString() : 'Never'}</td>
                     <td className="text-end">
                       {item.active && (
                         <Button
@@ -451,7 +488,7 @@ function UserPermissionsModal({ user, onClose }) {
 function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { hasRole } = useAuth();
+  const { user: currentUser, hasRole } = useAuth();
   const [selected, setSelected] = useState(() => new Set(user.roles));
 
   const { data: roles, isLoading, isError, error: rolesError } = useQuery({
@@ -461,6 +498,9 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
   });
 
   const wouldRemoveLastSuperAdmin = user.roles.includes('SUPER_ADMIN') && !selected.has('SUPER_ADMIN') && otherSuperAdminCount === 0;
+  const assignableRoles = (roles || []).filter((role) => (
+    user.roles.includes(role.name) || canDelegateRole(role, currentUser, hasRole)
+  ));
 
   const save = useMutation({
     mutationFn: () => usersApi.assignRoles(user.id, Array.from(selected)),
@@ -488,7 +528,7 @@ function EditRolesModal({ user, onClose, otherSuperAdminCount }) {
       {!isLoading && !isError && (
         <>
           <div className="d-flex flex-column gap-2 mb-3">
-            {roles?.filter((role) => hasRole('SUPER_ADMIN') || role.name !== 'SUPER_ADMIN' || user.roles.includes(role.name)).map((r) => (
+            {assignableRoles.map((r) => (
               <label
                 key={r.id}
                 className="d-flex align-items-start gap-2 p-2 rounded-3"

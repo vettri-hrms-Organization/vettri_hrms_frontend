@@ -8,6 +8,7 @@ import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import ErrorState from '../components/ui/ErrorState';
 import { SkeletonText } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import PageHeader from '../components/ui/PageHeader';
@@ -25,10 +26,30 @@ const TABS = [
 export default function SettingsOrganization() {
   const [tab, setTab] = useState('departments');
   const { user, hasPermission, hasRole } = useAuth();
-  const canManageOfficeLocations = hasRole('SUPER_ADMIN') || ['ORG_MANAGE', 'ATTENDANCE_MANAGE'].some(
-    (code) => hasPermission(code) && user?.scopes?.[code]?.includes('ORGANIZATION')
-  );
-  const visibleTabs = TABS.filter((item) => item.key !== 'attendance-policy' || hasPermission('ATTENDANCE_MANAGE'));
+  const hasOrganizationPermission = (code) => hasRole('SUPER_ADMIN')
+    || (hasPermission(code) && user?.scopes?.[code]?.includes('ORGANIZATION'));
+  const canManageOrganization = hasOrganizationPermission('ORG_MANAGE');
+  const canViewLocations = [
+    'OFFICE_LOCATION_VIEW', 'OFFICE_LOCATION_CREATE', 'OFFICE_LOCATION_UPDATE',
+    'OFFICE_LOCATION_DEACTIVATE', 'ORG_MANAGE',
+  ].some(hasOrganizationPermission);
+  const canCreateLocations = ['OFFICE_LOCATION_CREATE', 'ORG_MANAGE']
+    .some(hasOrganizationPermission);
+  const canUpdateLocations = ['OFFICE_LOCATION_UPDATE', 'ORG_MANAGE']
+    .some(hasOrganizationPermission);
+  const canDeactivateLocations = ['OFFICE_LOCATION_DEACTIVATE', 'ORG_MANAGE']
+    .some(hasOrganizationPermission);
+  const visibleTabs = TABS.filter((item) => {
+    if (item.key === 'locations') return canViewLocations;
+    if (item.key === 'attendance-policy') return hasPermission('ATTENDANCE_MANAGE');
+    return hasPermission('ORG_VIEW') || canManageOrganization;
+  });
+
+  useEffect(() => {
+    if (!visibleTabs.some((item) => item.key === tab)) {
+      setTab(visibleTabs[0]?.key || '');
+    }
+  }, [tab, visibleTabs]);
 
   return (
     <div className="hz-admin-page hz-admin-page--organization hz-settings-page d-flex flex-column gap-4">
@@ -36,11 +57,18 @@ export default function SettingsOrganization() {
 
       <Tabs items={visibleTabs} value={tab} onChange={setTab} />
 
-      {tab === 'departments' && <DepartmentsPanel />}
-      {tab === 'designations' && <DesignationsPanel />}
-      {tab === 'teams' && <TeamsPanel />}
-      {tab === 'locations' && <OfficeLocationsPanel canManage={canManageOfficeLocations} />}
+      {tab === 'departments' && <DepartmentsPanel canManage={canManageOrganization} />}
+      {tab === 'designations' && <DesignationsPanel canManage={canManageOrganization} />}
+      {tab === 'teams' && <TeamsPanel canManage={canManageOrganization} />}
+      {tab === 'locations' && (
+        <OfficeLocationsPanel
+          canCreate={canCreateLocations}
+          canUpdate={canUpdateLocations}
+          canDeactivate={canDeactivateLocations}
+        />
+      )}
       {tab === 'attendance-policy' && <AttendancePolicyPanel canManage={hasPermission('ATTENDANCE_MANAGE')} />}
+      {visibleTabs.length === 0 && <p className="alert alert-info mb-0">You do not have access to organization settings.</p>}
     </div>
   );
 }
@@ -148,7 +176,7 @@ function AttendancePolicyPanel({ canManage }) {
   );
 }
 
-function DepartmentsPanel() {
+function DepartmentsPanel({ canManage }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -172,6 +200,7 @@ function DepartmentsPanel() {
 
   return (
     <Panel
+      canManage={canManage}
       title="Departments"
       showForm={showForm}
       onToggleForm={() => setShowForm((s) => !s)}
@@ -218,7 +247,7 @@ function DepartmentsPanel() {
   );
 }
 
-function DesignationsPanel() {
+function DesignationsPanel({ canManage }) {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', level: '', departmentId: '' });
@@ -236,6 +265,7 @@ function DesignationsPanel() {
 
   return (
     <Panel
+      canManage={canManage}
       title="Designations"
       showForm={showForm}
       onToggleForm={() => setShowForm((s) => !s)}
@@ -281,7 +311,7 @@ function DesignationsPanel() {
   );
 }
 
-function TeamsPanel() {
+function TeamsPanel({ canManage }) {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', departmentId: '' });
@@ -299,6 +329,7 @@ function TeamsPanel() {
 
   return (
     <Panel
+      canManage={canManage}
       title="Teams"
       showForm={showForm}
       onToggleForm={() => setShowForm((s) => !s)}
@@ -341,7 +372,7 @@ function TeamsPanel() {
   );
 }
 
-function OfficeLocationsPanel({ canManage }) {
+function OfficeLocationsPanel({ canCreate, canUpdate, canDeactivate }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -354,7 +385,12 @@ function OfficeLocationsPanel({ canManage }) {
   const [reverseGeocoding, setReverseGeocoding] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
   const reverseRequestRef = useRef(0);
-  const { data: locations, isLoading } = useQuery({ queryKey: ['attendance-office-locations'], queryFn: attendanceApi.officeLocations });
+  const {
+    data: locations,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({ queryKey: ['attendance-office-locations'], queryFn: attendanceApi.officeLocations });
   const save = useMutation({
     mutationFn: ({ id, payload }) => id ? attendanceApi.updateOfficeLocation(id, payload) : attendanceApi.createOfficeLocation(payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['attendance-office-locations'] }); resetForm(); },
@@ -475,7 +511,7 @@ function OfficeLocationsPanel({ canManage }) {
   }
 
   return (
-    <Panel canManage={canManage} title="Office locations" showForm={showForm} onToggleForm={() => { if (showForm) resetForm(); else setShowForm(true); }} form={(
+    <Panel canManage={canCreate || (showForm && canUpdate)} canAdd={canCreate} title="Office locations" showForm={showForm} onToggleForm={() => { if (showForm) resetForm(); else setShowForm(true); }} form={(
       <form className="office-location-form" onSubmit={submit}>
         <div className="office-location-form__section">
           <div className="office-location-form__section-heading">
@@ -533,8 +569,9 @@ function OfficeLocationsPanel({ canManage }) {
       </form>
     )}>
     {isLoading && <SkeletonText lines={4} />}
-    {!isLoading && locations?.length === 0 && <EmptyState icon={MapPin} title="No office locations yet" description="Add your first office and its GPS coordinates above." />}
-    {!isLoading && locations?.map((location) => <Row key={location.id} left={location.name} sub={`${location.latitude}, ${location.longitude} · ${location.allowedRadiusMeters}m radius`} right={location.address || 'No address'} active={location.active} onEdit={canManage ? () => editLocation(location) : undefined} onToggleActive={canManage ? () => toggle.mutate({ id: location.id, active: location.active }) : undefined} toggling={toggle.isPending} />)}
+    {isError && <ErrorState description="Couldn't load office locations. Check your access or try again." onRetry={refetch} />}
+    {!isLoading && !isError && locations?.length === 0 && <EmptyState icon={MapPin} title="No office locations yet" description={canCreate ? 'Add your first office and its GPS coordinates above.' : 'No office locations have been added.'} />}
+    {!isLoading && !isError && locations?.map((location) => <Row key={location.id} left={location.name} sub={`${location.latitude}, ${location.longitude} · ${location.allowedRadiusMeters}m radius`} right={location.address || 'No address'} active={location.active} onEdit={canUpdate ? () => editLocation(location) : undefined} onToggleActive={canDeactivate ? () => toggle.mutate({ id: location.id, active: location.active }) : undefined} toggling={toggle.isPending} />)}
   </Panel>
   );
 }
@@ -543,11 +580,11 @@ function emptyOfficeLocation() {
   return { name: '', address: '', city: '', state: '', country: '', latitude: '', longitude: '', allowedRadiusMeters: 150 };
 }
 
-function Panel({ title, showForm, onToggleForm, form, children, canManage = true }) {
+function Panel({ title, showForm, onToggleForm, form, children, canManage = true, canAdd = canManage }) {
   return (
     <Card
       title={title}
-      actions={canManage && (
+      actions={canAdd && (
         <Button size="sm" variant="secondary" icon={Plus} onClick={onToggleForm}>
           {showForm ? 'Close' : 'Add'}
         </Button>

@@ -135,11 +135,17 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/organization/structure', icon: Network, label: 'Organization Structure', permission: 'ORG_VIEW' },
       { to: '/employees/import', icon: FileSpreadsheet, label: 'Import Employees', permission: 'EMPLOYEE_IMPORT' },
-      { to: '/settings/organization', icon: Building2, label: 'Departments', permission: 'ORG_MANAGE' },
-      { to: '/settings/organization', icon: Building2, label: 'Designations', permission: 'ORG_MANAGE' },
-      { to: '/settings/organization', icon: Building2, label: 'Teams', permission: 'ORG_MANAGE' },
+      {
+        to: '/settings/organization',
+        icon: Building2,
+        label: 'Organization Settings',
+        permissionsAny: [
+          'ORG_VIEW', 'ORG_MANAGE',
+          'OFFICE_LOCATION_VIEW', 'OFFICE_LOCATION_CREATE',
+          'OFFICE_LOCATION_UPDATE', 'OFFICE_LOCATION_DEACTIVATE',
+        ],
+      },
       { to: '/settings/users', icon: ShieldCheck, label: 'Users & Roles', permission: 'USER_VIEW' },
-      { to: '/settings/organization', icon: Building2, label: 'Organization Settings', permission: 'ORG_MANAGE' },
     ],
   },
   {
@@ -228,7 +234,16 @@ export const NAV_SECTIONS = [
     badge: null,
     items: [
       { to: '/settings/users', icon: ShieldCheck, label: 'Users & Roles', permission: 'USER_VIEW' },
-      { to: '/settings/organization', icon: Building2, label: 'Organization Settings', permission: 'ORG_VIEW' },
+      {
+        to: '/settings/organization',
+        icon: Building2,
+        label: 'Organization Settings',
+        permissionsAny: [
+          'ORG_VIEW', 'ORG_MANAGE',
+          'OFFICE_LOCATION_VIEW', 'OFFICE_LOCATION_CREATE',
+          'OFFICE_LOCATION_UPDATE', 'OFFICE_LOCATION_DEACTIVATE',
+        ],
+      },
       { to: '/settings/leave', icon: CalendarDays, label: 'Leave Configuration', permission: 'LEAVE_MANAGE' },
       { to: '/settings/audit', icon: ScrollText, label: 'Audit Logs', permission: 'AUDIT_VIEW' },
       { to: '/settings/platform', icon: ShieldCheck, label: 'Platform Admin', role: 'SUPER_ADMIN' },
@@ -270,7 +285,12 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
     const sectionAllowed = (!section.permission || hasPermission(section.permission))
       && !(section.id === 'team-monitoring' && hasPermission('IT_MANAGEMENT_ACCESS'));
     const items = sectionAllowed
-      ? section.items.filter((item) => (!item.permission || hasPermission(item.permission)) && hasAccessRole(item))
+      ? section.items.filter((item) => (
+        (item.permissionsAny
+          ? item.permissionsAny.some((permission) => hasPermission(permission))
+          : (!item.permission || hasPermission(item.permission)))
+        && hasAccessRole(item)
+      ))
       : [];
     return { ...section, items };
   }).filter((section) => section.items.length > 0 && hasAccessRole(section));
