@@ -72,17 +72,6 @@ export const NAV_SECTIONS = [
     ],
   },
   {
-    id: 'employee-inbox',
-    label: 'Notifications',
-    description: 'Updates and actions related to your account',
-    permission: 'SELF_PROFILE_VIEW',
-    collapsible: true,
-    badge: null,
-    items: [
-      { to: '/notifications', icon: Bell, label: 'Notifications' },
-    ],
-  },
-  {
     id: 'employee-team',
     label: 'My Team',
     description: 'Leave and team workflows assigned to you',
@@ -264,6 +253,14 @@ export const NAV_INDEX = [
       sectionPermission: section.permission,
     }))
   ),
+  {
+    to: '/notifications',
+    icon: Bell,
+    label: 'Notifications',
+    permission: 'SELF_PROFILE_VIEW',
+    sectionPermission: 'SELF_PROFILE_VIEW',
+    section: 'Notifications',
+  },
   { to: '/employees', permission: 'EMPLOYEE_VIEW' },
 ];
 
@@ -304,8 +301,6 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
   let organizationSection = null;
 
   for (const section of filtered) {
-    // Notifications already have a dedicated topbar bell and notification center.
-    if (section.id === 'employee-inbox') continue;
     // Home and Dashboard are the same destination; keep one sidebar entry.
     if (section.id === 'root' && filtered.some((item) => item.id === 'employee-home')) continue;
 
@@ -356,14 +351,6 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
   };
 
   addSection(filtered.find((section) => section.id === 'employee-home'));
-  addSection({
-    id: 'notifications',
-    label: 'Inbox',
-    description: 'Updates and actions for your account',
-    collapsible: true,
-    badge: null,
-    items: [{ to: '/notifications', icon: Bell, label: 'Notifications' }],
-  });
 
   if (employeeSelfItems.length) {
     addSection({
@@ -390,7 +377,7 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
   addSection(timeAndLeave);
 
   for (const section of filtered) {
-    if (['employee-home', 'employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps', 'employee-inbox', 'root', 'organization', 'talent', 'attendance'].includes(section.id)) continue;
+    if (['employee-home', 'employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps', 'root', 'organization', 'talent', 'attendance'].includes(section.id)) continue;
     addSection(section);
   }
 
