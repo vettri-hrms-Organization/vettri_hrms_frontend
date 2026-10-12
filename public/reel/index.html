@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f1b3d" />
+    <meta name="description" content="A cinematic, downloadable 35-second Vettri HRMS brand reel in vertical 9:16." />
+    <title>Vettri HRMS — Brand Reel</title>
+    <link rel="stylesheet" href="/reel/reel.css" />
+    <script src="/reel/reel.js" defer></script>
+  </head>
+  <body>
+    <main class="studio">
+      <section class="intro" aria-labelledby="page-title">
+        <a class="back-link" href="/" aria-label="Back to Vettri HRMS">V <span>Vettri HRMS</span></a>
+        <div class="intro-copy">
+          <p class="eyebrow"><span class="live-dot"></span> BRAND FILM · 35 SECONDS</p>
+          <h1 id="page-title">People first.<br /><span>Progress forward.</span></h1>
+          <p class="description">A little less HR admin. A lot more room to grow. Meet the people platform designed to bring work together.</p>
+          <div class="format-notes">
+            <span>Vertical 9:16</span><span>1080 × 1920</span><span>Original soundtrack</span>
+          </div>
+        </div>
+        <div class="control-card">
+          <div class="control-title">
+            <span class="control-icon" aria-hidden="true">↗</span>
+            <div><strong>Your reel, ready to share.</strong><p>Export a 1080p video for Reels and LinkedIn.</p></div>
+          </div>
+          <button id="record-button" class="export-button" type="button">
+            <span class="export-symbol" aria-hidden="true">↓</span>
+            <span class="export-label">Export social-ready video</span>
+          </button>
+          <p id="export-status" class="export-status" role="status" aria-live="polite">MP4 when supported · original soundtrack · no voice-over</p>
+        </div>
+        <p class="studio-note">Product screens are a visual preview. No fabricated results, customer quotes, or testimonials.</p>
+      </section>
+
+      <section class="reel-column" aria-label="Promotional video preview">
+        <div class="device-frame">
+          <div class="device-topline"><span>VETTRI HRMS</span><span id="timecode">00:00 / 00:35</span></div>
+          <div class="video-window">
+            <canvas id="reel-canvas" width="1080" height="1920" aria-label="Animated Vettri HRMS promotional video preview"></canvas>
+            <div id="play-overlay" class="play-overlay">
+              <button id="play-button" class="play-button" type="button" aria-label="Play promotional video"><span aria-hidden="true">▶</span></button>
+              <span>PLAY THE FILM</span>
+            </div>
+          </div>
+          <div class="transport">
+            <button id="restart-button" class="transport-button" type="button" aria-label="Restart video">↺</button>
+            <div class="track" role="progressbar" aria-label="Video progress" aria-valuemin="0" aria-valuemax="35" aria-valuenow="0">
+              <span id="progress-fill"></span>
+            </div>
+            <span class="sound-label"><span aria-hidden="true">♫</span> MUSIC ON</span>
+          </div>
+        </div>
+        <p class="preview-note">An original motion-graphics film, made for the vertical screen.</p>
+      </section>
+    </main>
+  </body>
+</html>
