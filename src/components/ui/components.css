@@ -10947,38 +10947,6 @@ button:disabled,
 .vettri-workspace-copy small { overflow: hidden; color: #8190a7; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
 .vettri-workspace-chevron { flex: 0 0 auto; color: #718096; }
 
-.vettri-sidebar-search-wrap { flex: 0 0 40px; margin-bottom: 8px; }
-.vettri-sidebar-search {
-  display: flex !important;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  height: 40px;
-  padding: 0 10px;
-  border: 1px solid rgba(148,163,184,.2);
-  border-radius: 11px;
-  background: rgba(255,255,255,.82);
-  color: #718096;
-  text-align: left;
-  cursor: pointer;
-}
-.vettri-sidebar-search:hover { border-color: rgba(37,99,235,.22); color: #2563eb; background: #fff; }
-.vettri-sidebar-search > span { flex: 1; color: #64748b; font-size: 12.5px; }
-.vettri-sidebar-search kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 22px;
-  min-width: 42px;
-  padding: 0 6px;
-  border: 1px solid rgba(148,163,184,.2);
-  border-radius: 6px;
-  background: #f7f9fc;
-  color: #64748b;
-  font-size: 9px;
-  font-weight: 700;
-}
-
 .vettri-sidebar-nav {
   display: flex !important;
   flex: 1 1 auto !important;
@@ -11074,9 +11042,6 @@ button:disabled,
 .vettri-user-meta { display: flex !important; min-width: 0; flex: 1; flex-direction: column; gap: 1px; }
 .vettri-user-meta strong { overflow: hidden; color: #172033; font-size: 11.5px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .vettri-user-meta small { overflow: hidden; color: #8795aa; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
-.vettri-user-bell { position: relative; display: inline-flex !important; align-items: center; justify-content: center; width: 30px; height: 30px; flex: 0 0 30px; border: 0; border-radius: 8px; background: transparent; color: #718096; }
-.vettri-user-bell:hover { background: rgba(37,99,235,.06); color: #2563eb; }
-.vettri-user-bell > span { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: #ef4444; }
 .vettri-sidebar-profile-menu { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 90; width: 210px; padding: 7px; border: 1px solid rgba(148,163,184,.22); border-radius: 13px; background: rgba(255,255,255,.98); box-shadow: 0 18px 44px -22px rgba(15,27,61,.35); }
 .vettri-sidebar-profile-identity { display: flex; align-items: center; gap: 8px; padding: 7px; border-bottom: 1px solid rgba(15,27,61,.07); }
 .vettri-sidebar-profile-identity span { min-width: 0; display: flex; flex-direction: column; }
@@ -11090,13 +11055,11 @@ button:disabled,
 .vettri-sidebar-shell.is-collapsed .vettri-sidebar { padding: 10px 8px; }
 .vettri-sidebar-shell.is-collapsed .vettri-sidebar-brand { justify-content: center; padding-inline: 0; }
 .vettri-sidebar-shell.is-collapsed .vettri-workspace-switcher { justify-content: center; padding-inline: 0; }
-.vettri-sidebar-shell.is-collapsed .vettri-sidebar-search { justify-content: center; padding-inline: 0; }
 .vettri-sidebar-shell.is-collapsed .vettri-nav-group-label,
 .vettri-sidebar-shell.is-collapsed .vettri-nav-label,
 .vettri-sidebar-shell.is-collapsed .vettri-nav-badge,
 .vettri-sidebar-shell.is-collapsed .vettri-quick-add span,
 .vettri-sidebar-shell.is-collapsed .vettri-user-meta,
-.vettri-sidebar-shell.is-collapsed .vettri-user-bell { display: none !important; }
 .vettri-sidebar-shell.is-collapsed .vettri-nav-group { margin-bottom: 4px; }
 .vettri-sidebar-shell.is-collapsed .vettri-nav-item { justify-content: center; padding-inline: 4px; }
 .vettri-sidebar-shell.is-collapsed .vettri-nav-icon { width: 30px; height: 30px; flex-basis: 30px; }

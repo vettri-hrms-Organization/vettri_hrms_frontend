@@ -410,7 +410,6 @@ textarea.form-control:focus {
 }
 
 .vettri-workspace-switcher,
-.vettri-sidebar-search,
 .vettri-quick-add,
 .vettri-user-card,
 .vettri-user-trigger,
@@ -443,21 +442,6 @@ textarea.form-control:focus {
   white-space: nowrap !important;
 }
 
-.vettri-sidebar-search {
-  width: 100% !important;
-  justify-content: flex-start !important;
-  gap: 8px !important;
-  text-align: left !important;
-}
-
-.vettri-sidebar-search > span {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
 /* Navigation must never fall back to inline anchor layout. */
 .vettri-nav-group {
   display: block !important;
@@ -477,7 +461,7 @@ textarea.form-control:focus {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  flex: 0 0 25px !important;
+  flex: 0 0 26px !important;
 }
 
 .vettri-nav-label {
@@ -533,13 +517,6 @@ textarea.form-control:focus {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
-}
-
-.vettri-user-bell {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex: 0 0 32px !important;
 }
 
 /* Topbar layout */

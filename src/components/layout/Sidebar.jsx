@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, LogOut, Plus, Search, Settings2, UserCircle, X } from 'lucide-react';
+import { ChevronDown, LogOut, Plus, Settings2, UserCircle, X } from 'lucide-react';
 import Logo from '../brand/Logo';
 import Avatar from '../ui/Avatar';
 import { visibleNavSections, findNavItemByPath } from './navConfig';
@@ -37,8 +37,6 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen, onCloseMobile]);
-
-  const openCommandCenter = () => window.dispatchEvent(new CustomEvent('vettri:open-command-center'));
 
   const currentUserName = user?.fullName || 'Account';
   const currentRole = user?.roles?.[0] || 'Member';
@@ -83,14 +81,6 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
             )}
             {!isCollapsed && <ChevronDown className="vettri-workspace-chevron" size={14} />}
           </button>
-
-          <div className="vettri-sidebar-search-wrap">
-            <button type="button" className="vettri-sidebar-search" onClick={openCommandCenter} aria-label="Search" title="Search">
-              <Search size={15} />
-              {!isCollapsed && <span>Search</span>}
-              {!isCollapsed && <kbd>{navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl K'}</kbd>}
-            </button>
-          </div>
 
           <nav className="vettri-sidebar-nav" aria-label="Product areas">
             {sections.map((section) => (
@@ -151,7 +141,6 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                   </span>
                 )}
               </button>
-              {!isCollapsed && <button type="button" className="vettri-user-bell" onClick={() => navigate('/notifications')} aria-label="Notifications" title="Notifications"><Bell size={16} strokeWidth={1.8} /><span /></button>}
             </div>
 
             {profileOpen && (
