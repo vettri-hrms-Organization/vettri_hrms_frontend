@@ -688,3 +688,82 @@ textarea.form-control:focus {
     flex-direction: column;
   }
 }
+
+/* Keep the shared topbar on-brand in both workspace themes. */
+.vettri-topbar {
+  background: #2563EB !important;
+  border-color: rgba(255, 255, 255, .2) !important;
+}
+
+.vettri-topbar-crumb,
+.vettri-topbar-crumb b,
+.vettri-topbar-crumb strong,
+.vettri-topbar .hz-current-workspace,
+.vettri-topbar .hz-current-workspace svg,
+.vettri-topbar > label,
+.vettri-topbar > label > svg {
+  color: #fff !important;
+}
+
+.vettri-topbar .vettri-command-trigger,
+.vettri-topbar .vettri-command-trigger:hover {
+  background: #fff !important;
+  color: #334155 !important;
+}
+
+.vettri-topbar .vettri-command-trigger {
+  border-color: rgba(15, 27, 61, .16) !important;
+}
+
+.vettri-topbar .vettri-command-trigger > svg {
+  color: #2563EB !important;
+}
+
+.vettri-topbar .vettri-command-trigger kbd {
+  background: #f1f5f9 !important;
+  border-color: #dbe3ed !important;
+  color: #475569 !important;
+}
+
+.vettri-topbar .hz-icon-btn {
+  background: rgba(255, 255, 255, .1) !important;
+  border-color: rgba(255, 255, 255, .24) !important;
+  color: #fff !important;
+}
+
+.vettri-topbar .hz-icon-btn:hover {
+  background: rgba(255, 255, 255, .2) !important;
+  border-color: rgba(255, 255, 255, .42) !important;
+  color: #fff !important;
+}
+
+.vettri-topbar .hz-icon-btn[aria-label='Account menu'] {
+  background: rgba(255, 255, 255, .1) !important;
+}
+
+.vettri-topbar .hz-icon-btn[aria-label='Account menu']:hover {
+  background: rgba(255, 255, 255, .2) !important;
+}
+
+.vettri-topbar .hz-icon-btn[aria-label='Account menu'] > div > span {
+  color: #fff !important;
+}
+
+.vettri-topbar .hz-icon-btn .hz-avatar {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .5) !important;
+}
+
+.vettri-topbar .hz-notification-dot {
+  border-color: #2563EB !important;
+}
+
+.vettri-topbar > label .form-select {
+  background-color: #fff !important;
+  color: #172033 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vettri-topbar .hz-icon-btn {
+    transition: none !important;
+  }
+}
