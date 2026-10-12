@@ -471,8 +471,6 @@ function SelectField({ id, label, value, options, error, onChange }) {
 }
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
   * { box-sizing: border-box; }
 
   .signup-page {
@@ -482,7 +480,7 @@ const styles = `
     grid-template-columns: 48% 52%;
     background: #fff;
     color: #0f172a;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--hz-font-sans);
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
   }
@@ -517,7 +515,7 @@ const styles = `
   .signup-brand-message { max-width: 520px; margin: auto 0; }
   .signup-brand-eyebrow { display: inline-flex; align-items: center; gap: 10px; color: #6ba3ff; font-size: 11px; font-weight: 700; letter-spacing: .16em; }
   .signup-brand-eyebrow-dot { width: 8px; height: 8px; border-radius: 50%; background: #4d8dff; box-shadow: 0 0 0 6px rgba(77,141,255,.12); }
-  .signup-brand-message h1 { margin: 18px 0 20px; max-width: 520px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(2.7rem, 4vw, 4.5rem); line-height: 1.02; letter-spacing: -.055em; font-weight: 800; color: #fff; }
+  .signup-brand-message h1 { margin: 18px 0 20px; max-width: 520px; font-family: var(--hz-font-display); font-size: clamp(2.7rem, 4vw, 4.5rem); line-height: 1.04; letter-spacing: -.045em; font-weight: 750; color: #fff; }
   .signup-brand-message h1 span { color: #69a3ff; }
   .signup-brand-message p { max-width: 500px; margin: 0 0 28px; color: #a9c1d9; font-size: 15px; line-height: 1.75; }
 
@@ -562,7 +560,7 @@ const styles = `
   .signup-surface { background: #fff; border: 1px solid #dfe6ee; border-radius: 16px; box-shadow: 0 12px 35px rgba(15,27,61,.07); padding: 30px; }
   .signup-surface-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .signup-eyebrow.light { color: #1d5aa6; margin: 0; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-  .signup-surface h2 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(1.8rem, 3vw, 2.35rem); line-height: 1.12; letter-spacing: -.045em; font-weight: 800; color: #172033; }
+  .signup-surface h2 { margin: 0; font-family: var(--hz-font-display); font-size: clamp(1.8rem, 3vw, 2.35rem); line-height: 1.2; letter-spacing: -.03em; font-weight: 700; color: #172033; }
   .signup-muted { margin: 9px 0 26px; color: #66758a; font-size: 13px; line-height: 1.65; }
 
   .signup-fields { display: flex; flex-direction: column; gap: 18px; }
@@ -645,5 +643,4 @@ const styles = `
     .signup-primary, .signup-back, .signup-spacer { width: 100%; max-width: none; }
   }
 `;
-
 

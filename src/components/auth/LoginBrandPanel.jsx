@@ -72,7 +72,7 @@ export default function LoginBrandPanel() {
         .login-brand-panel__copy { max-width: 470px; }
         .login-brand-panel__eyebrow { margin: 0 0 18px; color: #a8bdd1; font-size: 11px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
         .login-brand-panel__eyebrow span { padding: 0 5px; color: #4aaee4; }
-        .login-brand-panel h2 { max-width: 470px; margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(38px, 4.2vw, 64px); font-weight: 400; letter-spacing: -.045em; line-height: .98; }
+        .login-brand-panel h2 { max-width: 470px; margin: 0; font-family: var(--hz-font-display); font-size: clamp(38px, 4.2vw, 64px); font-weight: 600; letter-spacing: -.045em; line-height: 1.04; }
         .login-brand-panel h2 em { color: #22a9ed; font-style: normal; }
         .login-brand-panel__intro { max-width: 390px; margin: 25px 0 0; color: #afc1d3; font-size: 14px; line-height: 1.6; }
         .login-brand-panel__benefits { position: relative; z-index: 4; display: grid; gap: 13px; max-width: 390px; margin-top: 28px; }
