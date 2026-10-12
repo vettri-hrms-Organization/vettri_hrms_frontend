@@ -33,4 +33,21 @@ describe('offline queue tenant scoping', () => {
     expect(queue).toHaveLength(2);
     expect([...new Set(queue.map((item) => item.headers['X-Company-Id']))].sort()).toEqual(['company-1', 'company-2']);
   });
+
+  it('does not persist auth or password reset requests in the offline queue', () => {
+    const loginRequest = buildRequest('company-1', {
+      url: '/api/auth/login',
+      data: { username: 'admin', password: 'secret-pass', remember: true },
+      headers: { 'X-Company-Id': 'company-1', Authorization: 'Bearer abc' },
+    });
+
+    const resetRequest = buildRequest('company-1', {
+      url: '/api/auth/reset-password',
+      data: { token: 'abc123', password: 'newPass123!', confirmPassword: 'newPass123!' },
+    });
+
+    expect(queueRequestForRetry(loginRequest, new Error('offline'))).toBe(false);
+    expect(queueRequestForRetry(resetRequest, new Error('offline'))).toBe(false);
+    expect(readQueue()).toHaveLength(0);
+  });
 });

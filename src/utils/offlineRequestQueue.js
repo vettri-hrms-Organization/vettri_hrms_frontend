@@ -34,6 +34,79 @@ function safeJsonParse(value, fallback) {
   }
 }
 
+const SENSITIVE_KEY_PATTERNS = [/password/i, /secret/i, /token/i, /cookie/i, /authorization/i, /otp/i, /pin/i, /code/i, /key/i];
+const SENSITIVE_QUEUE_ENDPOINTS = new Set([
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/logout',
+  '/api/auth/refresh',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/change-password',
+  '/api/auth/verify-email',
+  '/api/auth/activate',
+  '/api/auth/activate/inspect',
+  '/api/auth/invitation',
+]);
+
+function normalizeQueuePath(value = '') {
+  const raw = String(value || '').split('?')[0].trim();
+  if (!raw) return '/';
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      return new URL(raw).pathname || '/';
+    } catch {
+      return raw;
+    }
+  }
+  return raw;
+}
+
+function hasSensitiveQueueContent(value, pathHint = '') {
+  if (value == null) return false;
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase();
+    return SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(normalized)) || pathHint.toLowerCase().includes('password') || pathHint.toLowerCase().includes('token');
+  }
+  if (Array.isArray(value)) {
+    return value.some((entry) => hasSensitiveQueueContent(entry, pathHint));
+  }
+  if (typeof value === 'object') {
+    return Object.entries(value).some(([key, nestedValue]) => {
+      const loweredKey = String(key).toLowerCase();
+      if (SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(loweredKey))) return true;
+      return hasSensitiveQueueContent(nestedValue, loweredKey);
+    });
+  }
+  return false;
+}
+
+function isSensitiveQueueEndpoint(path = '') {
+  const normalized = normalizeQueuePath(path).replace(/\/+$/, '') || '/';
+  return SENSITIVE_QUEUE_ENDPOINTS.has(normalized) || normalized.includes('/api/auth/') || normalized.includes('/api/agent/enroll');
+}
+
+function sanitizeQueueValue(value) {
+  if (value == null) return value;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeQueueValue(entry));
+  }
+  if (typeof value === 'object') {
+    return Object.keys(value).reduce((acc, key) => {
+      const lowerKey = String(key).toLowerCase();
+      if (SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(lowerKey)) || lowerKey === 'authorization' || lowerKey === 'cookie' || lowerKey === 'set-cookie') {
+        return acc;
+      }
+      acc[key] = sanitizeQueueValue(value[key]);
+      return acc;
+    }, {});
+  }
+  return value;
+}
+
 function writeQueue(queue) {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   const nextHealth = {
@@ -50,7 +123,9 @@ function writeQueue(queue) {
 export function readQueue() {
   return safeJsonParse(localStorage.getItem(QUEUE_KEY), []).filter((item) => {
     const url = String(item?.url || '');
-    return !url.includes('/api/employees/import/preview');
+    if (url.includes('/api/employees/import/preview') || isSensitiveQueueEndpoint(url)) return false;
+    if (hasSensitiveQueueContent(item?.data, 'data') || hasSensitiveQueueContent(item?.params, 'params') || hasSensitiveQueueContent(item?.headers, 'headers')) return false;
+    return true;
   }).map((item) => ({
     id: item.id || `${Date.now()}-${Math.random()}`,
     method: (item.method || 'POST').toLowerCase(),
@@ -153,14 +228,22 @@ export function queueRequestForRetry(request, error) {
     return false;
   }
 
+  const normalizedUrl = normalizeQueuePath(request?.url || '');
+  if (isSensitiveQueueEndpoint(normalizedUrl)) {
+    state.connectionState = ConnectionState.DEGRADED;
+    state.lastError = 'Sensitive auth requests are intentionally excluded from the offline retry queue to avoid replaying credentials or tokens.';
+    console.warn(state.lastError);
+    return false;
+  }
+
   const queue = readQueue();
   const safeRequest = {
     id: request._queueId || `${Date.now()}-${Math.random()}`,
     method: (request.method || 'POST').toLowerCase(),
     url: request.url || '/',
     baseURL: request.baseURL || '',
-    params: request.params || {},
-    data: request.data ?? null,
+    params: sanitizeQueueValue(request.params || {}),
+    data: sanitizeQueueValue(request.data ?? null),
     headers: { ...request.headers },
     retryCount: 0,
     createdAt: Date.now(),
@@ -168,14 +251,18 @@ export function queueRequestForRetry(request, error) {
     idempotencyKey: computeIdempotencyKey(request),
   };
 
-  if (safeRequest.headers.Authorization) {
-    delete safeRequest.headers.Authorization;
+  for (const key of Object.keys(safeRequest.headers)) {
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'authorization' || lowerKey === 'cookie' || lowerKey === 'set-cookie' || lowerKey.includes('token') || lowerKey.includes('secret') || lowerKey.includes('password')) {
+      delete safeRequest.headers[key];
+    }
   }
-  if (safeRequest.headers.authorization) {
-    delete safeRequest.headers.authorization;
-  }
-  if (safeRequest.headers.Cookie) {
-    delete safeRequest.headers.Cookie;
+
+  if (hasSensitiveQueueContent(safeRequest.data, normalizedUrl) || hasSensitiveQueueContent(safeRequest.params, normalizedUrl) || hasSensitiveQueueContent(safeRequest.headers, normalizedUrl)) {
+    state.connectionState = ConnectionState.DEGRADED;
+    state.lastError = 'Offline queue rejected a payload containing sensitive data; credentials and tokens are never persisted for replay.';
+    console.warn(state.lastError);
+    return false;
   }
 
   const existingIndex = queue.findIndex((item) => item.idempotencyKey === safeRequest.idempotencyKey);
