@@ -21,6 +21,7 @@ body {
   font-family: var(--hz-font-sans);
   font-size: var(--hz-text-base);
   letter-spacing: 0;
+  line-height: var(--hz-line-height-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -48,7 +49,23 @@ h4,
 h5,
 h6 {
   font-family: var(--hz-font-display);
-  letter-spacing: 0;
+  font-weight: var(--hz-font-weight-semibold);
+  line-height: var(--hz-line-height-heading);
+  letter-spacing: var(--hz-letter-spacing-heading);
+}
+
+h1 { font-size: var(--hz-text-4xl); }
+h2 { font-size: var(--hz-text-3xl); }
+h3 { font-size: var(--hz-text-2xl); }
+h4 { font-size: var(--hz-text-xl); }
+h5 { font-size: var(--hz-text-lg); }
+h6 { font-size: var(--hz-text-base); }
+
+button,
+input,
+select,
+textarea {
+  font-size: inherit;
 }
 
 .hz-main-content {

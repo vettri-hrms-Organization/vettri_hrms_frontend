@@ -744,3 +744,149 @@ textarea.form-control:focus {
     transition: none !important;
   }
 }
+
+/* Shared type hierarchy for authenticated HRMS surfaces. */
+.hz-page-header__title {
+  font-size: clamp(var(--hz-text-2xl), 2vw, var(--hz-text-4xl)) !important;
+  font-weight: var(--hz-font-weight-bold) !important;
+  line-height: var(--hz-line-height-tight) !important;
+  letter-spacing: var(--hz-letter-spacing-heading) !important;
+  overflow-wrap: anywhere;
+}
+
+.hz-page-header__description,
+.hz-dashboard__hero-copy p:last-child {
+  font-size: var(--hz-text-sm) !important;
+  line-height: var(--hz-line-height-body) !important;
+}
+
+.hz-card__title,
+.hz-panel__heading,
+.hz-section-header,
+.hz-card h2,
+.hz-card h3,
+.hz-panel h2,
+.hz-panel h3 {
+  font-size: var(--hz-text-lg) !important;
+  font-weight: var(--hz-font-weight-semibold) !important;
+  line-height: var(--hz-line-height-heading) !important;
+  letter-spacing: -0.02em !important;
+}
+
+.hz-dashboard__hero-copy h1 {
+  font-size: clamp(1.75rem, 2.15vw, 2.125rem) !important;
+  font-weight: var(--hz-font-weight-bold) !important;
+  line-height: 1.16 !important;
+  letter-spacing: -0.035em !important;
+  overflow-wrap: anywhere;
+}
+
+.hz-dashboard--employee .hz-dashboard__hero-copy h1 {
+  font-size: clamp(1.75rem, 2.15vw, 2.125rem) !important;
+  font-weight: var(--hz-font-weight-bold) !important;
+  line-height: 1.16 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.hz-dashboard__section-heading h2 {
+  font-size: var(--hz-text-lg) !important;
+  font-weight: var(--hz-font-weight-semibold) !important;
+  line-height: var(--hz-line-height-heading) !important;
+  letter-spacing: -0.02em !important;
+}
+
+.hz-dashboard__metric > span {
+  font-size: var(--hz-text-sm) !important;
+  font-weight: var(--hz-font-weight-medium) !important;
+  line-height: var(--hz-line-height-body) !important;
+}
+
+.hz-dashboard__metric strong,
+.hz-dashboard__hero-pill strong {
+  max-width: 100%;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.hz-dashboard__metric strong {
+  font-size: clamp(1.625rem, 2vw, 1.875rem) !important;
+  font-weight: var(--hz-font-weight-bold) !important;
+}
+
+.hz-dashboard__metric small {
+  font-size: var(--hz-text-xs) !important;
+  line-height: var(--hz-line-height-body) !important;
+}
+
+.vettri-nav-label {
+  font-size: var(--hz-text-sm) !important;
+  font-weight: var(--hz-font-weight-semibold) !important;
+  letter-spacing: 0 !important;
+}
+
+.vettri-nav-group-label {
+  font-size: var(--hz-text-2xs) !important;
+  font-weight: var(--hz-font-weight-bold) !important;
+  letter-spacing: 0.08em !important;
+}
+
+.vettri-topbar-crumb,
+.vettri-topbar .hz-current-workspace {
+  font-size: var(--hz-text-xs) !important;
+  font-weight: var(--hz-font-weight-medium) !important;
+}
+
+.vettri-topbar-crumb strong {
+  font-size: var(--hz-text-sm) !important;
+  font-weight: var(--hz-font-weight-semibold) !important;
+}
+
+.form-control,
+.form-select,
+textarea.form-control,
+.form-label,
+.hz-form-label,
+.btn {
+  font-family: var(--hz-font-sans);
+}
+
+.form-label,
+.hz-form-label {
+  font-size: var(--hz-text-sm) !important;
+  font-weight: var(--hz-font-weight-semibold) !important;
+  line-height: var(--hz-line-height-body);
+}
+
+.btn {
+  font-size: var(--hz-text-sm) !important;
+  font-weight: var(--hz-font-weight-semibold) !important;
+  letter-spacing: 0 !important;
+}
+
+.hz-table thead th,
+.table thead th {
+  font-size: var(--hz-text-xs) !important;
+  font-weight: var(--hz-font-weight-bold) !important;
+  letter-spacing: 0.045em !important;
+}
+
+.hz-table tbody td,
+.table tbody td {
+  font-size: var(--hz-text-sm);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+  .hz-dashboard__hero-copy h1 {
+    font-size: clamp(1.625rem, 6vw, 1.875rem) !important;
+  }
+
+  .hz-dashboard__metric strong {
+    font-size: clamp(1.5rem, 6vw, 1.75rem) !important;
+  }
+}
