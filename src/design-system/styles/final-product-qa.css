@@ -668,28 +668,33 @@ textarea.form-control:focus {
 
 /* Keep the shared topbar on-brand in both workspace themes. */
 .vettri-topbar {
-  background: #2563EB !important;
-  border-color: rgba(255, 255, 255, .2) !important;
+  background: linear-gradient(110deg, #F8FAFF 0%, #EDF4FF 55%, #E4EDFF 100%) !important;
+  border-color: #D7E5FF !important;
+  color: #0F1B3D !important;
 }
 
 .vettri-topbar-crumb,
 .vettri-topbar-crumb b,
 .vettri-topbar-crumb strong,
 .vettri-topbar .hz-current-workspace,
-.vettri-topbar .hz-current-workspace svg,
 .vettri-topbar > label,
+.vettri-topbar-crumb span {
+  color: #0F1B3D !important;
+}
+
+.vettri-topbar .hz-current-workspace svg,
 .vettri-topbar > label > svg {
-  color: #fff !important;
+  color: #2563EB !important;
 }
 
 .vettri-topbar .vettri-command-trigger,
 .vettri-topbar .vettri-command-trigger:hover {
   background: #fff !important;
-  color: #334155 !important;
+  color: #0F1B3D !important;
 }
 
 .vettri-topbar .vettri-command-trigger {
-  border-color: rgba(15, 27, 61, .16) !important;
+  border-color: #D7E5FF !important;
 }
 
 .vettri-topbar .vettri-command-trigger > svg {
@@ -697,46 +702,62 @@ textarea.form-control:focus {
 }
 
 .vettri-topbar .vettri-command-trigger kbd {
-  background: #f1f5f9 !important;
-  border-color: #dbe3ed !important;
-  color: #475569 !important;
+  background: #EAF1FF !important;
+  border-color: #D7E5FF !important;
+  color: #162653 !important;
 }
 
 .vettri-topbar .hz-icon-btn {
-  background: rgba(255, 255, 255, .1) !important;
-  border-color: rgba(255, 255, 255, .24) !important;
-  color: #fff !important;
+  background: #EAF1FF !important;
+  border-color: #D7E5FF !important;
+  color: #2563EB !important;
 }
 
 .vettri-topbar .hz-icon-btn:hover {
-  background: rgba(255, 255, 255, .2) !important;
-  border-color: rgba(255, 255, 255, .42) !important;
-  color: #fff !important;
+  background: #DDE9FF !important;
+  border-color: #BFD3FF !important;
+  color: #1D4ED8 !important;
 }
 
 .vettri-topbar .hz-icon-btn[aria-label='Account menu'] {
-  background: rgba(255, 255, 255, .1) !important;
+  background: rgba(234, 241, 255, .72) !important;
 }
 
 .vettri-topbar .hz-icon-btn[aria-label='Account menu']:hover {
-  background: rgba(255, 255, 255, .2) !important;
+  background: #DDE9FF !important;
 }
 
 .vettri-topbar .hz-icon-btn[aria-label='Account menu'] > div > span {
-  color: #fff !important;
+  color: #0F1B3D !important;
 }
 
 .vettri-topbar .hz-icon-btn .hz-avatar {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, .5) !important;
+  box-shadow: 0 0 0 2px #fff !important;
 }
 
 .vettri-topbar .hz-notification-dot {
-  border-color: #2563EB !important;
+  border-color: #F8FAFF !important;
 }
 
 .vettri-topbar > label .form-select {
   background-color: #fff !important;
-  color: #172033 !important;
+  border-color: #D7E5FF !important;
+  color: #0F1B3D !important;
+}
+
+.vettri-topbar .hz-topbar-menu {
+  background: #fff !important;
+  border-color: #D7E5FF !important;
+  color: #0F1B3D !important;
+}
+
+.vettri-topbar .hz-topbar-menu > div:first-child > div,
+.vettri-topbar .hz-topbar-menu button[role='menuitem']:not([style]) {
+  color: #0F1B3D !important;
+}
+
+.vettri-topbar .hz-topbar-menu button[role='menuitem'] svg {
+  color: #2563EB !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
