@@ -45,8 +45,23 @@ export default function Devices() {
     && hasPermission('MONITORING_MANAGE');
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['monitoring-devices'], queryFn: monitoringApi.devices, refetchInterval: 30_000 });
+  const inventorySummaryQuery = useQuery({
+    queryKey: ['monitoring-device-inventory-summary'],
+    queryFn: monitoringApi.inventoryScanSummary,
+    enabled: canManageDevices,
+    refetchInterval: 10_000,
+  });
+  const canViewInventory = hasPermission('IT_MANAGEMENT_ACCESS') && hasPermission('MONITORING_VIEW');
+  const inventorySummary = inventorySummaryQuery.data || { totalDevices: 0, queuedCount: 0, scanningCount: 0, completedCount: 0, failedCount: 0, offlineCount: 0, neverScannedCount: 0 };
   const employees = useQuery({ queryKey: ['monitoring-device-employee-options'], queryFn: monitoringApi.deviceEmployeeOptions, enabled: (connectOpen || Boolean(assignmentDevice)) && canManageDevices });
   const enrollmentQuery = useQuery({ queryKey: ['monitoring-device-enrollments'], queryFn: monitoringApi.deviceEnrollments, enabled: canManageDevices, refetchInterval: 10_000 });
+  const bulkScan = useMutation({
+    mutationFn: monitoringApi.bulkRequestDeviceInventoryScan,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['monitoring-devices'] });
+      await queryClient.invalidateQueries({ queryKey: ['monitoring-device-inventory-summary'] });
+    },
+  });
   const enroll = useMutation({
     mutationFn: () => monitoringApi.enrollDevice({ employeeId: Number(employeeId), deviceType: 'WINDOWS_PC' }),
     onSuccess: (result) => { setEnrollment(result); setEmailSent(false); queryClient.invalidateQueries({ queryKey: ['monitoring-device-enrollments'] }); },
@@ -96,6 +111,18 @@ export default function Devices() {
   }
   async function copyEnrollmentLink(item) {
     if (item?.enrollmentUrl) await navigator.clipboard.writeText(item.enrollmentUrl);
+  }
+
+  async function downloadInventoryReport(format) {
+    const blob = await monitoringApi.exportInventoryReport(format);
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `device-inventory-report.${format === 'excel' ? 'xlsx' : 'csv'}`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
   }
 
   const filtered = useMemo(() => {
@@ -206,6 +233,52 @@ export default function Devices() {
   return (
     <div className="d-flex flex-column gap-4">
       <PageHeader eyebrow="Monitoring" title="Monitored Devices" description="Every device enrolled with the Windows Agent" actions={canManageDevices && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>} />
+
+      {canViewInventory && (
+        <Card>
+          <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+            <div className="d-flex flex-wrap gap-3">
+              {[
+                { label: 'Total enrolled', value: inventorySummary.totalDevices },
+                { label: 'Queued', value: inventorySummary.queuedCount },
+                { label: 'Scanning', value: inventorySummary.scanningCount },
+                { label: 'Completed', value: inventorySummary.completedCount },
+                { label: 'Failed', value: inventorySummary.failedCount },
+                { label: 'Offline', value: inventorySummary.offlineCount },
+                { label: 'Never scanned', value: inventorySummary.neverScannedCount },
+              ].map((item) => (
+                <div key={item.label} className="text-center" style={{ minWidth: 110 }}>
+                  <div className="text-secondary-hz small">{item.label}</div>
+                  <div className="h5 mb-0 mt-1">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="d-flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => bulkScan.mutate()}
+                loading={bulkScan.isPending}
+                disabled={bulkScan.isPending || !canManageDevices}
+              >
+                {bulkScan.isPending ? 'Queuing scans...' : 'Scan All Devices'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => downloadInventoryReport('csv')}>
+                Download CSV Report
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => downloadInventoryReport('excel')}>
+                Download Excel Report
+              </Button>
+            </div>
+          </div>
+          {bulkScan.isError && (
+            <div className="mt-3">
+              <ErrorBanner>{bulkScan.error?.response?.data?.message || 'Could not queue a bulk inventory scan.'}</ErrorBanner>
+            </div>
+          )}
+        </Card>
+      )}
 
       <FilterBar>
         <div className="position-relative" style={{ maxWidth: 360, width: '100%' }}>

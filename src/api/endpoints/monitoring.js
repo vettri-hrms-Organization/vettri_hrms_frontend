@@ -82,6 +82,21 @@ export const monitoringApi = {
       .post(`/api/monitoring/devices/${id}/inventory-scan`)
       .then((res) => res.data),
 
+  bulkRequestDeviceInventoryScan: () =>
+    axiosClient
+      .post('/api/monitoring/devices/inventory-scan/bulk')
+      .then((res) => res.data),
+
+  inventoryScanSummary: () =>
+    axiosClient
+      .get('/api/monitoring/devices/inventory-summary')
+      .then((res) => res.data),
+
+  exportInventoryReport: (format = 'csv') =>
+    axiosClient
+      .get(`/api/monitoring/devices/inventory/export/${format}`, { responseType: 'blob' })
+      .then((res) => res.data),
+
   updateDeviceAssignment: (id, employeeId) =>
     axiosClient
       .put(`/api/monitoring/devices/${id}/assignment`, { employeeId })
