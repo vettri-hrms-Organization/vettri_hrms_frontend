@@ -77,6 +77,11 @@ export const monitoringApi = {
       .get(`/api/monitoring/devices/${id}`)
       .then((res) => res.data),
 
+  requestDeviceInventoryScan: (id) =>
+    axiosClient
+      .post(`/api/monitoring/devices/${id}/inventory-scan`)
+      .then((res) => res.data),
+
   updateDeviceAssignment: (id, employeeId) =>
     axiosClient
       .put(`/api/monitoring/devices/${id}/assignment`, { employeeId })

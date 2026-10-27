@@ -47,6 +47,7 @@ import {
   timeAgoIST,
   formatDurationShort,
 } from '../../utils/formatDateTime';
+import { useAuth } from '../../hooks/useAuth';
 
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -62,6 +63,9 @@ export default function DeviceDetails() {
   const { id } = useParams();
 
   const queryClient = useQueryClient();
+  const { hasPermission } = useAuth();
+  const canRequestInventoryScan = hasPermission('IT_MANAGEMENT_ACCESS')
+    && hasPermission('MONITORING_MANAGE');
 
 
   // ============================================================
@@ -114,13 +118,23 @@ export default function DeviceDetails() {
     enabled: Boolean(id),
 
     // Keep live heartbeat
-    refetchInterval: 30_000,
+    refetchInterval: (query) =>
+      ['PENDING', 'SCANNING'].includes(query.state.data?.inventoryStatus)
+        ? 3_000
+        : 30_000,
 
     // Avoid unnecessary request when browser gets focus
     refetchOnWindowFocus: false,
 
     // Refresh after reconnecting
     refetchOnReconnect: true,
+  });
+
+  const inventoryScan = useMutation({
+    mutationFn: () => monitoringApi.requestDeviceInventoryScan(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['monitoring-device', id] });
+    },
   });
 
 
@@ -1056,18 +1070,57 @@ export default function DeviceDetails() {
       {!deviceLoading && !deviceError && device && (
         <Card title="Hardware Inventory" subtitle="Specifications reported by the authenticated Vettri Agent. Missing firmware fields are left blank.">
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-            <StatusBadge
-              status={device.inventoryStatus || 'NOT_SCANNED'}
-              variant={device.inventoryStatus === 'COMPLETED' ? 'success' : device.inventoryStatus === 'FAILED' ? 'warning' : 'neutral'}
-            >
-              {device.inventoryStatus || 'NOT_SCANNED'}
-            </StatusBadge>
-            <span className="text-secondary-hz small">
-              {device.lastInventoryScanAt
-                ? `Last successful scan ${formatDateTimeIST(device.lastInventoryScanAt)}`
-                : 'No successful inventory scan yet'}
-            </span>
+            <div className="d-flex align-items-center flex-wrap gap-2">
+              <StatusBadge
+                status={device.inventoryStatus === 'PENDING' ? 'SCAN_QUEUED' : device.inventoryStatus || 'NOT_SCANNED'}
+                variant={device.inventoryStatus === 'COMPLETED' ? 'success' : device.inventoryStatus === 'FAILED' ? 'warning' : 'neutral'}
+              >
+                {device.inventoryStatus === 'PENDING' ? 'SCAN_QUEUED' : device.inventoryStatus || 'NOT_SCANNED'}
+              </StatusBadge>
+              <span className="text-secondary-hz small">
+                {device.lastInventoryScanAt
+                  ? `Last successful scan ${formatDateTimeIST(device.lastInventoryScanAt)}`
+                  : 'No successful inventory scan yet'}
+              </span>
+            </div>
+            {canRequestInventoryScan && (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                icon={RefreshCw}
+                loading={inventoryScan.isPending}
+                disabled={
+                  inventoryScan.isPending ||
+                  ['PENDING', 'SCANNING'].includes(device.inventoryStatus) ||
+                  device.active === false
+                }
+                onClick={() => inventoryScan.mutate()}
+              >
+                Scan Specifications
+              </Button>
+            )}
           </div>
+          {device.inventoryStatus === 'PENDING' && !isDeviceOnline(device) && (
+            <p className="text-secondary-hz small mb-3" role="status">
+              The agent is offline. This scan is queued and will run when it reconnects. Requests expire after 24 hours.
+            </p>
+          )}
+          {device.inventoryStatus === 'PENDING' && isDeviceOnline(device) && (
+            <p className="text-secondary-hz small mb-3" role="status">
+              The scan is queued and will start when the agent checks in.
+            </p>
+          )}
+          {device.inventoryStatus === 'SCANNING' && (
+            <p className="text-secondary-hz small mb-3" role="status">
+              The agent is collecting hardware specifications.
+            </p>
+          )}
+          {inventoryScan.isError && (
+            <p className="text-danger small mb-3" role="alert">
+              {inventoryScan.error?.response?.data?.message || 'The inventory scan could not be queued. Please try again.'}
+            </p>
+          )}
           {device.hardwareInventory
             ? <AdminHardwareInventory inventory={device.hardwareInventory} />
             : <p className="text-secondary-hz mb-0">No hardware specifications have been submitted by this device.</p>}
