@@ -53,6 +53,22 @@ export const monitoringApi = {
       .get(`/api/device-enrollments/${encodeURIComponent(token)}`, { timeout: 15000 })
       .then((res) => res.data),
 
+  deviceEnrollmentInventory: (token, deviceId) =>
+    axiosClient
+      .get(`/api/device-enrollments/${encodeURIComponent(token)}/inventory`, {
+        timeout: 15000,
+        params: deviceId ? { deviceId } : undefined,
+      })
+      .then((res) => res.data),
+
+  requestDeviceEnrollmentInventory: (token, deviceId) =>
+    axiosClient
+      .post(`/api/device-enrollments/${encodeURIComponent(token)}/inventory`, {
+        consent: true,
+        deviceId: deviceId || undefined,
+      }, { timeout: 15000 })
+      .then((res) => res.data),
+
   deviceEnrollmentInstallerUrl: (token) =>
     `${API_BASE_URL}/api/device-enrollments/${encodeURIComponent(token)}/installer`,
 

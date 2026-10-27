@@ -143,6 +143,23 @@ export default function Devices() {
       style: { color: 'var(--hz-text-secondary)' },
     },
     { key: 'os', label: 'Operating System', render: (d) => getDeviceOS(d) },
+    {
+      key: 'inventory',
+      label: 'Hardware Inventory',
+      render: (d) => (
+        <div className="d-flex flex-column align-items-start gap-1">
+          <StatusBadge
+            status={d.inventoryStatus || 'NOT_SCANNED'}
+            variant={d.inventoryStatus === 'COMPLETED' ? 'success' : d.inventoryStatus === 'FAILED' || d.inventoryStatus === 'OFFLINE' ? 'warning' : 'neutral'}
+          >
+            {d.inventoryStatus || 'NOT_SCANNED'}
+          </StatusBadge>
+          <span className="text-secondary-hz small">
+            {d.lastInventoryScanAt ? timeAgoIST(d.lastInventoryScanAt) : 'Not scanned'}
+          </span>
+        </div>
+      ),
+    },
     { key: 'agentVersion', label: 'Agent Version', render: (d) => getDeviceAgentVersion(d) },
     {
       key: 'actions',

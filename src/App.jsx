@@ -68,7 +68,9 @@ export default function App() {
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/careers" element={<CareersList />} />
       <Route path="/careers/:jobId" element={<JobApply />} />
-      <Route path="/device-enrollment/:token" element={<DeviceEnrollment />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/device-enrollment/:token" element={<DeviceEnrollment />} />
+      </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>

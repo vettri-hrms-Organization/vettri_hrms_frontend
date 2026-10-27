@@ -1053,6 +1053,26 @@ export default function DeviceDetails() {
           </Card>
         )}
 
+      {!deviceLoading && !deviceError && device && (
+        <Card title="Hardware Inventory" subtitle="Specifications reported by the authenticated Vettri Agent. Missing firmware fields are left blank.">
+          <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <StatusBadge
+              status={device.inventoryStatus || 'NOT_SCANNED'}
+              variant={device.inventoryStatus === 'COMPLETED' ? 'success' : device.inventoryStatus === 'FAILED' ? 'warning' : 'neutral'}
+            >
+              {device.inventoryStatus || 'NOT_SCANNED'}
+            </StatusBadge>
+            <span className="text-secondary-hz small">
+              {device.lastInventoryScanAt
+                ? `Last successful scan ${formatDateTimeIST(device.lastInventoryScanAt)}`
+                : 'No successful inventory scan yet'}
+            </span>
+          </div>
+          {device.hardwareInventory
+            ? <AdminHardwareInventory inventory={device.hardwareInventory} />
+            : <p className="text-secondary-hz mb-0">No hardware specifications have been submitted by this device.</p>}
+        </Card>
+      )}
 
       {/* ========================================================
           MAIN CONTENT
@@ -2151,4 +2171,66 @@ export default function DeviceDetails() {
 
     </div>
   );
+}
+
+function AdminHardwareInventory({ inventory }) {
+  const rows = [
+    ['Computer name', inventory.computerName],
+    ['Manufacturer', inventory.manufacturer],
+    ['Model', inventory.model],
+    ['Serial number', inventory.serialNumber],
+    ['Processor', inventory.processorName],
+    ['Processor manufacturer', inventory.processorManufacturer],
+    ['Physical cores', inventory.physicalCoreCount],
+    ['Logical processors', inventory.logicalProcessorCount],
+    ['Installed RAM', formatInventoryBytes(inventory.installedMemoryBytes)],
+    ['Windows edition', inventory.windowsEdition],
+    ['Windows version', inventory.windowsVersion],
+    ['Windows build', inventory.windowsBuild],
+    ['Architecture', inventory.architecture],
+    ['BIOS manufacturer', inventory.biosManufacturer],
+    ['BIOS version', inventory.biosVersion],
+    ['BIOS release date', inventory.biosReleaseDate],
+    ['System UUID', inventory.systemUuid],
+    ['Inventory collected', inventory.collectedAt],
+    ['Agent version', inventory.agentVersion],
+  ].filter(([, value]) => value !== null && value !== undefined && value !== '');
+
+  return (
+    <div>
+      <div className="row g-3">
+        {rows.map(([label, value]) => (
+          <div className="col-12 col-sm-6 col-lg-4" key={label}>
+            <div className="text-secondary-hz small">{label}</div>
+            <div className="fw-semibold text-break">{value}</div>
+          </div>
+        ))}
+      </div>
+      {Array.isArray(inventory.physicalDisks) && inventory.physicalDisks.length > 0 && (
+        <div className="mt-4">
+          <h3 className="h6">Physical disks</h3>
+          <ul className="mb-0">
+            {inventory.physicalDisks.map((disk, index) => (
+              <li key={`${disk.model || 'disk'}-${index}`}>
+                {disk.model || 'Physical disk'}{disk.capacityBytes ? ` · ${formatInventoryBytes(disk.capacityBytes)}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatInventoryBytes(bytes) {
+  const value = Number(bytes);
+  if (!Number.isFinite(value) || value <= 0) return '—';
+  const units = ['B', 'KB', 'GB', 'TB'];
+  let unitIndex = 0;
+  let display = value;
+  while (display >= 1024 && unitIndex < units.length - 1) {
+    display /= 1024;
+    unitIndex += 1;
+  }
+  return `${display.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
