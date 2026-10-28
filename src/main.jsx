@@ -14,6 +14,8 @@ import './design-system/styles/assistant.css';
 import './design-system/styles/hrms-product.css';
 import './design-system/styles/vettri-ui.css';
 import './design-system/styles/mobile.css';
+// Marketing-site brand layer (gradients, aurora, glass) - keep last so it wins.
+import './design-system/styles/aurora.css';
 
 import { queryClient } from './api/queryClient';
 import { AuthProvider } from './auth/AuthContext';

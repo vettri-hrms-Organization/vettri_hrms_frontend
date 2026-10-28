@@ -1,0 +1,245 @@
+/* =========================================================================
+   AURORA - the marketing site's visual language inside the app.
+   Loaded last (main.jsx) so the product after login looks like the same
+   brand as vettrihrms.in: signature blue -> indigo -> violet -> cyan,
+   gradient headlines, glass surfaces, soft aurora light, button shine.
+   Light theme only for the big colour moves; dark mode keeps its surfaces.
+   ========================================================================= */
+
+@property --vettri-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+:root {
+  --vettri-violet: #8B5CF6;
+  --vettri-cyan: #06B6D4;
+  --vettri-indigo: #6366F1;
+  --vettri-gradient-brand: linear-gradient(110deg, #4169E1 0%, #6366F1 35%, #8B5CF6 65%, #06B6D4 100%);
+  --vettri-gradient-button: linear-gradient(135deg, #4F74F0 0%, #4169E1 45%, #6366F1 100%);
+  --vettri-gradient-hero: linear-gradient(120deg, #1E2A78 0%, #3B3FD8 40%, #7C3AED 75%, #0891B2 100%);
+  --vettri-gradient-soft: linear-gradient(135deg, #EEF3FF 0%, #F3EEFF 50%, #E9FBFE 100%);
+  --hz-gradient-accent: var(--vettri-gradient-hero);
+  --hz-gradient-primary: linear-gradient(135deg, #4169E1 0%, #8B5CF6 100%);
+}
+
+/* ---- Page canvas: the hero's aurora light, very soft, behind every screen ---- */
+:root:not([data-theme='dark']) .vettri-app-shell .hz-main-content {
+  background:
+    radial-gradient(900px 420px at 18% -120px, rgba(65, 105, 225, 0.10), transparent 70%),
+    radial-gradient(760px 380px at 62% -160px, rgba(139, 92, 246, 0.09), transparent 70%),
+    radial-gradient(680px 360px at 100% -80px, rgba(6, 182, 212, 0.08), transparent 70%),
+    var(--vettri-page-background);
+  background-attachment: local;
+}
+
+/* ---- Gradient text helper + page headings ---- */
+.vettri-gtext,
+.hz-dash__hero h1 strong {
+  background: var(--vettri-gradient-brand);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: vettri-gshift 8s ease-in-out infinite alternate;
+}
+@keyframes vettri-gshift { to { background-position: 100% 50%; } }
+
+/* Page eyebrows ("MONITORING / LIVE", "Workforce") as gradient chips like the site's section eyebrows. */
+:root:not([data-theme='dark']) .hz-page-header__eyebrow,
+:root:not([data-theme='dark']) .hz-dashboard__section-kicker {
+  background: var(--vettri-gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+/* ---- Topbar: glass with the site's gradient hairline ---- */
+.vettri-topbar.hz-topbar { position: sticky; }
+:root:not([data-theme='dark']) .vettri-topbar.hz-topbar {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-bottom-color: transparent !important;
+}
+.vettri-topbar.hz-topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.45), rgba(6, 182, 212, 0.45), transparent);
+  pointer-events: none;
+}
+
+/* Ask Vettri: rotating gradient border, same as the site's "New" pill. */
+.vettri-ask-trigger { position: relative; isolation: isolate; border-color: transparent !important; }
+.vettri-ask-trigger::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--vettri-angle), #4169E1, #8B5CF6, #06B6D4, #4169E1);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: vettri-spin 4s linear infinite;
+}
+@keyframes vettri-spin { to { --vettri-angle: 360deg; } }
+
+/* ---- Sidebar: keep the midnight navy, add the aurora glow and gradient active state ---- */
+.vettri-sidebar { position: relative; isolation: isolate; }
+.vettri-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 340px;
+  z-index: -1;
+  background:
+    radial-gradient(70% 60% at 10% 0%, rgba(65, 105, 225, 0.32), transparent 70%),
+    radial-gradient(60% 50% at 90% 10%, rgba(139, 92, 246, 0.24), transparent 70%);
+  pointer-events: none;
+}
+.vettri-sidebar::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 260px;
+  z-index: -1;
+  background: radial-gradient(70% 70% at 50% 100%, rgba(6, 182, 212, 0.16), transparent 70%);
+  pointer-events: none;
+}
+.vettri-nav-item.is-active {
+  border-color: rgba(167, 139, 250, 0.28) !important;
+  background: linear-gradient(90deg, rgba(65, 105, 225, 0.42) 0%, rgba(139, 92, 246, 0.26) 60%, rgba(6, 182, 212, 0.10) 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 24px -12px rgba(99, 102, 241, 0.9) !important;
+}
+.vettri-nav-item.is-active .vettri-nav-icon { color: #C4B5FD !important; }
+.vettri-nav-item.is-active::before {
+  background: linear-gradient(180deg, #8EA6FF, #A78BFA, #67E8F9) !important;
+  box-shadow: 0 0 14px rgba(167, 139, 250, 0.9) !important;
+}
+.vettri-workspace-mark { background: var(--vettri-gradient-brand) !important; }
+
+/* ---- Buttons: the site's gradient + glow + shine sweep ---- */
+.btn-primary {
+  overflow: hidden;
+  isolation: isolate;
+  border-color: transparent !important;
+  background: var(--vettri-gradient-button) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(16, 23, 42, 0.12), 0 10px 24px -10px rgba(99, 102, 241, 0.85) !important;
+}
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.38) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 700ms var(--vettri-ease);
+  pointer-events: none;
+}
+.btn-primary:hover:not(:disabled)::after { transform: translateX(120%); }
+.btn-primary:hover:not(:disabled) {
+  filter: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(16, 23, 42, 0.12), 0 14px 30px -10px rgba(99, 102, 241, 1) !important;
+}
+
+/* ---- Dashboard hero: the site's closing-banner aurora ---- */
+.hz-dash__hero {
+  isolation: isolate;
+  background: var(--vettri-gradient-hero) !important;
+  background-size: 130% 130% !important;
+  animation: vettri-hero-shift 16s ease-in-out infinite alternate;
+  box-shadow: 0 30px 60px -32px rgba(79, 70, 229, 0.75) !important;
+}
+.hz-dash__hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 36px 36px;
+  -webkit-mask-image: radial-gradient(70% 90% at 30% 0%, #000, transparent 80%);
+  mask-image: radial-gradient(70% 90% at 30% 0%, #000, transparent 80%);
+  pointer-events: none;
+}
+.hz-dash__hero::after {
+  right: -100px !important;
+  top: -140px !important;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.22), transparent) !important;
+}
+.hz-dash__eyebrow,
+.hz-dash__hero-summary { color: rgba(224, 231, 255, 0.92) !important; }
+.hz-dash__hero-actions .btn-light {
+  background: #fff !important;
+  color: #3B3FD8 !important;
+  border-color: transparent !important;
+  box-shadow: 0 12px 26px -12px rgba(0, 0, 0, 0.5) !important;
+}
+@keyframes vettri-hero-shift { to { background-position: 100% 100%; } }
+
+/* ---- Stat / overview cards: colourful icon chips + gradient rail, like the feature cards ---- */
+.hz-stat-card::before { background: var(--vettri-gradient-brand) !important; width: 3px; }
+.hz-stat-card { --tile-grad: linear-gradient(135deg, #4F74F0, #4169E1); --tile-glow: rgba(65, 105, 225, 0.55); }
+.hz-stat-grid > :nth-child(4n + 2) .hz-stat-card, .hz-stat-grid > .hz-stat-card:nth-child(4n + 2) { --tile-grad: linear-gradient(135deg, #8B5CF6, #6D4CE8); --tile-glow: rgba(139, 92, 246, 0.55); }
+.hz-stat-grid > :nth-child(4n + 3) .hz-stat-card, .hz-stat-grid > .hz-stat-card:nth-child(4n + 3) { --tile-grad: linear-gradient(135deg, #06B6D4, #3B82F6); --tile-glow: rgba(6, 182, 212, 0.55); }
+.hz-stat-grid > :nth-child(4n + 4) .hz-stat-card, .hz-stat-grid > .hz-stat-card:nth-child(4n + 4) { --tile-grad: linear-gradient(135deg, #F59E0B, #EA7A0B); --tile-glow: rgba(245, 158, 11, 0.5); }
+.hz-stat-card--success { --tile-grad: linear-gradient(135deg, #14B8A6, #0E9F87) !important; --tile-glow: rgba(20, 184, 166, 0.5) !important; }
+.hz-stat-card--warning { --tile-grad: linear-gradient(135deg, #F59E0B, #EA7A0B) !important; --tile-glow: rgba(245, 158, 11, 0.5) !important; }
+.hz-stat-card--danger { --tile-grad: linear-gradient(135deg, #F43F5E, #E11D74) !important; --tile-glow: rgba(244, 63, 94, 0.5) !important; }
+.hz-stat-card .hz-stat-card__icon,
+.hz-stat-card--success .hz-stat-card__icon,
+.hz-stat-card--warning .hz-stat-card__icon,
+.hz-stat-card--danger .hz-stat-card__icon {
+  background: var(--tile-grad) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px -12px var(--tile-glow) !important;
+}
+.hz-stat-card:hover { border-color: rgba(139, 92, 246, 0.28) !important; }
+
+/* Cards lift with a faint violet edge, like the site's cards. */
+:root:not([data-theme='dark']) .hz-main-content .card:hover { border-color: rgba(139, 92, 246, 0.22) !important; }
+
+/* Focus ring in the brand gradient's blue-violet. */
+.hz-main-content .form-control:focus,
+.hz-main-content .form-select:focus {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14) !important;
+}
+
+/* Progress bars and active tabs pick up the gradient. */
+.hz-main-content .progress-bar { background: var(--vettri-gradient-brand) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vettri-gtext, .hz-dash__hero h1 strong, .vettri-ask-trigger::before, .hz-dash__hero { animation: none !important; }
+  .btn-primary::after { display: none; }
+}
+
+/* ---- Dashboard KPI tiles (admin) and overview tiles (employee): same treatment as stat cards ---- */
+.hz-dash__kpi,
+.hz-dashboard__metric { position: relative; overflow: hidden; --tile-grad: linear-gradient(135deg, #4F74F0, #4169E1); --tile-glow: rgba(65, 105, 225, 0.55); }
+.hz-dash__kpis > :nth-child(4n + 2), .hz-dashboard__metric-grid > :nth-child(4n + 2) { --tile-grad: linear-gradient(135deg, #8B5CF6, #6D4CE8); --tile-glow: rgba(139, 92, 246, 0.55); }
+.hz-dash__kpis > :nth-child(4n + 3), .hz-dashboard__metric-grid > :nth-child(4n + 3) { --tile-grad: linear-gradient(135deg, #06B6D4, #3B82F6); --tile-glow: rgba(6, 182, 212, 0.55); }
+.hz-dash__kpis > :nth-child(4n + 4), .hz-dashboard__metric-grid > :nth-child(4n + 4) { --tile-grad: linear-gradient(135deg, #F59E0B, #EA7A0B); --tile-glow: rgba(245, 158, 11, 0.5); }
+.hz-dash__kpi .hz-dash__kpi-icon,
+.hz-dash__kpi--success .hz-dash__kpi-icon,
+.hz-dash__kpi--warning .hz-dash__kpi-icon,
+.hz-dash__kpi--info .hz-dash__kpi-icon,
+.hz-dashboard__metric .hz-dashboard__metric-icon {
+  background: var(--tile-grad) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px -12px var(--tile-glow) !important;
+}
+.hz-dash__kpi::before,
+.hz-dashboard__metric::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--tile-grad);
+  opacity: 0;
+  transition: opacity 240ms var(--vettri-ease);
+}
+.hz-dash__kpi:hover::before,
+.hz-dashboard__metric:hover::before { opacity: 1; }
+.hz-dash__kpi strong,
+.hz-dashboard__metric strong { letter-spacing: -0.02em; }

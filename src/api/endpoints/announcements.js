@@ -2,8 +2,9 @@ import { axiosClient } from '../axiosClient';
 import { saveBlob } from './expenses';
 
 export const announcementsApi = {
-  feed: () => axiosClient.get('/api/announcements/feed').then((res) => res.data),
-  unreadCount: () => axiosClient.get('/api/announcements/unread-count').then((res) => res.data),
+  // Feed + badge also power the dashboard card and nav badge; those fail quietly.
+  feed: () => axiosClient.get('/api/announcements/feed', { _silent: true }).then((res) => res.data),
+  unreadCount: () => axiosClient.get('/api/announcements/unread-count', { _silent: true }).then((res) => res.data),
   markRead: (id) => axiosClient.post(`/api/announcements/${id}/read`).then((res) => res.data),
   acknowledge: (id) => axiosClient.post(`/api/announcements/${id}/acknowledge`).then((res) => res.data),
   downloadAttachment: (id) => axiosClient

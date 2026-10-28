@@ -204,6 +204,12 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Background requests (banners, badges, optional widgets) handle their own failure quietly:
+    // no toast, no "offline" state, no retry queue.
+    if (originalRequest?._silent) {
+      return Promise.reject(error);
+    }
+
     if (!error.response && !originalRequest?._queueReplayed) {
       if (isAuthenticationEndpoint(requestPath)) {
         return Promise.reject(error);

@@ -8,7 +8,8 @@ export const billingApi = {
   emailInvoice: (id) => axiosClient.post(`/api/billing/invoices/${id}/email`).then((res) => res.data),
 
   // Subscription lifecycle (any signed-in user can read status; changes are COMPANY_ADMIN only)
-  status: () => axiosClient.get('/api/billing/status').then((res) => res.data),
+  // Background check for the subscription banner - never toast on failure.
+  status: () => axiosClient.get('/api/billing/status', { _silent: true }).then((res) => res.data),
   subscription: () => axiosClient.get('/api/billing/subscription').then((res) => res.data),
   payNow: () => axiosClient.post('/api/billing/subscription/pay-now', null, { _skipOfflineQueue: true }).then((res) => res.data),
   verifyRenewal: (payload) => axiosClient.post('/api/billing/subscription/verify', payload, { _skipOfflineQueue: true }).then((res) => res.data),
