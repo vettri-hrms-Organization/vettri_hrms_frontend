@@ -18,7 +18,7 @@ export default function AuthPageShell({
     <div
       className="auth-page-shell d-flex align-items-center justify-content-center p-4"
       style={{
-        minHeight: '100vh',
+        minHeight: 'calc(100vh / var(--app-zoom, 1))',
         background: 'linear-gradient(to bottom, var(--hz-bg-canvas), rgba(245, 248, 252, 0.3))',
       }}
     >

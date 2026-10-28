@@ -11,7 +11,7 @@
 
 .vettri-assistant-panel {
   width: min(430px, calc(100vw - 24px)) !important;
-  max-height: calc(100vh - 32px) !important;
+  max-height: calc(calc(100vh / var(--app-zoom, 1)) - 32px) !important;
   display: flex !important;
   flex-direction: column !important;
   border: 1px solid rgba(148,163,184,.18) !important;
@@ -434,9 +434,9 @@
 /* Keep the composer anchored to the panel while only the transcript scrolls. */
 .vettri-assistant-panel {
   width: min(460px, calc(100vw - 24px)) !important;
-  height: min(820px, calc(100dvh - 32px)) !important;
+  height: min(820px, calc(calc(100dvh / var(--app-zoom, 1)) - 32px)) !important;
   min-height: 360px !important;
-  max-height: calc(100dvh - 32px) !important;
+  max-height: calc(calc(100dvh / var(--app-zoom, 1)) - 32px) !important;
 }
 
 .vettri-assistant-panel__header,
@@ -730,9 +730,9 @@
 
   .vettri-assistant-panel {
     width: 100vw !important;
-    height: 100dvh !important;
+    height: calc(100dvh / var(--app-zoom, 1)) !important;
     min-height: 0 !important;
-    max-height: 100dvh !important;
+    max-height: calc(100dvh / var(--app-zoom, 1)) !important;
     border: 0 !important;
     border-radius: 0 !important;
   }
@@ -783,9 +783,9 @@
 
 .vettri-assistant-panel {
   width: min(460px, calc(100vw - 40px)) !important;
-  height: min(680px, calc(100dvh - 40px)) !important;
-  min-height: min(560px, calc(100dvh - 40px)) !important;
-  max-height: calc(100dvh - 40px) !important;
+  height: min(680px, calc(calc(100dvh / var(--app-zoom, 1)) - 40px)) !important;
+  min-height: min(560px, calc(calc(100dvh / var(--app-zoom, 1)) - 40px)) !important;
+  max-height: calc(calc(100dvh / var(--app-zoom, 1)) - 40px) !important;
   pointer-events: auto !important;
 }
 
@@ -1030,9 +1030,9 @@
 
   .vettri-assistant-panel {
     width: calc(100vw - 20px) !important;
-    height: calc(100dvh - 20px) !important;
+    height: calc(calc(100dvh / var(--app-zoom, 1)) - 20px) !important;
     min-height: 0 !important;
-    max-height: calc(100dvh - 20px) !important;
+    max-height: calc(calc(100dvh / var(--app-zoom, 1)) - 20px) !important;
     border: 1px solid rgba(148,163,184,.18) !important;
     border-radius: 18px !important;
   }

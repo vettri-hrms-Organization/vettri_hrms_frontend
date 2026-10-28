@@ -474,8 +474,8 @@ const styles = `
   * { box-sizing: border-box; }
 
   .signup-page {
-    min-height: 100vh;
-    height: 100vh;
+    min-height: calc(100vh / var(--app-zoom, 1));
+    height: calc(100vh / var(--app-zoom, 1));
     display: grid;
     grid-template-columns: 48% 52%;
     background: #fff;
@@ -489,7 +489,7 @@ const styles = `
   .signup-brand-panel {
     position: relative;
     min-width: 0;
-    min-height: 100vh;
+    min-height: calc(100vh / var(--app-zoom, 1));
     overflow: hidden;
     background:
       radial-gradient(circle at 85% 15%, rgba(56,139,253,.18), transparent 35%),
@@ -501,7 +501,7 @@ const styles = `
   .signup-brand-content {
     position: relative;
     z-index: 5;
-    min-height: 100vh;
+    min-height: calc(100vh / var(--app-zoom, 1));
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -534,8 +534,8 @@ const styles = `
   /* RIGHT — independent vertical scrolling */
   .signup-main {
     min-width: 0;
-    min-height: 100vh;
-    height: 100vh;
+    min-height: calc(100vh / var(--app-zoom, 1));
+    height: calc(100vh / var(--app-zoom, 1));
     overflow-y: auto;
     overflow-x: hidden;
     background: var(--hz-surface-subtle);
@@ -626,7 +626,7 @@ const styles = `
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 900px) {
-    .signup-page { display: block; height: auto; min-height: 100vh; overflow: visible; }
+    .signup-page { display: block; height: auto; min-height: calc(100vh / var(--app-zoom, 1)); overflow: visible; }
     .signup-brand-panel { min-height: auto; }
     .signup-brand-content { min-height: 540px; padding: 34px 28px 30px; }
     .signup-main { height: auto; min-height: auto; overflow: visible; }

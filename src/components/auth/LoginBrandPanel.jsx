@@ -67,15 +67,15 @@ export default function LoginBrandPanel() {
       </div>
 
       <style>{`
-        .login-brand-panel { position: relative; flex: 0 0 54%; min-height: 100vh; overflow: hidden; color: #fff;
+        .login-brand-panel { position: relative; flex: 0 0 54%; min-height: calc(100vh / var(--app-zoom, 1)); overflow: hidden; color: #fff;
           background: radial-gradient(70% 60% at 0% 0%, rgba(65,105,225,.38), transparent 60%),
                       radial-gradient(60% 55% at 100% 100%, rgba(101,88,245,.30), transparent 60%),
                       linear-gradient(160deg, #0B1222 0%, #10172A 50%, #141E3C 100%); }
         .login-brand-panel__grid { position: absolute; inset: 0; opacity: .5;
           background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
           background-size: 44px 44px; mask-image: radial-gradient(80% 70% at 30% 30%, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(80% 70% at 30% 30%, #000 30%, transparent 75%); }
-        .login-brand-panel__content { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; padding: clamp(32px, 5vh, 56px) clamp(36px, 5.5vw, 84px) 32px; }
-        .login-brand-panel__brand { display: inline-flex; margin-bottom: clamp(28px, 6vh, 64px); }
+        .login-brand-panel__content { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: calc(100vh / var(--app-zoom, 1)); padding: clamp(32px, calc(5vh / var(--app-zoom, 1)), 56px) clamp(36px, 5.5vw, 84px) 32px; }
+        .login-brand-panel__brand { display: inline-flex; margin-bottom: clamp(28px, calc(6vh / var(--app-zoom, 1)), 64px); }
         .login-brand-panel__copy { max-width: 560px; }
         .login-brand-panel__eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 20px; padding: 6px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: rgba(255,255,255,.04); color: #C9D2E6; font-size: 12.5px; font-weight: 600; }
         .login-brand-panel__eyebrow svg { color: #A9BCFF; }
@@ -86,7 +86,7 @@ export default function LoginBrandPanel() {
         .login-brand-panel__chips li { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(255,255,255,.05); color: #E3E8F4; font-size: 13px; font-weight: 600; }
         .login-brand-panel__chips svg { color: #A9BCFF; }
 
-        .login-brand-panel__stage { position: relative; flex: 1; min-height: 250px; margin: clamp(24px, 4vh, 44px) 0 24px; }
+        .login-brand-panel__stage { position: relative; flex: 1; min-height: 250px; margin: clamp(24px, calc(4vh / var(--app-zoom, 1)), 44px) 0 24px; }
         .glimpse { position: absolute; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); box-shadow: 0 30px 60px -20px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
         .glimpse--main { left: 0; top: 0; width: min(440px, 78%); padding: 16px 18px 18px; animation: glimpse-float 7s ease-in-out infinite; }
         .glimpse__head { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
