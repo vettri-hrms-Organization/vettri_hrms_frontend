@@ -5,6 +5,7 @@ import { monitoringApi } from '../../api/endpoints/monitoring';
 import { formatDateTimeIST } from '../../utils/formatDateTime';
 import Button from '../../components/ui/Button';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import { MonitoringConsentGate } from '../privacy/MonitoringNotice';
 
 export default function DeviceEnrollment() {
   const { token = '' } = useParams();
@@ -244,6 +245,7 @@ export default function DeviceEnrollment() {
                       <div className="text-secondary-hz small text-center">Or continue with the agent enrollment instructions below if this is a new device.</div>
                     </>
                   )}
+                  <MonitoringConsentGate>
                   <div>
                     <h2 className="h6">Step 1: Download the Vettri Windows Agent</h2>
                     <p className="mb-0">Download the installer on this Windows computer. The enrollment link expires {formatDateTimeIST(details.expiresAt)}.</p>
@@ -271,6 +273,7 @@ export default function DeviceEnrollment() {
                     <p className="mb-0">After installation, the Agent will securely register this computer and report its connection status here.</p>
                   </div>
                   <div className="d-flex align-items-start gap-2 text-secondary-hz small"><ShieldCheck size={16} /><span>The enrollment token is used once to register this computer. After registration, the Agent stores its machine-protected credential locally.</span></div>
+                  </MonitoringConsentGate>
                 </div>
               ) : details.status === 'USED' ? (
                 <div className="d-flex flex-column gap-3">

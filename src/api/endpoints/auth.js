@@ -29,6 +29,14 @@ export const authApi = {
   updateMfaPolicy: (policy) => axiosClient.put('/api/auth/mfa/policy', { policy }).then((res) => res.data),
   resetUserMfa: (userId) => axiosClient.post(`/api/auth/mfa/users/${userId}/reset`).then((res) => res.data),
 
+  // Single sign-on (Google / Microsoft). The browser is sent to ssoStartUrl(); the
+  // backend redirects back to /login?sso_code=... which is swapped for tokens here.
+  ssoProviders: () => axiosClient.get('/api/auth/sso/providers').then((res) => res.data),
+  ssoStartUrl: (provider) => `${axiosClient.defaults.baseURL || ''}/api/auth/sso/${encodeURIComponent(provider)}/start`,
+  ssoExchange: (code) => axiosClient.post('/api/auth/sso/exchange', { code }).then((res) => res.data),
+  ssoSettings: () => axiosClient.get('/api/auth/sso/settings').then((res) => res.data),
+  updateSsoSettings: (payload) => axiosClient.put('/api/auth/sso/settings', payload).then((res) => res.data),
+
   logout: (refreshToken) => axiosClient.post('/api/auth/logout', { refreshToken }),
 
   me: () => axiosClient.get('/api/auth/me').then((res) => res.data),

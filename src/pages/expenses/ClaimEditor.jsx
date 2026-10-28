@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Paperclip, Send, Save } from 'lucide-react';
+import { Plus, Trash2, Paperclip, Send, Save, Camera } from 'lucide-react';
 import Dialog from '../../components/ui/Dialog';
 import Button from '../../components/ui/Button';
 import FormField from '../../components/ui/FormField';
@@ -175,6 +175,11 @@ export default function ClaimEditor({ claim, onClose }) {
                   <div className="col-12 col-md-3 mb-3">
                     <label className="hz-form-label d-flex align-items-center gap-1" htmlFor={`receipt-${line.key}`}><Paperclip size={14} aria-hidden="true" /> Receipt</label>
                     <input id={`receipt-${line.key}`} type="file" className="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={(event) => chooseFile(line, event.target.files?.[0])} />
+                    {/* Phones: open the rear camera straight away to photograph the receipt. */}
+                    <label className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1 mt-1" htmlFor={`receipt-camera-${line.key}`}>
+                      <Camera size={14} aria-hidden="true" /> Photograph receipt
+                    </label>
+                    <input id={`receipt-camera-${line.key}`} type="file" className="d-none" accept="image/*" capture="environment" onChange={(event) => chooseFile(line, event.target.files?.[0])} />
                     <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>
                       {line.pendingFile ? `Will upload: ${line.pendingFile.name}` : line.hasReceipt ? `Attached: ${line.receiptFileName || 'receipt'}` : 'No receipt attached'}
                     </div>

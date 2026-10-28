@@ -10,7 +10,7 @@ import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import StatusBadge from '../components/ui/StatusBadge';
 
-const filters = ['ALL', 'PAID', 'PENDING', 'FAILED', 'REFUNDED'];
+const filters = ['ALL', 'PAID', 'PENDING', 'FAILED', 'REFUNDED', 'ISSUED', 'CANCELLED'];
 
 function formatDate(value) {
   return value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -21,11 +21,20 @@ function formatMoney(invoice) {
 }
 
 function typeLabel(invoice) {
-  return invoice.invoiceType === 'PAYMENT_VERIFICATION_RECEIPT' ? 'Payment verification' : `${invoice.plan || 'Subscription'} payment`;
+  if (invoice.invoiceType === 'PAYMENT_VERIFICATION_RECEIPT') return 'Payment verification';
+  if (invoice.invoiceType === 'CREDIT_NOTE') return `Against ${invoice.originalInvoiceNumber || 'invoice'}`;
+  return `${invoice.plan || 'Subscription'} ${invoice.status === 'PENDING' ? 'renewal (due)' : 'payment'}`;
 }
 
 function documentLabel(invoice) {
-  return invoice.invoiceType === 'PAYMENT_VERIFICATION_RECEIPT' ? 'Payment verification receipt' : 'Subscription invoice';
+  if (invoice.invoiceType === 'PAYMENT_VERIFICATION_RECEIPT') return 'Payment verification receipt';
+  if (invoice.invoiceType === 'CREDIT_NOTE') return 'Credit note';
+  if (invoice.status === 'PENDING') return 'Proforma invoice';
+  return invoice.taxableValue != null && invoice.sellerGstin ? 'Tax invoice' : 'Subscription invoice';
+}
+
+function amount(value, currency = 'INR') {
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(Number(value || 0));
 }
 
 export default function BillingInvoices() {
@@ -102,6 +111,13 @@ export default function BillingInvoices() {
           {selected.isLoading ? <p className="text-secondary-hz">Loading invoice details...</p> : selected.data && <>
             <div className="hz-billing-total"><div><span>Total amount</span><strong>{formatMoney(selected.data)}</strong></div><StatusBadge status={selected.data.status} /></div>
             <div className="hz-billing-detail-grid"><div><span>Invoice date</span><strong>{formatDate(selected.data.invoiceDate)}</strong></div><div><span>Type</span><strong>{selected.data.invoiceType === 'PAYMENT_VERIFICATION_RECEIPT' ? 'Payment verification' : 'Subscription invoice'}</strong></div><div><span>Plan</span><strong>{selected.data.plan || '—'}</strong></div><div><span>Billing cycle</span><strong>{selected.data.billingCycle || '—'}</strong></div><div><span>Employees</span><strong>{selected.data.employeeCount || '—'}</strong></div><div><span>Payment method</span><strong>{selected.data.paymentMethod || 'Razorpay'}</strong></div></div>
+            {selected.data.taxableValue != null ? <div className="hz-billing-detail-section"><h3>Tax summary</h3><p>
+              SAC: {selected.data.sacCode || '—'} · Place of supply: {selected.data.placeOfSupply || '—'}<br />
+              Taxable value: {amount(selected.data.taxableValue, selected.data.currency || 'INR')}<br />
+              {Number(selected.data.cgstAmount) ? <>CGST {selected.data.cgstRate}%: {amount(selected.data.cgstAmount)} · SGST {selected.data.sgstRate}%: {amount(selected.data.sgstAmount)}<br /></> : null}
+              {Number(selected.data.igstAmount) ? <>IGST {selected.data.igstRate}%: {amount(selected.data.igstAmount)}<br /></> : null}
+              {selected.data.taxNote || null}
+            </p></div> : null}
             <div className="hz-billing-detail-section"><h3>Customer</h3><p><strong>{selected.data.companyLegalName || selected.data.companyName || '—'}</strong><br />{selected.data.billingAddress || 'Billing address not configured'}{selected.data.gstin ? <><br />GSTIN: {selected.data.gstin}</> : null}</p></div>
             <div className="hz-billing-detail-section"><h3>Payment reference</h3><p>Purpose: {selected.data.invoiceType === 'PAYMENT_VERIFICATION_RECEIPT' ? 'Payment method verification for the Vettri HRMS trial' : 'Subscription payment'}<br />Order ID: {selected.data.razorpayOrderId || '—'}<br />Payment ID: {selected.data.razorpayPaymentId || '—'}<br />Email status: {selected.data.emailStatus || 'Not sent'}</p></div>
             <div className="hz-billing-drawer__actions"><Button icon={Download} onClick={() => downloadInvoice(selected.data)}>Download PDF</Button><Button variant="secondary" icon={Mail} onClick={() => email.mutate(selected.data.id)} loading={email.isPending}>{selected.data.invoiceType === 'PAYMENT_VERIFICATION_RECEIPT' ? 'Email receipt' : 'Email invoice'}</Button></div>

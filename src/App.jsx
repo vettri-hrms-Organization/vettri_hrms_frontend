@@ -37,6 +37,10 @@ const SalaryReports = lazy(() => import('./pages/salary/SalaryReports'));
 const PayrollSettings = lazy(() => import('./pages/salary/PayrollSettings'));
 const TaxDeclarations = lazy(() => import('./pages/salary/TaxDeclarations'));
 const MyTaxDeclaration = lazy(() => import('./pages/salary/MyTaxDeclaration'));
+const FullAndFinal = lazy(() => import('./pages/salary/FullAndFinal'));
+const AccountingExport = lazy(() => import('./pages/salary/AccountingExport'));
+const MySettlement = lazy(() => import('./pages/salary/MySettlement'));
+const MyHolidays = lazy(() => import('./pages/leave/MyHolidays'));
 const MonitoringDashboard = lazy(() => import('./pages/monitoring/MonitoringDashboard'));
 const MonitoringDevices = lazy(() => import('./pages/monitoring/Devices'));
 const MonitoringDeviceDetails = lazy(() => import('./pages/monitoring/DeviceDetails'));
@@ -57,6 +61,7 @@ const AccountSecurity = lazy(() => import('./pages/AccountSecurity'));
 const Welcome = lazy(() => import('./pages/Welcome'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const BillingInvoices = lazy(() => import('./pages/BillingInvoices'));
+const BillingSubscription = lazy(() => import('./pages/billing/BillingSubscription'));
 const Requirements = lazy(() => import('./pages/Requirements'));
 const MonitoringReports = lazy(() => import('./pages/monitoring/MonitoringReports'));
 const SettingsPlatform = lazy(() => import('./pages/SettingsPlatform'));
@@ -70,8 +75,14 @@ const MyOnboarding = lazy(() => import('./pages/onboarding/MyOnboarding'));
 const MyExpenses = lazy(() => import('./pages/expenses/MyExpenses'));
 const ExpenseApprovals = lazy(() => import('./pages/expenses/ExpenseApprovals'));
 const ExpenseSettings = lazy(() => import('./pages/expenses/ExpenseSettings'));
+const SettingsCustomFields = lazy(() => import('./pages/settings/SettingsCustomFields'));
+const SettingsSignIn = lazy(() => import('./pages/settings/SettingsSignIn'));
+const DataImportHub = lazy(() => import('./pages/imports/DataImportHub'));
 const AnnouncementsFeed = lazy(() => import('./pages/announcements/AnnouncementsFeed'));
 const AnnouncementAdmin = lazy(() => import('./pages/announcements/AnnouncementAdmin'));
+const MyPrivacy = lazy(() => import('./pages/privacy/MyPrivacy'));
+const LegalAcceptance = lazy(() => import('./pages/privacy/LegalAcceptance'));
+const PrivacyAdmin = lazy(() => import('./pages/privacy/PrivacyAdmin'));
 
 export default function App() {
   return (
@@ -129,8 +140,13 @@ export default function App() {
           <Route path="salary/tax-declarations" element={<TaxDeclarations />} />
           <Route path="my-payslip" element={<SalaryDetails />} />
           <Route path="my-tax-declaration" element={<MyTaxDeclaration />} />
+          <Route path="salary/settlements" element={<FullAndFinal />} />
+          <Route path="salary/accounting" element={<AccountingExport />} />
+          <Route path="my-settlement" element={<MySettlement />} />
+          <Route path="my-holidays" element={<MyHolidays />} />
           <Route path="my-profile" element={<MyProfileRoute />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="billing" element={<BillingSubscription />} />
           <Route path="billing/invoices" element={<BillingInvoices />} />
           <Route path="reports" element={<Reports />} />
           <Route path="/requirements" element={<Requirements />} />
@@ -142,6 +158,9 @@ export default function App() {
           <Route path="settings/platform" element={<SettingsPlatform />} />
           <Route path="settings/preferences" element={<SettingsPreferences />} />
           <Route path="account/security" element={<AccountSecurity />} />
+          <Route path="privacy" element={<MyPrivacy />} />
+          <Route path="privacy/accept" element={<LegalAcceptance />} />
+          <Route path="settings/privacy" element={<PrivacyAdmin />} />
           <Route path="onboarding" element={<Onboarding />} />
           <Route path="settings/letters" element={<SettingsLetters />} />
           <Route path="hr-onboarding" element={<OnboardingDashboard />} />
@@ -150,6 +169,9 @@ export default function App() {
           <Route path="my-expenses" element={<MyExpenses />} />
           <Route path="expenses/approvals" element={<ExpenseApprovals />} />
           <Route path="settings/expenses" element={<ExpenseSettings />} />
+          <Route path="settings/custom-fields" element={<SettingsCustomFields />} />
+          <Route path="settings/sign-in" element={<SettingsSignIn />} />
+          <Route path="settings/data-import" element={<DataImportHub />} />
           <Route path="announcements" element={<AnnouncementsFeed />} />
           <Route path="announcements/manage" element={<AnnouncementAdmin />} />
         </Route>

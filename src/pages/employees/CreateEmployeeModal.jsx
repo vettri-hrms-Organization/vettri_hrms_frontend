@@ -7,6 +7,8 @@ import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import { BankStatutoryFields, EMPTY_BANK_STATUTORY, normalizeBankStatutory, validateBankStatutory } from './BankStatutoryFields';
+import CustomFieldInputs from '../../components/customFields/CustomFieldInputs';
+import { customFieldsApi, missingRequired } from '../../api/endpoints/customFields';
 
 const EMPTY_FORM = {
   ...EMPTY_BANK_STATUTORY,
@@ -36,9 +38,25 @@ export default function CreateEmployeeModal({ onClose }) {
   const { data: designations = [] } = useQuery({ queryKey: ['designations'], queryFn: designationsApi.list });
   const { data: teams = [] } = useQuery({ queryKey: ['teams'], queryFn: teamsApi.list });
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => employeesApi.list() });
+  const { data: customDefinitions = [] } = useQuery({
+    queryKey: ['custom-fields', 'definitions'],
+    queryFn: customFieldsApi.definitions,
+  });
+  const [customValues, setCustomValues] = useState({});
+  const [customErrors, setCustomErrors] = useState({});
+  const definitionList = Array.isArray(customDefinitions) ? customDefinitions : [];
 
   const createEmployee = useMutation({
-    mutationFn: employeesApi.create,
+    // Custom fields are validated before the employee is created, then saved against the new id.
+    mutationFn: async (payload) => {
+      const created = await employeesApi.create(payload);
+      const filled = Object.fromEntries(Object.entries(customValues)
+        .filter(([, value]) => value !== '' && value !== null && value !== undefined && !(Array.isArray(value) && !value.length)));
+      if (definitionList.length && Object.keys(filled).length && created?.id) {
+        await customFieldsApi.saveEmployeeValues(created.id, filled);
+      }
+      return created;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
@@ -51,12 +69,32 @@ export default function CreateEmployeeModal({ onClose }) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const bankError = validateBankStatutory(form);
     if (bankError) {
       setError(bankError);
       return;
+    }
+    if (definitionList.length) {
+      const missing = missingRequired(definitionList, customValues);
+      if (Object.keys(missing).length) {
+        setCustomErrors(missing);
+        setError('Fill in the required additional details.');
+        return;
+      }
+      try {
+        const check = await customFieldsApi.validate(customValues);
+        if (check && check.valid === false) {
+          setCustomErrors(check.errors || {});
+          setError('Some additional details are not valid.');
+          return;
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || 'Could not check the additional details');
+        return;
+      }
+      setCustomErrors({});
     }
     setError(null);
     const payload = {
@@ -147,6 +185,18 @@ export default function CreateEmployeeModal({ onClose }) {
 
         <SectionLabel>Bank &amp; Statutory</SectionLabel>
         <BankStatutoryFields form={form} set={set} />
+
+        {definitionList.length > 0 && (
+          <>
+            <SectionLabel>Additional details</SectionLabel>
+            <CustomFieldInputs
+              definitions={definitionList}
+              values={customValues}
+              errors={customErrors}
+              onChange={(key, value) => setCustomValues((current) => ({ ...current, [key]: value }))}
+            />
+          </>
+        )}
 
         <div className="d-flex justify-content-end gap-2 mt-4">
           <Button variant="secondary" type="button" onClick={onClose}>

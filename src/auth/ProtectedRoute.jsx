@@ -5,6 +5,7 @@ import PageLoader from '../components/ui/PageLoader';
 import { NAV_INDEX } from '../components/layout/navConfig';
 
 export const CHANGE_PASSWORD_PATH = '/account/security';
+export const LEGAL_ACCEPT_PATH = '/privacy/accept';
 
 /**
  * Wraps a set of routes (via <Outlet/>) behind authentication. Pass
@@ -35,6 +36,15 @@ export default function ProtectedRoute({ allowedRoles }) {
   // same treatment - the security page is the only reachable screen.
   if (user?.mfaEnrollmentRequired && location.pathname !== CHANGE_PASSWORD_PATH) {
     return <Navigate to={CHANGE_PASSWORD_PATH} replace />;
+  }
+
+  // A legal document this user must accept is new or has a new version
+  // (Terms / Privacy / DPA bump): the acceptance page is the only reachable
+  // screen until they accept (flag + list come from /api/auth/me).
+  // Runs only after the password/2FA gates are satisfied, so the gates never bounce between each other.
+  if (user?.legalAcceptanceRequired && !user?.mustChangePassword && !user?.mfaEnrollmentRequired
+      && location.pathname !== LEGAL_ACCEPT_PATH) {
+    return <Navigate to={LEGAL_ACCEPT_PATH} replace />;
   }
 
   if (user?.employeeId && !hasPermission('ATTENDANCE_VIEW') && location.pathname === '/attendance') {

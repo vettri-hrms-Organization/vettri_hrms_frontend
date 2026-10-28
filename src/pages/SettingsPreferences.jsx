@@ -5,6 +5,7 @@ import SectionHeader from '../components/ui/SectionHeader';
 import Card from '../components/ui/Card';
 import { useTheme } from '../contexts/ThemeContext';
 import { notificationsApi } from '../api/endpoints/notifications';
+import WhatsAppOptInCard from '../components/notifications/WhatsAppOptInCard';
 
 const PREFERENCES_KEY = 'vettri.regional-preferences';
 const DEFAULTS = { language: 'en-IN', timezone: 'Asia/Kolkata', currency: 'INR' };
@@ -51,6 +52,7 @@ export default function SettingsPreferences() {
             </>
           )}
         </Card>
+        <div className="mt-4"><WhatsAppOptInCard /></div>
       </div>
       <Card title="Appearance" subtitle="Your preference is saved on this device.">
         <label className="hz-preference-row"><span><strong>Theme</strong><small>Choose the most comfortable workspace appearance.</small></span><select value={theme} onChange={(event) => setTheme(event.target.value)} aria-label="Theme"><option value="light">Light</option><option value="dark">Dark</option></select></label>

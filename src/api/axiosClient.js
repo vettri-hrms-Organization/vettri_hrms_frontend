@@ -238,6 +238,16 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // 402 = subscription inactive (workspace read-only). Show one friendly toast and
+    // let the subscription banner refresh; never queue or retry the write.
+    if (status === 402) {
+      emitApiError({ message: safeMessage, status });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('vettri:subscription-inactive', { detail: { message: safeMessage } }));
+      }
+      return Promise.reject(error);
+    }
+
     // A 403 means "not allowed", not "connection broken", so the connection
     // state is left alone. Only a refused action (POST/PUT/PATCH/DELETE) is
     // surfaced as a toast; a refused read is a background permission probe

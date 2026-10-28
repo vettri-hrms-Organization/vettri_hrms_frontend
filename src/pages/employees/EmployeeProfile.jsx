@@ -33,6 +33,9 @@ import { categoricalColor } from '../../design-system/palette';
 import { ScrollText, ListChecks } from 'lucide-react';
 import EmployeeLettersTab from '../letters/EmployeeLettersTab';
 import EmployeeOnboardingTab from '../onboarding/EmployeeOnboardingTab';
+import SelfieThumb from '../../components/attendance/SelfieThumb';
+import WorkLocationGratuityCards from './WorkLocationGratuityCards';
+import CustomFieldsCard from './CustomFieldsCard';
 
 const TABS = [
   { key: 'overview', label: 'Profile', icon: ClipboardList },
@@ -375,6 +378,9 @@ function OverviewTab({ employee }) {
       <div className="col-12 col-lg-6">
         <BankStatutoryCard employee={employee} canEdit={hasPermission('EMPLOYEE_MANAGE')} InfoRow={InfoRow} />
       </div>
+      <div className="col-12">
+        <CustomFieldsCard employeeId={employee.id} />
+      </div>
       <div className="col-12 col-lg-6">
         <Card title="Biometric Enrollment" subtitle="The PIN this employee is enrolled under on the fingerprint device">
           <div className="d-flex align-items-center gap-2 py-2">
@@ -444,6 +450,7 @@ function JobTab({ employee }) {
           <div className="hz-profile-empty-note">Additional job settings are not configured for this employee.</div>
         </Card>
       </div>
+      <WorkLocationGratuityCards employee={employee} />
     </div>
   );
 }
@@ -603,7 +610,7 @@ function AttendanceTab({ employee }) {
       ) : (
         <div className="table-responsive">
           <table className="table mb-0 align-middle hz-table" aria-label="Employee attendance sessions">
-            <thead><tr><th>Date</th><th>Work mode</th><th>Check in</th><th>Check out</th><th>Source</th><th>Status</th></tr></thead>
+            <thead><tr><th>Date</th><th>Work mode</th><th>Check in</th><th>Check out</th><th>Source</th><th>Status</th><th>Selfie</th></tr></thead>
             <tbody>{sessions.map((session) => (
               <tr key={session.id}>
                 <td>{session.attendanceDate}</td>
@@ -612,6 +619,7 @@ function AttendanceTab({ employee }) {
                 <td>{session.checkOutTime ? formatTimeIST(session.checkOutTime) : '—'}</td>
                 <td>{session.source || '—'}</td>
                 <td><Badge variant={session.status === 'CHECKED_OUT' ? 'success' : 'info'} dot={false}>{session.status}</Badge></td>
+                <td><SelfieThumb session={session} label={session.attendanceDate} /></td>
               </tr>
             ))}</tbody>
           </table>

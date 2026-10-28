@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Zap, SlidersHorizontal } from 'lucide-react';
-import { leaveTypesApi, holidaysApi, leavePolicyApi } from '../api/endpoints/leave';
+import { Plus, Zap, SlidersHorizontal } from 'lucide-react';
+import { leaveTypesApi, leavePolicyApi } from '../api/endpoints/leave';
 import LeavePolicyDialog from './leave/LeavePolicyDialog';
+import HolidaySettingsPanel from './leave/HolidaySettingsPanel';
 import YearEndProcessing from './leave/YearEndProcessing';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
@@ -28,7 +29,7 @@ export default function SettingsLeave() {
       <Tabs items={TABS} value={tab} onChange={setTab} />
 
       {tab === 'types' && <LeaveTypesPanel />}
-      {tab === 'holidays' && <HolidaysPanel />}
+      {tab === 'holidays' && <HolidaySettingsPanel />}
       {tab === 'yearend' && <YearEndProcessing />}
     </div>
   );
@@ -171,75 +172,6 @@ function LeaveTypesPanel() {
           </div>
         ))}
       {policyType && <LeavePolicyDialog type={policyType} onClose={() => setPolicyType(null)} />}
-    </Card>
-  );
-}
-
-function HolidaysPanel() {
-  const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', date: '' });
-
-  const { data: holidays, isLoading } = useQuery({ queryKey: ['holidays'], queryFn: holidaysApi.list });
-  const create = useMutation({
-    mutationFn: holidaysApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['holidays'] });
-      setForm({ name: '', date: '' });
-      setShowForm(false);
-    },
-  });
-  const remove = useMutation({
-    mutationFn: holidaysApi.remove,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['holidays'] }),
-  });
-
-  return (
-    <Card
-      title="Holiday Calendar"
-      actions={
-        <Button size="sm" variant="secondary" icon={Plus} onClick={() => setShowForm((s) => !s)}>
-          {showForm ? 'Close' : 'Add'}
-        </Button>
-      }
-    >
-      {showForm && (
-        <form
-          className="row g-2 align-items-end mb-4 pb-3"
-          style={{ borderBottom: '1px solid var(--hz-border)' }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            create.mutate(form);
-          }}
-        >
-          <div className="col-6">
-            <input className="form-control" placeholder="Holiday name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          </div>
-          <div className="col-4">
-            <input className="form-control" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-          </div>
-          <div className="col-2">
-            <Button type="submit" size="sm" loading={create.isPending} className="w-100 justify-content-center">
-              Add
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {isLoading && <SkeletonText lines={3} />}
-      {!isLoading && holidays?.length === 0 && <EmptyState title="No holidays configured" description="Add your company's holidays so leave-day counting excludes them." />}
-      {!isLoading &&
-        holidays?.map((h) => (
-          <div key={h.id} className="d-flex align-items-center justify-content-between py-2" style={{ borderBottom: '1px solid var(--hz-border)' }}>
-            <div>
-              <div style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{h.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{new Date(h.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            </div>
-            <button className="btn btn-sm btn-light border-0" style={{ color: 'var(--hz-danger-600)' }} onClick={() => remove.mutate(h.id)} aria-label={`Delete holiday "${h.name}"`}>
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
     </Card>
   );
 }

@@ -18,6 +18,8 @@ const PUBLIC_AUTH_ENDPOINTS = new Set([
   '/api/auth/verify-email',
   '/api/auth/mfa/verify',
   '/api/auth/mfa/email/send',
+  '/api/auth/sso/providers',
+  '/api/auth/sso/exchange',
 ]);
 
 const PROTECTED_AUTH_ENDPOINTS = new Set([

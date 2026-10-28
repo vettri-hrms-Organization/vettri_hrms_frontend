@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, Shie
 import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../api/endpoints/auth';
 import LoginBrandPanel from '../components/auth/LoginBrandPanel';
+import SsoSignIn from '../components/auth/SsoSignIn';
 import Logo from '../components/brand/Logo';
 import { mapPasswordError } from '../utils/errorMapping';
 
@@ -223,6 +224,12 @@ export default function Login() {
                     )}
                   </button>
                 </form>
+
+                <SsoSignIn
+                  onMfa={setMfa}
+                  onSignedIn={() => navigate(from, { replace: true })}
+                  onError={showError}
+                />
 
                 <p className="text-center text-secondary small mt-4 mb-0">
                   Don&apos;t have an account?{' '}

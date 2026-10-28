@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Home, LogIn, LogOut, MapPin, RefreshCw } from 'lucide-react';
 import { attendanceApi } from '../../api/endpoints/attendance';
+import { dailyAttendanceApi } from '../../api/endpoints/shifts';
+import Dialog from '../../components/ui/Dialog';
+import SelfieCapture from '../../components/attendance/SelfieCapture';
+import { istToday } from './shiftUtils';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -216,6 +220,15 @@ export default function EmployeeAttendance() {
   const [regularizationReason, setRegularizationReason] = useState('');
   const [message, setMessage] = useState(null);
   const [locationStatus, setLocationStatus] = useState('idle');
+  const [selfieOpen, setSelfieOpen] = useState(false);
+  // Last confirmed selfie, reused by "Try again" after a location error so the employee isn't asked twice.
+  const lastSelfieRef = useRef(null);
+  const todayIst = istToday();
+  const todayShift = useQuery({
+    queryKey: ['attendance-daily-me', todayIst, todayIst],
+    queryFn: () => dailyAttendanceApi.mine(todayIst, todayIst),
+    retry: false,
+  });
 
   const today = useQuery({ queryKey: ['attendance-today'], queryFn: attendanceApi.today });
   const historyRange = monthRange(historyMonth);
@@ -238,12 +251,15 @@ export default function EmployeeAttendance() {
   }, [context.data]);
 
   const checkIn = useMutation({
-    mutationFn: async () => {
+    // Selfie travels as a base64 JPEG data URL in the existing JSON body (`selfieImage`),
+    // alongside the GPS fields - see AttendanceCheckInRequest on the backend.
+    mutationFn: async ({ selfieImage } = {}) => {
       setLocationStatus('locating');
       try {
         const location = mode === 'OFFICE' ? await acquireBestLocation((status) => setLocationStatus(status)) : {};
         setLocationStatus('verifying');
         const payload = { ...location, source: location.source || 'WEB_DESKTOP', workingMode: mode, wfh: mode === 'WFH', officeLocationId: locations.data?.[0]?.id };
+        if (selfieImage) payload.selfieImage = selfieImage;
         if (import.meta.env.DEV) {
           console.debug('[attendance] check-in location diagnostics', {
             latitude: payload.latitude,
@@ -259,17 +275,27 @@ export default function EmployeeAttendance() {
       }
     },
     onSuccess: () => {
+      setSelfieOpen(false);
+      lastSelfieRef.current = null;
       setMessage({ type: 'success', text: 'You are checked in.' });
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
     },
     onError: (error) => {
+      const serverMessage = error.response?.data?.message;
+      const selfieError = selfieErrorMessage(serverMessage);
+      if (selfieError) {
+        lastSelfieRef.current = null;
+        setMessage({ type: 'error', code: 'SELFIE', text: selfieError });
+        return;
+      }
+      setSelfieOpen(false);
       const code = error.response?.data?.code || error.message;
       setMessage({
         type: 'error',
         code,
-        text: error.response?.data?.message || locationErrorMessage(code, error.response?.data?.accuracyMeters),
+        text: serverMessage || locationErrorMessage(code, error.response?.data?.accuracyMeters),
       });
     },
   });
@@ -322,6 +348,38 @@ export default function EmployeeAttendance() {
   const canWebCheckIn = canSelfCheckIn && context.data?.allowedWebCheckIn
     && (mode !== 'WFH' || context.data.wfhStatus === 'APPROVED');
 
+  const requireSelfie = !!policy.data?.requireSelfieAtCheckIn;
+  const shiftToday = todayShift.data?.[0];
+
+  function startCheckIn() {
+    setMessage(null);
+    if (requireSelfie) {
+      setSelfieOpen(true);
+      return;
+    }
+    checkIn.mutate({});
+  }
+
+  function confirmSelfie(dataUrl) {
+    lastSelfieRef.current = dataUrl;
+    checkIn.mutate({ selfieImage: dataUrl });
+  }
+
+  function retryCheckIn() {
+    if (requireSelfie && !lastSelfieRef.current) {
+      setSelfieOpen(true);
+      return;
+    }
+    checkIn.mutate({ selfieImage: lastSelfieRef.current || undefined });
+  }
+
+  function selfieErrorMessage(serverMessage) {
+    if (typeof serverMessage !== 'string' || !serverMessage.startsWith('SELFIE_')) return null;
+    if (serverMessage.startsWith('SELFIE_REQUIRED')) return 'Your organization requires a selfie to check in. Take a selfie and try again.';
+    if (serverMessage.startsWith('SELFIE_TOO_LARGE')) return 'The selfie is too large. Retake it and try again.';
+    return 'The selfie could not be read. Retake it as a photo and try again.';
+  }
+
   function locationErrorMessage(code, accuracyMeters) {
     if (code === 'LOCATION_PERMISSION_REQUIRED') return 'Location permission required. Enable location access for Vettri and try again.';
     if (code === 'LOCATION_INACCURATE') {
@@ -337,9 +395,26 @@ export default function EmployeeAttendance() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
+      <Dialog
+        open={selfieOpen}
+        onClose={() => { if (!checkIn.isPending) setSelfieOpen(false); }}
+        title="Check-in selfie"
+        description="Look at the camera and take a quick selfie. It is sent with your location to confirm your check-in."
+        size="sm"
+      >
+        {selfieOpen && (
+          <SelfieCapture
+            busy={checkIn.isPending}
+            onCapture={confirmSelfie}
+            onCancel={() => setSelfieOpen(false)}
+          />
+        )}
+        {selfieOpen && message?.code === 'SELFIE' && <div className="alert alert-danger mt-3 mb-0" role="alert">{message.text}</div>}
+      </Dialog>
+
       <PageHeader eyebrow="Self service" title="My attendance" description="Check in when your organization’s attendance policy allows, request WFH, and see your attendance history." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); history.refetch(); context.refetch(); policy.refetch(); wfhRequests.refetch(); regularizations.refetch(); }}>Refresh</Button>} />
 
-      {message && <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'} mb-0`} role="status">{message.text}{message.type === 'error' && message.code?.startsWith('LOCATION_') && <button type="button" className="btn btn-link p-0 ms-2" onClick={() => checkIn.mutate()}>Try again</button>}</div>}
+      {message && <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'} mb-0`} role="status">{message.text}{message.type === 'error' && (message.code?.startsWith('LOCATION_') || message.code === 'SELFIE') && <button type="button" className="btn btn-link p-0 ms-2" onClick={retryCheckIn}>Try again</button>}</div>}
 
       <div className="row g-3">
         <div className="col-12 col-lg-7">
@@ -361,8 +436,14 @@ export default function EmployeeAttendance() {
                   {session && <StatusBadge status={session.status} variant={session.status === 'CHECKED_IN' ? 'success' : 'info'} dot>{formatStatusLabel(session.status)}</StatusBadge>}
                 </div>
                 <div className="row g-3"><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check in</div><strong>{session?.checkInTime ? formatTimeIST(session.checkInTime) : '--:--'}</strong></div><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check out</div><strong>{session?.checkOutTime ? formatTimeIST(session.checkOutTime) : '--:--'}</strong></div></div>
-                <div className="d-flex flex-wrap gap-2">
-                  {canWebCheckIn && <Button icon={LogIn} onClick={() => checkIn.mutate()} loading={checkIn.isPending} disabled={!!session || busy || context.data.attendanceStatus === 'BIOMETRIC_PUNCHED'}>
+                {shiftToday?.shiftName && (
+                  <div className="hz-today-shift">
+                    Today’s shift: <strong>{shiftToday.shiftName}</strong>{shiftToday.shiftStart ? ` · ${shiftToday.shiftStart}–${shiftToday.shiftEnd}` : ''}
+                  </div>
+                )}
+                {canWebCheckIn && requireSelfie && !session && <div className="hz-today-shift">A selfie is required when you check in.</div>}
+                <div className="hz-punch-actions">
+                  {canWebCheckIn && <Button icon={LogIn} onClick={startCheckIn} loading={checkIn.isPending} disabled={!!session || busy || context.data.attendanceStatus === 'BIOMETRIC_PUNCHED'}>
                     {checkIn.isPending ? (locationStatus === 'locating' ? 'Getting your location…' : locationStatus === 'improving' ? 'Improving location accuracy…' : 'Verifying location…') : 'Check in'}
                   </Button>}
                   {canSelfCheckOut && <Button variant="secondary" icon={LogOut} onClick={() => checkOut.mutate()} loading={checkOut.isPending} disabled={!session || busy}>Check out</Button>}

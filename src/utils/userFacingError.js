@@ -53,6 +53,13 @@ export function userFacingError(error) {
       : vettriMicrocopy.error.sessionExpired;
   }
 
+  if (status === 402) {
+    // Subscription inactive (SUBSCRIPTION_INACTIVE): the workspace is read-only.
+    return isSafeUserMessage(message)
+      ? message
+      : 'This workspace is read-only because the subscription is inactive. A company admin can pay under Billing to restore full access.';
+  }
+
   if (status === 403) {
     return vettriMicrocopy.permission.generic;
   }
@@ -84,5 +91,5 @@ export function userFacingError(error) {
 
 export function notifyableStatus(error) {
   const status = error?.response?.status;
-  return !error?.response || [401, 403, 404, 409, 429].includes(status) || status >= 500;
+  return !error?.response || [401, 402, 403, 404, 409, 429].includes(status) || status >= 500;
 }

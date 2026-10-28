@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles, KeyRound } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles, KeyRound, Download } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
 import { adminApi } from '../../api/endpoints/admin';
@@ -12,6 +12,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { formatRole } from '../../utils/formatRole';
 import CommandCenter from './CommandCenter';
 import AskVettriPanel from './AskVettriPanel';
+import { promptInstall, usePwa } from '../../pwa/pwa';
+import IosInstallHint from '../../pwa/IosInstallHint';
 
 export default function Topbar({ onOpenMobileNav }) {
   const { user, logout, hasPermission, hasRole, selectedCompanyId, setSelectedCompanyId } = useAuth();
@@ -26,6 +28,8 @@ export default function Topbar({ onOpenMobileNav }) {
   const [askVettriOpen, setAskVettriOpen] = useState(false);
   const [askVettriQuery, setAskVettriQuery] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
+  const pwa = usePwa();
+  const [iosHintOpen, setIosHintOpen] = useState(false);
   const currentPage = useMemo(() => {
     const currentQuery = location.search.replace(/^\?/, '');
     const exact = NAV_INDEX.find((entry) => {
@@ -150,6 +154,7 @@ export default function Topbar({ onOpenMobileNav }) {
       </button>
       <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} onAskVettri={openAskVettri} />
       <AskVettriPanel open={askVettriOpen} initialQuery={askVettriQuery} onClose={() => setAskVettriOpen(false)} />
+      <IosInstallHint open={iosHintOpen} onClose={() => setIosHintOpen(false)} />
 
       <div className="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
         {quickActions.length > 0 && (
@@ -326,6 +331,19 @@ export default function Topbar({ onOpenMobileNav }) {
                 >
                   <UserCircle size={16} /> {profileLoading ? 'Opening profile…' : 'My Profile'}
                 </button>
+                {(pwa.canInstall || pwa.showIosHint) && (
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (pwa.canInstall) promptInstall();
+                      else setIosHintOpen(true);
+                    }}
+                    className="btn btn-light border-0 w-100 d-flex align-items-center gap-2 text-start px-2 py-2"
+                  >
+                    <Download size={16} /> Install app
+                  </button>
+                )}
                 <button
                   role="menuitem"
                   onClick={() => {

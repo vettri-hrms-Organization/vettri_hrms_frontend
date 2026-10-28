@@ -1,0 +1,24 @@
+{
+  "name": "Vettri HRMS",
+  "short_name": "Vettri",
+  "description": "Attendance, leave, payslips and HR self-service for your team.",
+  "id": "/",
+  "start_url": "/my-attendance?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#10172A",
+  "background_color": "#F6F8FC",
+  "lang": "en-IN",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/icons/vettri-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/vettri-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/vettri-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/vettri-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Check in", "short_name": "Attendance", "url": "/my-attendance?source=pwa", "icons": [{ "src": "/icons/vettri-192.png", "sizes": "192x192" }] },
+    { "name": "Apply leave", "short_name": "Leave", "url": "/leave?source=pwa", "icons": [{ "src": "/icons/vettri-192.png", "sizes": "192x192" }] }
+  ]
+}

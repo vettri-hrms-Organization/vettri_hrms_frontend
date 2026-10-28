@@ -6,6 +6,8 @@ import FormField from '../components/ui/FormField';
 import Button from '../components/ui/Button';
 import { selfServiceApi } from '../api/endpoints/selfService';
 import { useAuth } from '../hooks/useAuth';
+import { Link } from 'react-router-dom';
+import { LEGAL_LINKS } from '../api/endpoints/privacy';
 
 const supportLevels = [
   { label: 'Level 1', title: 'General support', icon: Headphones, description: 'For everyday questions about using Vettri HRMS and its core workflows.' },
@@ -138,6 +140,22 @@ export default function SupportInfo() {
             <span>Help status</span>
             <strong>Available</strong>
           </div>
+        </div>
+      </section>
+
+      <section className="hz-dashboard__surface hz-support-meta" aria-label="Legal and privacy">
+        <div className="hz-dashboard__section-heading">
+          <div>
+            <span className="hz-dashboard__section-kicker">Legal</span>
+            <h2>Legal &amp; privacy</h2>
+          </div>
+        </div>
+        <div className="d-flex flex-wrap gap-3">
+          <a href={LEGAL_LINKS.terms} target="_blank" rel="noopener noreferrer">Terms of Service</a>
+          <a href={LEGAL_LINKS.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+          <a href={LEGAL_LINKS.dpa} target="_blank" rel="noopener noreferrer">Data Processing Agreement</a>
+          <a href={LEGAL_LINKS.security} target="_blank" rel="noopener noreferrer">Security</a>
+          <Link to="/privacy">My privacy, consents &amp; data requests</Link>
         </div>
       </section>
 

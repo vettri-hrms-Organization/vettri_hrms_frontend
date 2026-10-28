@@ -3,7 +3,9 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import SubscriptionBanner from '../billing/SubscriptionBanner';
 import Breadcrumbs from './Breadcrumbs';
+import MobileTabBar from './MobileTabBar';
 import { NavMemoryProvider } from './NavMemoryContext';
 import { BreadcrumbProvider } from './BreadcrumbContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -32,6 +34,7 @@ export default function MainLayout() {
         />
         <div className="vettri-app-shell__content">
           <Topbar onOpenMobileNav={() => setMobileNavOpen(true)} />
+          <SubscriptionBanner />
           <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
               <Breadcrumbs />
@@ -39,6 +42,7 @@ export default function MainLayout() {
             </BreadcrumbProvider>
           </main>
         </div>
+        <MobileTabBar onOpenMore={() => setMobileNavOpen(true)} moreOpen={mobileNavOpen} />
       </div>
     </NavMemoryProvider>
   );

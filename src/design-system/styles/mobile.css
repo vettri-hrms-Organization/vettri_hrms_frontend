@@ -1,0 +1,153 @@
+/* ========================================================================
+   VETTRI - MOBILE SELF-SERVICE + PWA
+   Phone-first polish for employee screens (360-430px), the bottom tab bar,
+   selfie capture and the PWA update/install surfaces. Desktop (>= 768px)
+   layout is untouched except for the selfie/PWA components themselves.
+   ======================================================================== */
+
+/* ---- Bottom tab bar (employees, < 768px) ---- */
+.hz-tabbar { display: none; }
+
+@media (max-width: 767.98px) {
+  .hz-tabbar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1030; /* below the sidebar drawer (1040/1045) so "More" overlays it */
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    min-height: 60px;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+    background: var(--hz-bg-surface);
+    border-top: 1px solid var(--vettri-border);
+    box-shadow: 0 -8px 24px -18px rgba(16, 23, 42, 0.35);
+  }
+  .hz-tabbar__item {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--hz-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hz-tabbar__item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .hz-tabbar__item.is-active { color: var(--hz-primary-600); background: var(--hz-primary-50); }
+  .hz-tabbar__item:focus-visible { outline: 2px solid var(--hz-focus); outline-offset: -2px; }
+
+  /* Leave room for the tab bar under every page. */
+  .vettri-app-shell:has(.hz-tabbar) .hz-main-content {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* ---- Self-service pages: phone ergonomics ---- */
+  .hz-main-content .hz-page-header { gap: 10px; }
+  .hz-main-content .hz-page-header__title { font-size: 22px; }
+  .hz-main-content .btn { min-height: 40px; }
+  .hz-main-content .form-control,
+  .hz-main-content .form-select { min-height: 44px; font-size: 16px; } /* 16px stops iOS zoom-on-focus */
+  .hz-main-content .card-header { padding: 14px 16px 10px !important; }
+  .hz-main-content .card-body { padding: 14px 16px !important; }
+  .hz-module-page { gap: 16px !important; }
+
+  /* Wide tables scroll inside their card instead of the page. */
+  .hz-main-content .table-responsive { margin: 0 -16px; padding: 0 16px; }
+  .hz-main-content .table { font-size: 13px; }
+}
+
+/* ---- My attendance: one-thumb punch ---- */
+.hz-punch-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.hz-today-shift { font-size: 13px; color: var(--hz-text-secondary); }
+
+@media (max-width: 575.98px) {
+  .hz-punch-actions { flex-direction: column; }
+  .hz-punch-actions .btn {
+    width: 100%;
+    min-height: 56px;
+    justify-content: center;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 14px;
+  }
+}
+
+/* ---- Selfie capture ---- */
+.hz-selfie { display: flex; flex-direction: column; gap: 12px; }
+.hz-selfie__frame {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--vettri-navy);
+}
+.hz-selfie__media { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hz-selfie__media--mirror { transform: scaleX(-1); }
+.hz-selfie__overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255, 255, 255, 0.85); font-weight: 600;
+}
+.hz-selfie__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+@media (max-width: 575.98px) {
+  .hz-selfie__actions .btn { flex: 1 1 100%; justify-content: center; min-height: 48px; }
+}
+
+.hz-selfie-thumb {
+  width: 40px; height: 40px; object-fit: cover; border-radius: 8px;
+  border: 1px solid var(--vettri-border); cursor: zoom-in; background: var(--hz-surface-muted);
+}
+
+/* ---- PWA update toast + iOS install hint ---- */
+.hz-pwa-toast,
+.hz-pwa-sheet {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1080;
+  width: min(420px, calc(100vw - 32px));
+  background: var(--hz-bg-surface);
+  color: var(--hz-text-primary);
+  border: 1px solid var(--vettri-border);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px -16px rgba(16, 23, 42, 0.45);
+}
+.hz-pwa-toast {
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px 10px 16px;
+  font-weight: 600;
+}
+.hz-pwa-toast > span { flex: 1 1 auto; }
+.hz-pwa-sheet {
+  top: calc(var(--vettri-topbar-height) + 12px);
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 14px 16px;
+}
+@media (max-width: 767.98px) {
+  .hz-pwa-toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---- Phone tweaks for shared self-service widgets ---- */
+@media (max-width: 575.98px) {
+  .hz-main-content .hz-tabs { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .hz-main-content .hz-tabs::-webkit-scrollbar { display: none; }
+  .hz-main-content .hz-tab { flex: 0 0 auto; white-space: nowrap; }
+  /* Page header actions (Refresh, Apply leave, New claim...) wrap under the title, full width. */
+  .hz-main-content .hz-page-header { flex-wrap: wrap; }
+  .hz-main-content .hz-page-header .btn { flex: 1 1 auto; justify-content: center; }
+  /* Inline-width selects (year pickers, filters) shouldn't push the card wider than the screen. */
+  .hz-main-content select.form-select[style] { max-width: 100%; }
+  .hz-main-content .row > [class*='col-'] { min-width: 0; }
+}

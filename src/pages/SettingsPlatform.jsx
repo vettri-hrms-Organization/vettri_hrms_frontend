@@ -7,9 +7,11 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/ui/PageHeader';
+import PlatformBillingPanel from './billing/PlatformBillingPanel';
+import DemoWorkspacesPanel from './platform/DemoWorkspacesPanel';
 
 const plans = ['STARTER', 'BUSINESS', 'ENTERPRISE'];
-const statuses = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELLED'];
+const statuses = ['TRIAL', 'TRIALING', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'EXPIRED', 'CANCELLED'];
 const emptySubscription = { plan: 'STARTER', status: 'TRIAL', employeeLimit: 25, deviceLimit: 2, startDate: '', renewalDate: '', amount: '' };
 
 export default function SettingsPlatform() {
@@ -56,5 +58,7 @@ export default function SettingsPlatform() {
       </form>
     </Card>
     <Card title="Subscriptions"><div className="table-responsive"><table className="table align-middle mb-0 hz-table" aria-label="Subscriptions"><thead><tr><th>Company</th><th>Plan</th><th>Status</th><th>Employees</th><th>Devices</th><th /></tr></thead><tbody>{(subscriptions.data || []).map((item) => <tr key={item.id}><td>{(companies.data || []).find((companyItem) => companyItem.id === item.companyId)?.name || item.companyId}</td><td>{item.plan}</td><td>{item.status}</td><td>{item.employeeLimit}</td><td>{item.deviceLimit}</td><td><Button size="sm" variant="secondary" onClick={() => { setEditingSubscriptionId(item.id); setSelectedCompany(String(item.companyId)); setSubscription({ plan: item.plan, status: item.status, employeeLimit: item.employeeLimit, deviceLimit: item.deviceLimit, startDate: item.startDate || '', renewalDate: item.renewalDate || '', amount: item.amount || '' }); }}>Edit</Button></td></tr>)}</tbody></table></div></Card>
+    <DemoWorkspacesPanel />
+    <PlatformBillingPanel />
   </div>;
 }

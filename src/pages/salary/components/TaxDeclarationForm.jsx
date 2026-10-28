@@ -161,6 +161,15 @@ export default function TaxDeclarationForm({ employeeId = null, fy, canEdit = tr
                 TDS so far: {formatCurrency(projection.tdsDeductedSoFar)} · estimated monthly TDS ({projection.selectedRegime === 'OLD' ? 'old' : 'new'} regime): {formatCurrency(projection.estimatedMonthlyTds)}.
                 Save to see the effect of changes.
               </p>
+              {projection.openingYtd && (
+                <p className="mb-0 mt-1 small" style={{ color: 'var(--hz-text-muted)' }}>
+                  Includes salary paid before Vettri payroll ({projection.openingYtd.monthsCovered} month(s)):{' '}
+                  taxable {formatCurrency(projection.openingYtd.taxableSalary ?? projection.openingYtd.grossSalary)}, TDS {formatCurrency(projection.openingYtd.tdsDeducted)}
+                  {Number(projection.openingYtd.previousEmployerIncome) > 0 && (
+                    <> · previous employer income {formatCurrency(projection.openingYtd.previousEmployerIncome)}, TDS {formatCurrency(projection.openingYtd.previousEmployerTds)}</>
+                  )}.
+                </p>
+              )}
             </div>
           )}
         </Card>

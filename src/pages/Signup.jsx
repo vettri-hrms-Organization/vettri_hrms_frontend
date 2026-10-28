@@ -42,6 +42,14 @@ const initialForm = {
   plan: 'TRIAL',
   billingCycle: 'MONTHLY',
   employeeCount: 25,
+  acceptTerms: false,
+  acceptDpa: false,
+};
+
+const LEGAL_URLS = {
+  terms: 'https://vettrihrms.in/terms',
+  privacy: 'https://vettrihrms.in/privacy',
+  dpa: 'https://vettrihrms.in/dpa',
 };
 
 const getSubscriptionTotal = (employeeCount, billingCycle) => {
@@ -109,6 +117,10 @@ export default function Signup() {
       if (!form.companySize) nextErrors.companySize = 'Select your company size.';
       if (!form.country.trim()) nextErrors.country = 'Enter your country.';
     }
+    if (step === 3) {
+      if (!form.acceptTerms) nextErrors.acceptTerms = 'Please agree to the Terms of Service and Privacy Policy.';
+      if (!form.acceptDpa) nextErrors.acceptDpa = 'Please accept the Data Processing Agreement for your organization.';
+    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -133,6 +145,8 @@ export default function Signup() {
           country: form.country,
           interests: form.interests,
           plan: form.plan,
+          acceptTerms: form.acceptTerms,
+          acceptDpa: form.acceptDpa,
           ...(hasPaymentFlow ? { billingCycle: form.billingCycle, employeeCount: form.employeeCount } : {}),
         }),
       });
@@ -419,6 +433,21 @@ export default function Signup() {
               </div>
             )}
 
+            {step === 3 && (
+              <div className="signup-legal">
+                <label className="signup-legal-check">
+                  <input type="checkbox" checked={form.acceptTerms} onChange={(event) => update('acceptTerms', event.target.checked)} aria-invalid={Boolean(errors.acceptTerms)} />
+                  <span>I agree to the <a href={LEGAL_URLS.terms} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={LEGAL_URLS.privacy} target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span>
+                </label>
+                {errors.acceptTerms && <small className="signup-legal-error">{errors.acceptTerms}</small>}
+                <label className="signup-legal-check">
+                  <input type="checkbox" checked={form.acceptDpa} onChange={(event) => update('acceptDpa', event.target.checked)} aria-invalid={Boolean(errors.acceptDpa)} />
+                  <span>On behalf of {form.organizationName.trim() || 'my organization'}, I accept the <a href={LEGAL_URLS.dpa} target="_blank" rel="noopener noreferrer">Data Processing Agreement</a> - Vettri processes our employees' personal data only on our instructions.</span>
+                </label>
+                {errors.acceptDpa && <small className="signup-legal-error">{errors.acceptDpa}</small>}
+              </div>
+            )}
+
             {errors.submit && <p className="signup-error" role="alert">{errors.submit}</p>}
 
             <div className="signup-actions">
@@ -570,6 +599,11 @@ const styles = `
   .signup-field input::placeholder { color: #9AA6C0; }
   .signup-field input:focus, .signup-field select:focus { outline: none; border-color: var(--hz-primary-500); box-shadow: none; }
   .signup-field small, .signup-error { display: block; margin-top: 6px; color: var(--hz-danger-600); font-size: 11px; font-weight: 600; line-height: 1.4; }
+  .signup-legal { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+  .signup-legal-check { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.5; color: var(--hz-text-secondary); cursor: pointer; }
+  .signup-legal-check input { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--hz-primary-600); }
+  .signup-legal-check a { color: var(--hz-primary-600); font-weight: 600; }
+  .signup-legal-error { color: var(--hz-danger-600); font-size: 11px; font-weight: 600; margin: -4px 0 0 26px; }
   .signup-password { display: flex; align-items: center; border: 1px solid var(--hz-border); border-radius: 9px; background: #fff; transition: border-color .18s ease; }
   .signup-password:focus-within { border-color: var(--hz-primary-500); box-shadow: none; }
   .signup-password input { border: 0 !important; box-shadow: none !important; height: 50px; flex: 1; }

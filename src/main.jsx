@@ -13,12 +13,21 @@ import './components/ui/components.css';
 import './design-system/styles/assistant.css';
 import './design-system/styles/hrms-product.css';
 import './design-system/styles/vettri-ui.css';
+import './design-system/styles/mobile.css';
 
 import { queryClient } from './api/queryClient';
 import { AuthProvider } from './auth/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import App from './App.jsx';
+import PwaUpdatePrompt from './pwa/PwaUpdatePrompt';
+import { registerServiceWorker } from './pwa/pwa';
+
+// Installable PWA: the service worker is registered in production builds only, so dev
+// (Vite HMR) never serves stale bundles from cache.
+if (import.meta.env.PROD) {
+  registerServiceWorker();
+}
 
 class AppErrorBoundary extends React.Component {
   state = { hasError: false };
@@ -52,6 +61,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <ThemeProvider>
               <ToastProvider>
                 <App />
+                <PwaUpdatePrompt />
               </ToastProvider>
             </ThemeProvider>
           </AuthProvider>

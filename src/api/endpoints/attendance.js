@@ -25,6 +25,8 @@ export const attendanceApi = {
   updateEmployeeConfiguration: (employeeId, payload) => axiosClient.put(`/api/attendance/employee/${employeeId}/configuration`, payload).then((res) => res.data),
   biometricDevices: (employeeId) => axiosClient.get(`/api/attendance/employee/${employeeId}/biometric-devices`).then((res) => res.data),
   employeeSessions: (employeeId) => axiosClient.get(`/api/attendance/employee/${employeeId}/sessions`).then((res) => res.data),
+  // Check-in selfie (JPEG/PNG blob). Needs the Authorization header, so it is fetched via axios, not <img src>.
+  sessionSelfie: (sessionId) => axiosClient.get(`/api/attendance/sessions/${sessionId}/selfie`, { responseType: 'blob' }).then((res) => res.data),
   officeLocations: () => axiosClient.get('/api/attendance/office-locations').then((res) => res.data),
   createOfficeLocation: (payload) => axiosClient.post('/api/attendance/office-locations', payload).then((res) => res.data),
     updateOfficeLocation: (id, payload) => axiosClient.put(`/api/attendance/office-locations/${id}`, payload).then((res) => res.data),

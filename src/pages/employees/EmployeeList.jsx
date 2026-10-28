@@ -10,6 +10,7 @@ import {
   Download,
 } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportToCsv';
+import { customFieldsApi } from '../../api/endpoints/customFields';
 import { formatDateIST, toISTDateInputValue } from '../../utils/formatDateTime';
 
 import { employeesApi } from '../../api/endpoints/employees';
@@ -238,7 +239,23 @@ export default function EmployeeList() {
         content.forEach((emp) => byId.set(emp.id, emp));
         if (content.length === 0 || p >= (result?.totalPages ?? 1) - 1) break;
       }
-      const rows = Array.from(byId.values()).map(toEmployeeExportRow);
+      // Company custom fields become extra columns (label as header); failure here never blocks the export.
+      let custom = null;
+      try {
+        custom = await customFieldsApi.exportValues();
+      } catch {
+        custom = null;
+      }
+      const customFields = Array.isArray(custom?.fields) ? custom.fields : [];
+      const rows = Array.from(byId.values()).map((emp) => {
+        const row = toEmployeeExportRow(emp);
+        const values = custom?.values?.[emp.id] || custom?.values?.[String(emp.id)] || {};
+        customFields.forEach((field) => {
+          const header = Object.prototype.hasOwnProperty.call(row, field.label) ? `${field.label} (${field.key})` : field.label;
+          row[header] = values[field.key] ?? '';
+        });
+        return row;
+      });
       if (rows.length === 0) {
         setExportError('There are no employees to export.');
         return;

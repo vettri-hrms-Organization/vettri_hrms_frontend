@@ -86,6 +86,8 @@ function AttendancePolicyPanel({ canManage }) {
     manualRegularizationEnabled: true,
     regularizationApprovalRequired: true,
     gracePeriodMinutes: 10,
+    requireSelfieAtCheckIn: false,
+    selfieRetentionDays: 90,
   });
 
   useEffect(() => {
@@ -95,6 +97,8 @@ function AttendancePolicyPanel({ canManage }) {
         manualRegularizationEnabled: policy.manualRegularizationEnabled,
         regularizationApprovalRequired: policy.regularizationApprovalRequired,
         gracePeriodMinutes: policy.gracePeriodMinutes,
+        requireSelfieAtCheckIn: !!policy.requireSelfieAtCheckIn,
+        selfieRetentionDays: policy.selfieRetentionDays ?? 90,
       });
     }
   }, [policy]);
@@ -168,6 +172,21 @@ function AttendancePolicyPanel({ canManage }) {
                 {[0, 5, 10, 15, 20, 30, 45, 60].map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}
               </select>
               <small className="text-muted-hz">Stored in policy for attendance reporting; late rules require configured shifts.</small>
+            </div>
+            <div className="col-12 col-md-6">
+              <label className="form-label" htmlFor="attendance-selfie">Selfie at check-in</label>
+              <select id="attendance-selfie" className="form-select" value={String(form.requireSelfieAtCheckIn)} disabled={!canManage} onChange={(event) => setForm({ ...form, requireSelfieAtCheckIn: event.target.value === 'true' })}>
+                <option value="false">Not required</option>
+                <option value="true">Required for Web/App check-in</option>
+              </select>
+              <small className="text-muted-hz">Employees take a front-camera selfie with their GPS check-in. No face recognition is used.</small>
+            </div>
+            <div className="col-12 col-md-6">
+              <label className="form-label" htmlFor="attendance-selfie-retention">Keep selfies for</label>
+              <select id="attendance-selfie-retention" className="form-select" value={form.selfieRetentionDays} disabled={!canManage} onChange={(event) => setForm({ ...form, selfieRetentionDays: Number(event.target.value) })}>
+                {[...new Set([7, 15, 30, 60, 90, 180, 365, form.selfieRetentionDays])].sort((a, b) => a - b).map((days) => <option key={days} value={days}>{days} days</option>)}
+              </select>
+              <small className="text-muted-hz">Older selfies are deleted automatically every night.</small>
             </div>
           </div>
           {canManage && <div className="d-flex justify-content-end"><Button onClick={() => save.mutate(form)} loading={save.isPending}>Save attendance policy</Button></div>}

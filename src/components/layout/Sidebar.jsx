@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronsLeft, LogOut, Plus, Settings2, UserCircle, X } from 'lucide-react';
+import { ChevronDown, ChevronsLeft, LogOut, Plus, Settings2, ShieldCheck, UserCircle, X } from 'lucide-react';
 import Logo from '../brand/Logo';
 import Avatar from '../ui/Avatar';
 import { visibleNavSections, findNavItemByPath } from './navConfig';
@@ -212,6 +212,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                 </div>
                 <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); navigate('/my-profile'); }}><UserCircle size={15} /> My profile</button>
                 <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); navigate('/settings/preferences'); }}><Settings2 size={15} /> Preferences</button>
+                <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); navigate('/privacy'); }}><ShieldCheck size={15} /> Privacy</button>
                 <button type="button" role="menuitem" className="danger" onClick={() => { setProfileOpen(false); logout(); }}><LogOut size={15} /> Sign out</button>
               </div>
             )}
