@@ -203,7 +203,7 @@ function HolidaysPanel() {
           <div key={h.id} className="d-flex align-items-center justify-content-between py-2" style={{ borderBottom: '1px solid var(--hz-border)' }}>
             <div>
               <div style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{h.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{new Date(h.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+              <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{new Date(h.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
             </div>
             <button className="btn btn-sm btn-light border-0" style={{ color: 'var(--hz-danger-600)' }} onClick={() => remove.mutate(h.id)} aria-label={`Delete holiday "${h.name}"`}>
               <Trash2 size={14} />

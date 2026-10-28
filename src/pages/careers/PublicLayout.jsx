@@ -1,23 +1,24 @@
 import { Link } from 'react-router-dom';
 import Logo from '../../components/brand/Logo';
 
-export default function PublicLayout({ children }) {
+export default function PublicLayout({ children, hero = null }) {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--hz-bg-canvas)' }}>
-      <header style={{ borderBottom: '1px solid var(--hz-border)', background: 'var(--hz-bg-surface)' }}>
-        <div className="container py-3 d-flex align-items-center justify-content-between">
-          <Link to="/careers" className="text-decoration-none">
+    <div className="hz-public">
+      <header className="hz-public__header">
+        <div className="hz-public__bar">
+          <Link to="/careers" className="text-decoration-none" aria-label="Careers home">
             <Logo tagline="Careers" />
           </Link>
-          <Link to="/" className="text-decoration-none" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-            &larr; Back to Vettri HRMS
+          <Link to="/" className="hz-public__back">
+            Back to Vettri HRMS
           </Link>
         </div>
       </header>
-      <main className="container py-5" style={{ maxWidth: 860 }}>
+      {hero}
+      <main className="hz-public__main">
         {children}
       </main>
-      <footer className="container py-4 text-center" style={{ fontSize: 'var(--hz-text-xs)', color: 'var(--hz-text-muted)' }}>
+      <footer className="hz-public__footer">
         &copy; {new Date().getFullYear()} Vettri HRMS. All rights reserved.
       </footer>
     </div>

@@ -96,8 +96,8 @@ export function getWelcomeGreeting(user, date = new Date()) {
 }
 
 export function getAssistantWelcome(user) {
-  const name = getDisplayName(user);
-  return name
-    ? `👋 Hey ${name}. ${vettriMicrocopy.welcome.assistant}`
-    : `👋 Hi there. ${vettriMicrocopy.welcome.assistant}`;
+  const firstName = getDisplayName(user).split(' ')[0];
+  return firstName
+    ? `Hi ${firstName}. ${vettriMicrocopy.welcome.assistant}`
+    : `Hi there. ${vettriMicrocopy.welcome.assistant}`;
 }

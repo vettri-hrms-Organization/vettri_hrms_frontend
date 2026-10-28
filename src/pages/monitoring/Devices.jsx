@@ -237,7 +237,7 @@ export default function Devices() {
       {canViewInventory && (
         <Card>
           <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-            <div className="d-flex flex-wrap gap-3">
+            <div className="hz-mini-stats">
               {[
                 { label: 'Total enrolled', value: inventorySummary.totalDevices },
                 { label: 'Queued', value: inventorySummary.queuedCount },
@@ -247,9 +247,9 @@ export default function Devices() {
                 { label: 'Offline', value: inventorySummary.offlineCount },
                 { label: 'Never scanned', value: inventorySummary.neverScannedCount },
               ].map((item) => (
-                <div key={item.label} className="text-center" style={{ minWidth: 110 }}>
-                  <div className="text-secondary-hz small">{item.label}</div>
-                  <div className="h5 mb-0 mt-1">{item.value}</div>
+                <div key={item.label} className="hz-mini-stat">
+                  <span>{item.label}</span>
+                  <strong>{item.value ?? 0}</strong>
                 </div>
               ))}
             </div>

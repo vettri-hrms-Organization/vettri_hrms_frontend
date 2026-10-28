@@ -10,7 +10,7 @@ test('notifications are grouped by local calendar day', () => {
     { id: 3, created_at: new Date(2026, 5, 10, 8).toISOString() },
   ], now);
 
-  assert.deepEqual(grouped.map((group) => group.label), ['Today', 'Yesterday', new Date(2026, 5, 10).toLocaleDateString()]);
+  assert.deepEqual(grouped.map((group) => group.label), ['Today', 'Yesterday', new Date(2026, 5, 10).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })]);
   assert.deepEqual(grouped.map((group) => group.items.length), [1, 1, 1]);
 });
 

@@ -5,6 +5,8 @@ import { reportsApi } from '../../api/endpoints/reports';
 import Card from '../../components/ui/Card';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonCard } from '../../components/ui/Skeleton';
+import PageHeader from '../../components/ui/PageHeader';
+import { formatStatusLabel } from '../../components/ui/StatusBadge';
 
 /**
  * Distinct from Reports.jsx: that page is a drill-down tool (pick a tab,
@@ -60,17 +62,16 @@ export default function ExecutiveOverview() {
 
   return (
     <div className="hz-admin-page hz-admin-page--executive d-flex flex-column gap-4">
-      <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-          <h1 style={{ fontSize: 'var(--hz-text-2xl)', fontWeight: 700 }}>Executive Overview</h1>
-          <p className="text-secondary-hz" style={{ fontSize: 'var(--hz-text-sm)' }}>
-            Org health at a glance - same live data as Reports, synthesized into one view
-          </p>
-        </div>
-        <Link to="/reports" className="d-inline-flex align-items-center gap-1 text-decoration-none" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600, color: 'var(--hz-primary-600)' }}>
-          Drill into full reports <ArrowRight size={14} />
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Insights"
+        title="Executive overview"
+        description="Organisation health at a glance: headcount, attendance, leave and hiring in one view."
+        actions={(
+          <Link to="/reports" className="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+            Drill into full reports <ArrowRight size={15} aria-hidden="true" />
+          </Link>
+        )}
+      />
 
       <div className="row g-3">
         <KpiCard icon={Users} label="Headcount" value={emp.totalEmployees} accent="var(--hz-primary-600)" tint="var(--hz-primary-50)" />
@@ -204,5 +205,5 @@ const STAGE_LABEL = {
   OFFERED: 'Offered', OFFER_LETTER_SENT: 'Offer Sent', HIRED: 'Hired', REJECTED: 'Rejected',
 };
 function stageLabel(stage) {
-  return STAGE_LABEL[stage] || stage;
+  return STAGE_LABEL[stage] || formatStatusLabel(stage);
 }

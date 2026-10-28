@@ -208,6 +208,20 @@ function SummaryTile({ label, value, tone }) {
   );
 }
 
+// "SPECIAL_ALLOWANCE" -> "Special allowance", "specialAllowance" -> "Special allowance",
+// payroll codes such as HRA, PF and TDS stay upper case.
+const PAYROLL_ACRONYMS = new Set(['HRA', 'PF', 'EPF', 'TDS', 'ESI', 'ESIC', 'LTA', 'DA', 'PT', 'NPS', 'CTC', 'VPF']);
+
 function splitLabel(key) {
-  return key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+  const words = String(key)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .split(/[\s_-]+/)
+    .filter(Boolean);
+  return words
+    .map((word, index) => {
+      if (PAYROLL_ACRONYMS.has(word.toUpperCase())) return word.toUpperCase();
+      const lower = word.toLowerCase();
+      return index === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+    })
+    .join(' ');
 }

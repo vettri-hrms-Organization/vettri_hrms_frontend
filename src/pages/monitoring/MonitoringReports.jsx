@@ -720,12 +720,8 @@ export default function MonitoringReports() {
                 boxShadow:
                   'none',
               }}
-              placeholder="
-                Search employee, device, application...
-              "
-              aria-label="
-                Search monitoring report
-              "
+              placeholder="Search employee, device, application..."
+              aria-label="Search monitoring report"
               value={
                 search
               }
@@ -763,9 +759,7 @@ export default function MonitoringReports() {
                 onClick={
                   clearSearch
                 }
-                aria-label="
-                  Clear search
-                "
+                aria-label="Clear search"
               >
 
                 <X
@@ -2257,9 +2251,7 @@ export default function MonitoringReports() {
                     currentPage ===
                     0
                   }
-                  aria-label="
-                    Previous page
-                  "
+                  aria-label="Previous page"
                 >
 
                   <ChevronLeft
@@ -2368,9 +2360,7 @@ export default function MonitoringReports() {
                     totalPages -
                       1
                   }
-                  aria-label="
-                    Next page
-                  "
+                  aria-label="Next page"
                 >
 
                   <ChevronRight

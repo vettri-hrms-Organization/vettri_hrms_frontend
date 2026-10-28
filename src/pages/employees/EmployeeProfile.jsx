@@ -98,26 +98,37 @@ export default function EmployeeProfile() {
         <ArrowLeft size={15} /> Back to Employees
       </Link>
 
-      <Card className="hz-profile__identity-card">
-        <div className="d-flex align-items-start justify-content-between flex-wrap gap-3">
-          <div className="d-flex align-items-center gap-3">
-            <Avatar name={employee.fullName} size="xl" />
-            <div className="hz-profile__identity-copy">
-              <div className="d-flex align-items-center gap-2">
-                <h1 style={{ fontSize: 'var(--hz-text-xl)', fontWeight: 700, margin: 0 }}>{employee.fullName}</h1>
+      <section className="hz-profile-hero" aria-labelledby="profile-name">
+        <div className="hz-profile-hero__cover" aria-hidden="true" />
+        <div className="hz-profile-hero__main">
+          <div className="hz-profile-hero__identity">
+            <span className="hz-profile-hero__avatar">
+              <Avatar name={employee.fullName} src={employee.profilePhotoUrl} size="xl" />
+            </span>
+            <div className="hz-profile-hero__copy">
+              <div className="hz-profile-hero__name-row">
+                <h1 id="profile-name">{employee.fullName}</h1>
                 <Badge variant={meta.variant} dot>
                   {meta.label}
                 </Badge>
               </div>
-              <p className="text-secondary-hz mb-1" style={{ fontSize: 'var(--hz-text-sm)' }}>
-                {employee.designationTitle || 'No designation set'} {employee.departmentName ? `· ${employee.departmentName}` : ''}
+              <p className="hz-profile-hero__role">
+                {employee.designationTitle || 'No designation set'}{employee.departmentName ? ` · ${employee.departmentName}` : ''}
               </p>
-              <p className="text-muted-hz mb-0" style={{ fontSize: 12 }}>
-                {employee.employeeCode} · {EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType}
+              <p className="hz-profile-hero__meta">
+                <span>{employee.employeeCode}</span>
+                <span>{EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType || 'Employment type not set'}</span>
+                {employee.reportingManagerName && <span>Reports to {employee.reportingManagerName}</span>}
               </p>
             </div>
           </div>
 
+          <div className="hz-profile-hero__actions">
+            {employee.email && (
+              <a href={`mailto:${employee.email}`} className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2">
+                <Mail size={15} aria-hidden="true" /> Email
+              </a>
+            )}
           {!isEmployee && (
           <div className="position-relative">
             <Button variant="secondary" size="sm" onClick={() => setStatusMenuOpen((o) => !o)}>
@@ -148,19 +159,27 @@ export default function EmployeeProfile() {
             )}
           </div>
           )}
+          </div>
         </div>
-        <div className="hz-profile-summary">
-          <ProfileSummary label="Joined" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'} />
-          <ProfileSummary label="Reports" value={`${employee.directReports?.length || 0} direct reports`} />
+
+        <dl className="hz-profile-hero__facts">
+          <ProfileSummary
+            label="Joined"
+            value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'}
+            detail={formatTenure(employee.dateOfJoining)}
+          />
+          <ProfileSummary label="Direct reports" value={employee.directReports?.length || 0} />
           <ProfileSummary label="Employment" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType || 'Not set'} />
-        </div>
+          <ProfileSummary label="Department" value={employee.departmentName || 'Not set'} />
+        </dl>
+
         <div className="hz-profile-contact-strip">
           <ProfileContact icon={Mail} label="Email" value={employee.email} />
           <ProfileContact icon={Phone} label="Phone" value={employee.phone} />
-          <ProfileContact icon={MapPin} label="Location" value={employee.address} />
-          <ProfileContact icon={Users} label="Department" value={employee.departmentName} />
+          <ProfileContact icon={MapPin} label="Address" value={employee.address} />
+          <ProfileContact icon={Users} label="Manager" value={employee.reportingManagerName} />
         </div>
-      </Card>
+      </section>
 
       <Tabs items={availableTabs} value={tab} onChange={changeTab} />
 
@@ -182,13 +201,30 @@ export default function EmployeeProfile() {
   );
 }
 
-function ProfileSummary({ label, value }) {
+function ProfileSummary({ label, value, detail }) {
   return (
-    <div className="hz-profile-summary__item">
-      <span>{label}</span>
-      <strong>{value}</strong>
+    <div className="hz-profile-hero__fact">
+      <dt>{label}</dt>
+      <dd>{value}{detail && <small>{detail}</small>}</dd>
     </div>
   );
+}
+
+/** "2 yrs 3 mos" since the joining date; null when unknown or in the future. */
+function formatTenure(dateOfJoining) {
+  if (!dateOfJoining) return null;
+  const start = new Date(`${dateOfJoining}T00:00:00`);
+  const now = new Date();
+  let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  if (now.getDate() < start.getDate()) months -= 1;
+  if (Number.isNaN(months) || months < 0) return null;
+  if (months === 0) return 'Joined this month';
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const parts = [];
+  if (years) parts.push(`${years} yr${years === 1 ? '' : 's'}`);
+  if (rest) parts.push(`${rest} mo${rest === 1 ? '' : 's'}`);
+  return `${parts.join(' ')} tenure`;
 }
 
 function ProfileContact({ icon: Icon, label, value }) {
@@ -502,8 +538,8 @@ function AttendanceTab({ employee }) {
               <tr key={session.id}>
                 <td>{session.attendanceDate}</td>
                 <td>{session.wfh ? 'WFH' : session.locationType || 'Office'}</td>
-                <td>{session.checkInTime ? new Date(session.checkInTime).toLocaleTimeString() : '—'}</td>
-                <td>{session.checkOutTime ? new Date(session.checkOutTime).toLocaleTimeString() : '—'}</td>
+                <td>{session.checkInTime ? formatTimeIST(session.checkInTime) : '—'}</td>
+                <td>{session.checkOutTime ? formatTimeIST(session.checkOutTime) : '—'}</td>
                 <td>{session.source || '—'}</td>
                 <td><Badge variant={session.status === 'CHECKED_OUT' ? 'success' : 'info'} dot={false}>{session.status}</Badge></td>
               </tr>

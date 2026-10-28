@@ -174,24 +174,24 @@ export default function LeaveRequests() {
                     </td>
                     <td className="pe-4 text-end">
                       {r.status === 'PENDING' && (
-                        <div className="d-flex justify-content-end gap-1">
+                        <div className="d-flex justify-content-end gap-2">
                           <button
-                            className="btn btn-sm btn-light border-0"
-                            style={{ color: 'var(--hz-success-600)' }}
-                            onClick={() => setDecision({ id: r.id, approve: true, employeeName: r.employeeName })}
-                            disabled={decide.isPending}
-                            aria-label={`Approve ${r.employeeName}'s leave request`}
-                          >
-                            <Check size={15} />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-light border-0"
-                            style={{ color: 'var(--hz-danger-600)' }}
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
                             onClick={() => setDecision({ id: r.id, approve: false, employeeName: r.employeeName })}
                             disabled={decide.isPending}
                             aria-label={`Reject ${r.employeeName}'s leave request`}
                           >
-                            <XIcon size={15} />
+                            <XIcon size={14} aria-hidden="true" /> Reject
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                            onClick={() => setDecision({ id: r.id, approve: true, employeeName: r.employeeName })}
+                            disabled={decide.isPending}
+                            aria-label={`Approve ${r.employeeName}'s leave request`}
+                          >
+                            <Check size={14} aria-hidden="true" /> Approve
                           </button>
                         </div>
                       )}

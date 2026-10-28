@@ -91,10 +91,12 @@ function EmployeeRow({ employee, canViewProfile }) {
 }
 
 function Stat({ icon: Icon, label, value }) {
+  const isText = typeof value === 'string';
   return (
-    <div className="hz-inline-summary__item">
-      <strong className="d-inline-flex align-items-center gap-2"><Icon size={16} aria-hidden="true" />{value}</strong>
+    <div className={`hz-inline-summary__item hz-inline-summary__item--with-icon${isText ? ' hz-inline-summary__item--text' : ''}`}>
+      <strong>{isText ? value : (value ?? 0).toLocaleString('en-IN')}</strong>
       <span>{label}</span>
+      <i className="hz-inline-summary__icon" aria-hidden="true"><Icon size={16} /></i>
     </div>
   );
 }

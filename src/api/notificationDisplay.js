@@ -16,7 +16,7 @@ export function groupNotificationsByDay(notifications, now = new Date()) {
         ? 'Today'
         : new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate()).getTime() === yesterday.getTime()
           ? 'Yesterday'
-          : createdAt.toLocaleDateString();
+          : createdAt.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
     if (!groups.has(day)) groups.set(day, []);
     groups.get(day).push(notification);
   }

@@ -1339,7 +1339,7 @@ export default function SoftwareManagement() {
           className="
             row
             g-3
-            align-items-end
+            align-items-start
           "
         >
 
@@ -1398,7 +1398,7 @@ export default function SoftwareManagement() {
           </div>
 
 
-          <div className="col-md-6">
+          <div className="col-md-5">
 
             <label className="hz-form-label">
 
@@ -1473,7 +1473,7 @@ export default function SoftwareManagement() {
           </div>
 
 
-          <div className="col-md-2">
+          <div className="col-md-3 align-self-end">
 
             <Button
               icon={Rocket}

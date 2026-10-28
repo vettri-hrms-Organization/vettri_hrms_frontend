@@ -583,12 +583,8 @@ export default function Activity() {
               boxShadow:
                 'none',
             }}
-            placeholder="
-              Search employee, device, application or window...
-            "
-            aria-label="
-              Search monitoring activity
-            "
+            placeholder="Search employee, device, application or window..."
+            aria-label="Search monitoring activity"
             value={
               search
             }
@@ -630,9 +626,7 @@ export default function Activity() {
               onClick={
                 clearSearch
               }
-              aria-label="
-                Clear search
-              "
+              aria-label="Clear search"
             >
 
               <X
@@ -1503,9 +1497,7 @@ export default function Activity() {
                     currentPage ===
                     0
                   }
-                  aria-label="
-                    Previous page
-                  "
+                  aria-label="Previous page"
                 >
 
                   <ChevronLeft
@@ -1616,9 +1608,7 @@ export default function Activity() {
                     totalPages -
                       1
                   }
-                  aria-label="
-                    Next page
-                  "
+                  aria-label="Next page"
                 >
 
                   <ChevronRight

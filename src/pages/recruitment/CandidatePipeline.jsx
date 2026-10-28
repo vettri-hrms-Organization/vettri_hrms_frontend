@@ -239,7 +239,7 @@ export default function CandidatePipeline() {
                     </div>
                     <div className="d-flex align-items-center justify-content-between" style={{ fontSize: 11, color: 'var(--hz-text-muted)' }}>
                       <span>{c.experienceYears != null ? `${c.experienceYears} yrs exp` : 'Exp. n/a'}</span>
-                      <span>{new Date(c.appliedDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                      <span>{c.appliedDate ? new Date(c.appliedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
                     </div>
                   </button>
                 ))}

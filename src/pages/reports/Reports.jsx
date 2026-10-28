@@ -17,6 +17,7 @@ import FilterBar from '../../components/ui/FilterBar';
 import StatCard from '../../components/ui/StatCard';
 import ChartCard from '../../components/ui/ChartCard';
 import ExportMenu from '../../components/ui/ExportMenu';
+import { formatStatusLabel } from '../../components/ui/StatusBadge';
 import { toISTDateInputValue } from '../../utils/formatDateTime';
 import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
 
@@ -350,9 +351,9 @@ function AttendanceReportPanel({ startDate, endDate, onChangeStart, onChangeEnd 
                   </Button>
                 }
               >
-                <ReportBarChart data={data.dailyDistinctEmployees.map((d) => ({ label: new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }), value: d.count }))} />
+                <ReportBarChart data={data.dailyDistinctEmployees.map((d) => ({ label: new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' }), value: d.count }))} />
                 {data.dailyDistinctEmployees.map((d) => (
-                  <Bar key={d.date} label={new Date(d.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} value={d.count} max={Math.max(1, data.totalActiveEmployees)} />
+                  <Bar key={d.date} label={new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })} value={d.count} max={Math.max(1, data.totalActiveEmployees)} />
                 ))}
               </ChartCard>
             </div>

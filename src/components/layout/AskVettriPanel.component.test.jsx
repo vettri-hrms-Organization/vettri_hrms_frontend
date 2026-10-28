@@ -207,7 +207,7 @@ describe('AskVettriPanel chat experience', () => {
 
     const confirmation = await screen.findByRole('group', { name: 'Confirm leave request' });
     expect(within(confirmation).getByText('Casual Leave')).toBeTruthy();
-    expect(within(confirmation).getByText(/October 9, 2026/)).toBeTruthy();
+    expect(within(confirmation).getByText(/9 October 2026/)).toBeTruthy();
     expect(within(confirmation).getByText(/Available balance: 3 days/)).toBeTruthy();
     expect(within(confirmation).getByText('Reason: Not provided (optional)')).toBeTruthy();
     await user.click(within(confirmation).getByRole('button', { name: 'Submit Leave' }));
@@ -268,7 +268,7 @@ describe('AskVettriPanel chat experience', () => {
       conversationId: 'conversation-1',
     });
     const updatedCard = (await screen.findAllByRole('group', { name: 'Confirm leave request' })).at(-1);
-    expect(within(updatedCard).getByText(/October 14, 2026/)).toBeTruthy();
+    expect(within(updatedCard).getByText(/14 October 2026/)).toBeTruthy();
     expect(within(updatedCard).getByText('Reason: Family event')).toBeTruthy();
   });
 

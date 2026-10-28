@@ -678,12 +678,8 @@ export default function EmployeeSalaryList() {
                 ps-5
                 pe-5
               "
-              placeholder="
-                Search employee by name, code or email...
-              "
-              aria-label="
-                Search employee salary
-              "
+              placeholder="Search employee by name, code or email..."
+              aria-label="Search employee salary"
               value={
                 search
               }
@@ -737,9 +733,7 @@ export default function EmployeeSalaryList() {
                 onClick={
                   clearSearch
                 }
-                aria-label="
-                  Clear search
-                "
+                aria-label="Clear search"
               >
 
                 <X
@@ -1498,9 +1492,7 @@ export default function EmployeeSalaryList() {
                   icon={
                     Users
                   }
-                  title="
-                    No employees match these filters
-                  "
+                  title="No employees match these filters"
                   description="
                     Try clearing the search or filters above.
                   "
@@ -1656,9 +1648,7 @@ export default function EmployeeSalaryList() {
                       currentPage ===
                       0
                     }
-                    aria-label="
-                      Previous page
-                    "
+                    aria-label="Previous page"
                   >
 
                     <ChevronLeft
@@ -1771,9 +1761,7 @@ export default function EmployeeSalaryList() {
                       totalPages -
                         1
                     }
-                    aria-label="
-                      Next page
-                    "
+                    aria-label="Next page"
                   >
 
                     <ChevronRight

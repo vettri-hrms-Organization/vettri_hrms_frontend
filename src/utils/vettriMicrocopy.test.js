@@ -34,8 +34,8 @@ test('dashboard greetings use the time of day and first name', () => {
 });
 
 test('Ask Vettri greeting is personalized without assuming a name', () => {
-  assert.equal(getAssistantWelcome({ fullName: 'Avery Employee' }), '👋 Hey Avery Employee. What can I help you with today?');
-  assert.equal(getAssistantWelcome(null), '👋 Hi there. What can I help you with today?');
+  assert.equal(getAssistantWelcome({ fullName: 'Avery Employee' }), 'Hi Avery. What can I help you with today?');
+  assert.equal(getAssistantWelcome(null), 'Hi there. What can I help you with today?');
 });
 
 test('microcopy categories remain available as a centralized catalog', () => {

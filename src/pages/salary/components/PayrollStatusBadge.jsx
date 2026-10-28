@@ -10,9 +10,12 @@ const STATUS_META = {
   DRAFT: { label: 'Draft', variant: 'neutral' },
   CANCELLED: { label: 'Cancelled', variant: 'danger' },
   NOT_STARTED: { label: 'Not Started', variant: 'neutral' },
+  PROCESSING: { label: 'Processing', variant: 'warning' },
+  COMPLETED: { label: 'Completed', variant: 'success' },
+  FAILED: { label: 'Failed', variant: 'danger' },
 };
 
 export default function PayrollStatusBadge({ status }) {
   const meta = STATUS_META[status] || { label: status || 'Unknown', variant: 'neutral' };
-  return <Badge variant={meta.variant}>{meta.label}</Badge>;
+  return <Badge variant={meta.variant} dot>{meta.label}</Badge>;
 }
