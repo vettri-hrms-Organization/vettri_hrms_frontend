@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileSpreadsheet, History, Receipt } from 'lucide-react';
-import { employeeSalaryApi } from '../../api/endpoints/salary';
+import { ArrowLeft, ChevronDown, ChevronRight, Download, FileSpreadsheet, FileText, History, Receipt } from 'lucide-react';
+import { currentFinancialYear, employeeSalaryApi, financialYearLabel, payrollApi, taxDeclarationApi } from '../../api/endpoints/salary';
+import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/ui/Card';
 import Avatar from '../../components/ui/Avatar';
@@ -32,6 +33,39 @@ export default function SalaryDetails() {
   const canViewList = hasPermission('SALARY_VIEW');
   const isEmployee = !!user?.employeeId;
   const [modalOpen, setModalOpen] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const thisFy = currentFinancialYear();
+  const [form16Fy, setForm16Fy] = useState(thisFy - 1);
+  const [downloadingForm16, setDownloadingForm16] = useState(false);
+  const toast = useToast();
+
+  async function downloadForm16() {
+    setDownloadingForm16(true);
+    try {
+      await taxDeclarationApi.downloadForm16(employeeId, form16Fy);
+    } catch (err) {
+      toast.error(err.response?.status === 400
+        ? `No processed payroll in ${financialYearLabel(form16Fy)} to build a Form 16 from.`
+        : 'Could not download Form 16');
+    } finally {
+      setDownloadingForm16(false);
+    }
+  }
+
+  // Employees get their own payslip once the run is processed; SALARY_VIEW holders can pull any line.
+  const canDownload = (p) => canViewList || p.status === 'PROCESSED' || p.status === 'PAID';
+
+  async function downloadPayslip(p) {
+    setDownloadingId(p.id);
+    try {
+      await payrollApi.downloadPayslipPdf(p.id, `payslip-${data.employeeCode}-${p.periodYear}-${String(p.periodMonth).padStart(2, '0')}.pdf`);
+    } catch (err) {
+      toast.error(err.response?.status === 403 ? 'This payslip is not available yet.' : 'Could not download the payslip');
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['salary-employee-detail', employeeId],
@@ -112,6 +146,11 @@ export default function SalaryDetails() {
                   <SummaryTile label="Total Deductions" value={structure.totalDeductions} tone="danger" />
                   <SummaryTile label="Net Salary" value={structure.netSalary} tone="primary" />
                 </div>
+                {structure.autoStatutory && (
+                  <p className="mb-0" style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>
+                    PF, ESI, professional tax and TDS are calculated each month at payroll, so net pay on your payslip may differ from the figure above.
+                  </p>
+                )}
                 <div className="row g-3">
                   {Object.entries(structure.components).map(([key, value]) => (
                     <div className="col-6 col-md-4" key={key}>
@@ -159,6 +198,15 @@ export default function SalaryDetails() {
               <thead>
                 <tr>
                   <th className="text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+                    Period
+                  </th>
+                  <th className="text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+                    Paid days
+                  </th>
+                  <th className="text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+                    LOP
+                  </th>
+                  <th className="text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
                     Net Salary
                   </th>
                   <th className="text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
@@ -167,22 +215,83 @@ export default function SalaryDetails() {
                   <th className="text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
                     Payment Date
                   </th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {data.payrollHistory.map((p) => (
-                  <tr key={p.id}>
+                  <Fragment key={p.id}>
+                  <tr>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 text-decoration-none d-inline-flex align-items-center gap-1"
+                        style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-primary)' }}
+                        onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                        aria-expanded={expandedId === p.id}
+                        title="Show earnings, deductions and employer contributions"
+                      >
+                        {expandedId === p.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {p.periodLabel || '—'}
+                      </button>
+                    </td>
+                    <td>{p.paidDays != null ? `${Number(p.paidDays)} / ${p.daysInPeriod}` : '—'}</td>
+                    <td>{Number(p.lopDays) > 0 ? Number(p.lopDays) : '—'}</td>
                     <td style={{ fontWeight: 600 }}>{formatCurrency(p.netSalary)}</td>
                     <td>
                       <PayrollStatusBadge status={p.status} />
                     </td>
                     <td>{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
+                    <td className="text-end">
+                      {canDownload(p) && (
+                        <button
+                          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+                          onClick={() => downloadPayslip(p)}
+                          disabled={downloadingId === p.id}
+                        >
+                          <Download size={13} /> {downloadingId === p.id ? 'Downloading…' : 'Download PDF'}
+                        </button>
+                      )}
+                    </td>
                   </tr>
+                  {expandedId === p.id && (
+                    <tr>
+                      <td colSpan={7} style={{ background: 'var(--hz-gray-50)' }}>
+                        <PayslipBreakdown item={p} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+      </Card>
+
+      <Card
+        title="Form 16 (Part B)"
+        subtitle="Annual salary and TDS statement computed from processed payroll. Part A is issued by your employer from TRACES."
+        actions={isEmployee && !routeEmployeeId ? (
+          <Link to="/my-tax-declaration" className="btn btn-sm btn-outline-secondary">Tax declaration</Link>
+        ) : undefined}
+      >
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <select
+            className="form-select form-select-sm"
+            style={{ width: 'auto' }}
+            value={form16Fy}
+            onChange={(e) => setForm16Fy(Number(e.target.value))}
+            aria-label="Financial year"
+          >
+            {[thisFy, thisFy - 1, thisFy - 2].map((fy) => (
+              <option key={fy} value={fy}>{financialYearLabel(fy)}{fy === thisFy ? ' (so far)' : ''}</option>
+            ))}
+          </select>
+          <button type="button" className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" onClick={downloadForm16} disabled={downloadingForm16}>
+            <FileText size={13} /> {downloadingForm16 ? 'Preparing…' : 'Download Form 16 Part B'}
+          </button>
+        </div>
       </Card>
 
       {modalOpen && (
@@ -193,6 +302,64 @@ export default function SalaryDetails() {
             if (saved) refetch();
           }}
         />
+      )}
+    </div>
+  );
+}
+
+const EARNING_LINES = [
+  ['basicSalary', 'Basic salary'], ['hra', 'HRA'], ['specialAllowance', 'Special allowance'], ['medicalAllowance', 'Medical allowance'],
+  ['travelAllowance', 'Travel allowance'], ['bonus', 'Bonus'], ['incentives', 'Incentives'], ['overtime', 'Overtime'],
+];
+const DEDUCTION_LINES = [
+  ['pf', 'Provident fund (PF)'], ['esi', 'ESI'], ['professionalTax', 'Professional tax'], ['tds', 'Income tax (TDS)'], ['otherDeductions', 'Other deductions'],
+];
+
+/** One payslip's earnings (incl. additional earnings), deductions and employer contributions. */
+function PayslipBreakdown({ item }) {
+  const c = item.components || {};
+  const earnings = [
+    ...EARNING_LINES.filter(([key]) => Number(c[key]) > 0).map(([key, label]) => [label, c[key]]),
+    ...(item.adjustments || []).map((a) => [`${a.label}${a.taxable ? '' : ' (non-taxable)'}`, a.amount]),
+  ];
+  const deductions = DEDUCTION_LINES.filter(([key]) => Number(c[key]) > 0).map(([key, label]) => [label, c[key]]);
+  const employer = [
+    ['Employer EPF', item.employerEpf],
+    ['Employer EPS (pension)', item.employerEps],
+    ['Employer ESI', item.employerEsi],
+  ].filter(([, value]) => Number(value) > 0);
+  return (
+    <div className="row g-3 py-2" style={{ fontSize: 13 }}>
+      <BreakdownColumn title="Earnings" rows={earnings} total={['Gross earnings', item.grossSalary]} />
+      <BreakdownColumn title="Deductions" rows={deductions} total={['Total deductions', item.totalDeductions]} />
+      <BreakdownColumn
+        title="Employer contributions"
+        note="Paid by the company on top of your salary - not deducted."
+        rows={employer}
+        total={employer.length ? ['Total', item.employerContributions] : null}
+        empty="None this month"
+      />
+    </div>
+  );
+}
+
+function BreakdownColumn({ title, rows, total, note, empty = '—' }) {
+  return (
+    <div className="col-12 col-md-4">
+      <p className="text-uppercase mb-1" style={{ fontSize: 11, letterSpacing: '0.06em', color: 'var(--hz-text-muted)', fontWeight: 600 }}>{title}</p>
+      {note && <p className="mb-1" style={{ fontSize: 11, color: 'var(--hz-text-muted)' }}>{note}</p>}
+      {rows.length === 0 && <p className="mb-0" style={{ color: 'var(--hz-text-muted)' }}>{empty}</p>}
+      {rows.map(([label, value]) => (
+        <div key={label} className="d-flex justify-content-between">
+          <span>{label}</span>
+          <span>{formatCurrency(value)}</span>
+        </div>
+      ))}
+      {total && (
+        <div className="d-flex justify-content-between mt-1 pt-1" style={{ borderTop: '1px solid var(--hz-border)', fontWeight: 600 }}>
+          <span>{total[0]}</span>
+          <span>{formatCurrency(total[1])}</span>
+        </div>
       )}
     </div>
   );

@@ -7,7 +7,8 @@ import FormField from '../../../components/ui/FormField';
 import ErrorBanner from '../../../components/ui/ErrorBanner';
 import { useToast } from '../../../components/ui/Toast';
 import { formatCurrency } from '../../../utils/formatCurrency';
-import SalaryComponentsFields, { EMPTY_COMPONENTS, computeTotals } from './SalaryComponentsFields';
+import { toISTDateInputValue } from '../../../utils/formatDateTime';
+import SalaryComponentsFields, { EMPTY_COMPONENTS, STATUTORY_KEYS, computeTotals } from './SalaryComponentsFields';
 
 /**
  * Defines a new salary structure for an employee, or revises an existing
@@ -23,9 +24,11 @@ export default function AssignSalaryStructureModal({ employee, onClose }) {
   const employeeId = employee.employeeId ?? employee.id;
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [effectiveFrom, setEffectiveFrom] = useState(new Date().toISOString().slice(0, 10));
+  const [effectiveFrom, setEffectiveFrom] = useState(toISTDateInputValue());
   const [components, setComponents] = useState(EMPTY_COMPONENTS);
   const [notes, setNotes] = useState('');
+  // New structures default to auto-calculated PF/ESI/PT/TDS; existing ones keep whatever they had.
+  const [autoStatutory, setAutoStatutory] = useState(true);
   const [error, setError] = useState(null);
   const [touched, setTouched] = useState(false);
 
@@ -39,10 +42,11 @@ export default function AssignSalaryStructureModal({ employee, onClose }) {
     if (!touched && currentStructure?.components) {
       setComponents({ ...currentStructure.components });
       setNotes(currentStructure.notes || '');
+      setAutoStatutory(!!currentStructure.autoStatutory);
     }
   }, [currentStructure, touched]);
 
-  const totals = computeTotals(components);
+  const totals = computeTotals(components, autoStatutory);
 
   const upsert = useMutation({
     mutationFn: salaryStructuresApi.upsert,
@@ -69,11 +73,14 @@ export default function AssignSalaryStructureModal({ employee, onClose }) {
       setError('Basic salary must be greater than zero');
       return;
     }
+    const payload = { ...components };
+    if (autoStatutory) STATUTORY_KEYS.forEach((key) => { payload[key] = 0; });
     upsert.mutate({
       employeeId,
       effectiveFrom,
       notes,
-      components,
+      autoStatutory,
+      components: payload,
     });
   }
 
@@ -104,7 +111,27 @@ export default function AssignSalaryStructureModal({ employee, onClose }) {
               <FormField col={6} label="Notes (optional)" placeholder="e.g. Annual appraisal revision" value={notes} onChange={setNotes} />
             </div>
 
-            <SalaryComponentsFields components={components} onChange={set} />
+            <div
+              className="d-flex align-items-start gap-2 mb-3 p-3"
+              style={{ background: 'var(--hz-gray-50)', border: '1px solid var(--hz-border)', borderRadius: 'var(--hz-radius-lg)' }}
+            >
+              <input
+                id="auto-statutory"
+                type="checkbox"
+                className="form-check-input mt-1"
+                checked={autoStatutory}
+                onChange={(e) => { setTouched(true); setAutoStatutory(e.target.checked); }}
+              />
+              <label htmlFor="auto-statutory" style={{ fontSize: 13, cursor: 'pointer' }}>
+                <strong>Auto-calculate statutory deductions</strong>
+                <span className="d-block" style={{ color: 'var(--hz-text-muted)' }}>
+                  PF, ESI, professional tax and TDS are computed each payroll run from the company&apos;s payroll settings,
+                  paid days and the employee&apos;s tax declaration. Turn off to enter fixed amounts.
+                </span>
+              </label>
+            </div>
+
+            <SalaryComponentsFields components={components} onChange={set} autoStatutory={autoStatutory} />
 
             <div
               className="d-flex align-items-center justify-content-between mt-4 p-3"

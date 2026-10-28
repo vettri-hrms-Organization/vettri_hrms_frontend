@@ -29,3 +29,45 @@ export const tokenStorage = {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
   },
 };
+
+// "Remember this device" tokens from two-factor sign-in, keyed by the
+// lower-cased login identifier. Deliberately NOT removed by clear()/logout -
+// surviving a sign-out is the point. The backend only honours a token for the
+// user it was issued to, for 30 days, and an admin 2FA reset revokes it.
+const MFA_DEVICE_KEY = 'haodaone_mfa_devices';
+
+function readDeviceMap() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(MFA_DEVICE_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export const mfaDeviceStorage = {
+  get: (identifier) => {
+    if (!identifier) return null;
+    return readDeviceMap()[String(identifier).trim().toLowerCase()] || null;
+  },
+  set: (identifier, deviceToken) => {
+    if (!identifier || !deviceToken) return;
+    try {
+      const map = readDeviceMap();
+      map[String(identifier).trim().toLowerCase()] = deviceToken;
+      localStorage.setItem(MFA_DEVICE_KEY, JSON.stringify(map));
+    } catch {
+      // Storage full/blocked: the user is simply asked for a code next time.
+    }
+  },
+  remove: (identifier) => {
+    if (!identifier) return;
+    try {
+      const map = readDeviceMap();
+      delete map[String(identifier).trim().toLowerCase()];
+      localStorage.setItem(MFA_DEVICE_KEY, JSON.stringify(map));
+    } catch {
+      // ignore
+    }
+  },
+};

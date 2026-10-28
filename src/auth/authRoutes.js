@@ -16,6 +16,8 @@ const PUBLIC_AUTH_ENDPOINTS = new Set([
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/verify-email',
+  '/api/auth/mfa/verify',
+  '/api/auth/mfa/email/send',
 ]);
 
 const PROTECTED_AUTH_ENDPOINTS = new Set([

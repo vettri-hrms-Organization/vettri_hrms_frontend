@@ -36,7 +36,7 @@ export function AttendanceWidget({ records, loading }) {
           {days.map((day) => <span key={`${day.label}-${day.active}`} className={day.active ? 'is-present' : ''}><i />{day.label}</span>)}
         </div>
       </>}
-      <Link to="/my-profile?tab=attendance" className="hz-dashboard__text-link">View attendance <ArrowRight size={15} /></Link>
+      <Link to="/my-attendance" className="hz-dashboard__text-link">View attendance <ArrowRight size={15} /></Link>
     </section>
   );
 }

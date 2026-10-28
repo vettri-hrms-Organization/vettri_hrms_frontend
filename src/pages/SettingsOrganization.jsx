@@ -68,6 +68,7 @@ export default function SettingsOrganization() {
         />
       )}
       {tab === 'attendance-policy' && <AttendancePolicyPanel canManage={hasPermission('ATTENDANCE_MANAGE')} />}
+      {tab === 'attendance-policy' && <WorkingWeekPanel canManage={hasPermission('ATTENDANCE_MANAGE')} />}
       {visibleTabs.length === 0 && <p className="alert alert-info mb-0">You do not have access to organization settings.</p>}
     </div>
   );
@@ -114,7 +115,7 @@ function AttendancePolicyPanel({ canManage }) {
   ];
 
   return (
-    <Panel title="Attendance policy">
+    <Panel title="Attendance policy" canAdd={false}>
       {isLoading && <SkeletonText lines={4} />}
       {isError && <div className="alert alert-danger mb-0">Could not load this policy. <button type="button" className="btn btn-link p-0" onClick={refetch}>Try again</button></div>}
       {!isLoading && !isError && (
@@ -170,6 +171,102 @@ function AttendancePolicyPanel({ canManage }) {
             </div>
           </div>
           {canManage && <div className="d-flex justify-content-end"><Button onClick={() => save.mutate(form)} loading={save.isPending}>Save attendance policy</Button></div>}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+const WEEKDAYS = [
+  { value: 'MONDAY', label: 'Monday' },
+  { value: 'TUESDAY', label: 'Tuesday' },
+  { value: 'WEDNESDAY', label: 'Wednesday' },
+  { value: 'THURSDAY', label: 'Thursday' },
+  { value: 'FRIDAY', label: 'Friday' },
+  { value: 'SATURDAY', label: 'Saturday' },
+  { value: 'SUNDAY', label: 'Sunday' },
+];
+
+const WEEKLY_OFF_MODES = [
+  { value: 'WORKING', label: 'Working day' },
+  { value: 'ALL', label: 'Off every week' },
+  { value: '2_4', label: 'Off on 2nd & 4th' },
+  { value: '1_3', label: 'Off on 1st & 3rd' },
+  { value: '1_3_5', label: 'Off on 1st, 3rd & 5th' },
+];
+
+// Tokens look like "SUNDAY" (every week) or "SATURDAY#2" (2nd of the month) - see WorkingWeek.java.
+function weeklyOffModesFromTokens(tokens = []) {
+  const occurrences = {};
+  tokens.forEach((token) => {
+    const [day, week] = String(token).split('#');
+    if (!week) occurrences[day] = 'ALL';
+    else if (occurrences[day] !== 'ALL') occurrences[day] = [...(occurrences[day] || []), Number(week)];
+  });
+  return Object.fromEntries(WEEKDAYS.map(({ value }) => {
+    const entry = occurrences[value];
+    if (!entry) return [value, 'WORKING'];
+    if (entry === 'ALL') return [value, 'ALL'];
+    return [value, [...entry].sort((a, b) => a - b).join('_')];
+  }));
+}
+
+function weeklyOffTokensFromModes(modes) {
+  return WEEKDAYS.flatMap(({ value }) => {
+    const mode = modes[value];
+    if (!mode || mode === 'WORKING') return [];
+    if (mode === 'ALL') return [value];
+    return mode.split('_').map((week) => `${value}#${week}`);
+  });
+}
+
+function WorkingWeekPanel({ canManage }) {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['attendance-working-week'],
+    queryFn: attendanceApi.workingWeek,
+  });
+  const [modes, setModes] = useState(() => weeklyOffModesFromTokens(['SATURDAY', 'SUNDAY']));
+
+  useEffect(() => {
+    if (data) setModes(weeklyOffModesFromTokens(data.weeklyOffDays || []));
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: () => attendanceApi.updateWorkingWeek(weeklyOffTokensFromModes(modes)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-working-week'] });
+      toast.success('Working week saved.');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not save the working week.'),
+  });
+
+  return (
+    <Panel title="Working week" canAdd={false}>
+      {isLoading && <SkeletonText lines={3} />}
+      {isError && <div className="alert alert-danger mb-0">Could not load the working week. <button type="button" className="btn btn-link p-0" onClick={refetch}>Try again</button></div>}
+      {!isLoading && !isError && (
+        <div className="d-flex flex-column gap-3">
+          <p className="text-muted-hz mb-0" style={{ fontSize: 13 }}>
+            Weekly offs are skipped when counting leave days and are marked WO in the attendance muster. Company holidays are managed separately.
+          </p>
+          <div className="row g-3">
+            {WEEKDAYS.map((day) => {
+              const current = modes[day.value] || 'WORKING';
+              const known = WEEKLY_OFF_MODES.some((mode) => mode.value === current);
+              return (
+                <div key={day.value} className="col-12 col-sm-6 col-lg-4">
+                  <label className="form-label" htmlFor={`weekly-off-${day.value}`}>{day.label}</label>
+                  <select id={`weekly-off-${day.value}`} className="form-select" value={current} disabled={!canManage} onChange={(event) => setModes({ ...modes, [day.value]: event.target.value })}>
+                    {WEEKLY_OFF_MODES.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
+                    {!known && <option value={current}>Off on weeks {current.split('_').join(', ')}</option>}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+          {canManage && <div className="d-flex justify-content-end"><Button onClick={() => save.mutate()} loading={save.isPending}>Save working week</Button></div>}
         </div>
       )}
     </Panel>

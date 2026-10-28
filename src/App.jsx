@@ -1,22 +1,26 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './auth/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
 import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
-import Signup from './pages/Signup';
-import ActivateAccount from './pages/ActivateAccount';
-import ResetPassword from './pages/ResetPassword';
-import VerifyEmail from './pages/VerifyEmail';
-import Dashboard from './pages/Dashboard';
-import EmployeeList from './pages/employees/EmployeeList';
-import EmployeeProfile from './pages/employees/EmployeeProfile';
-import EmployeeImport from './pages/employees/EmployeeImport';
-import AttendanceList from './pages/attendance/AttendanceList';
-import Devices from './pages/attendance/Devices';
-import EmployeeAttendance from './pages/attendance/EmployeeAttendance';
-import AttendancePresence from './pages/attendance/AttendancePresence';
-import LeaveRequests from './pages/leave/LeaveRequests';
+const Signup = lazy(() => import('./pages/Signup'));
+const ActivateAccount = lazy(() => import('./pages/ActivateAccount'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const EmployeeList = lazy(() => import('./pages/employees/EmployeeList'));
+const EmployeeProfile = lazy(() => import('./pages/employees/EmployeeProfile'));
+const EmployeeImport = lazy(() => import('./pages/employees/EmployeeImport'));
+const AttendanceList = lazy(() => import('./pages/attendance/AttendanceList'));
+const Devices = lazy(() => import('./pages/attendance/Devices'));
+const EmployeeAttendance = lazy(() => import('./pages/attendance/EmployeeAttendance'));
+const AttendancePresence = lazy(() => import('./pages/attendance/AttendancePresence'));
+const RosterGrid = lazy(() => import('./pages/attendance/RosterGrid'));
+const LateEarly = lazy(() => import('./pages/attendance/LateEarly'));
+const OvertimeApprovals = lazy(() => import('./pages/attendance/OvertimeApprovals'));
+const SettingsShifts = lazy(() => import('./pages/SettingsShifts'));
+const LeaveRequests = lazy(() => import('./pages/leave/LeaveRequests'));
 const JobOpenings = lazy(() => import('./pages/recruitment/JobOpenings'));
 const CandidatePipeline = lazy(() => import('./pages/recruitment/CandidatePipeline'));
 const MyInterviews = lazy(() => import('./pages/recruitment/MyInterviews'));
@@ -30,6 +34,9 @@ const SalaryStructurePage = lazy(() => import('./pages/salary/SalaryStructurePag
 const PayrollProcessing = lazy(() => import('./pages/salary/PayrollProcessing'));
 const SalaryDetails = lazy(() => import('./pages/salary/SalaryDetails'));
 const SalaryReports = lazy(() => import('./pages/salary/SalaryReports'));
+const PayrollSettings = lazy(() => import('./pages/salary/PayrollSettings'));
+const TaxDeclarations = lazy(() => import('./pages/salary/TaxDeclarations'));
+const MyTaxDeclaration = lazy(() => import('./pages/salary/MyTaxDeclaration'));
 const MonitoringDashboard = lazy(() => import('./pages/monitoring/MonitoringDashboard'));
 const MonitoringDevices = lazy(() => import('./pages/monitoring/Devices'));
 const MonitoringDeviceDetails = lazy(() => import('./pages/monitoring/DeviceDetails'));
@@ -37,18 +44,19 @@ const VettriCli = lazy(() => import('./pages/monitoring/VettriCli'));
 const RemoteDesktop = lazy(() => import('./pages/monitoring/RemoteDesktop'));
 const MonitoringActivity = lazy(() => import('./pages/monitoring/Activity'));
 const DeviceEnrollment = lazy(() => import('./pages/monitoring/DeviceEnrollment'));
-import SettingsUsers from './pages/SettingsUsers';
-import SettingsOrganization from './pages/SettingsOrganization';
-import SettingsLeave from './pages/SettingsLeave';
-import SettingsAudit from './pages/SettingsAudit';
+const SettingsUsers = lazy(() => import('./pages/SettingsUsers'));
+const SettingsOrganization = lazy(() => import('./pages/SettingsOrganization'));
+const SettingsLeave = lazy(() => import('./pages/SettingsLeave'));
+const SettingsAudit = lazy(() => import('./pages/SettingsAudit'));
 import NotFound from './pages/NotFound';
-import Onboarding from './pages/Onboarding';
+const Onboarding = lazy(() => import('./pages/Onboarding'));
 import PageLoader from './components/ui/PageLoader';
-import SupportInfo from './pages/SupportInfo';
-import SettingsPreferences from './pages/SettingsPreferences';
-import Welcome from './pages/Welcome';
-import Notifications from './pages/Notifications';
-import BillingInvoices from './pages/BillingInvoices';
+const SupportInfo = lazy(() => import('./pages/SupportInfo'));
+const SettingsPreferences = lazy(() => import('./pages/SettingsPreferences'));
+const AccountSecurity = lazy(() => import('./pages/AccountSecurity'));
+const Welcome = lazy(() => import('./pages/Welcome'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const BillingInvoices = lazy(() => import('./pages/BillingInvoices'));
 const Requirements = lazy(() => import('./pages/Requirements'));
 const MonitoringReports = lazy(() => import('./pages/monitoring/MonitoringReports'));
 const SettingsPlatform = lazy(() => import('./pages/SettingsPlatform'));
@@ -56,6 +64,14 @@ const SoftwareManagement = lazy(() => import('./pages/software/SoftwareManagemen
 const OrganizationStructure = lazy(() => import('./pages/organization/OrganizationStructure'));
 const CareersList = lazy(() => import('./pages/careers/CareersList'));
 const JobApply = lazy(() => import('./pages/careers/JobApply'));
+const SettingsLetters = lazy(() => import('./pages/letters/SettingsLetters'));
+const OnboardingDashboard = lazy(() => import('./pages/onboarding/OnboardingDashboard'));
+const MyOnboarding = lazy(() => import('./pages/onboarding/MyOnboarding'));
+const MyExpenses = lazy(() => import('./pages/expenses/MyExpenses'));
+const ExpenseApprovals = lazy(() => import('./pages/expenses/ExpenseApprovals'));
+const ExpenseSettings = lazy(() => import('./pages/expenses/ExpenseSettings'));
+const AnnouncementsFeed = lazy(() => import('./pages/announcements/AnnouncementsFeed'));
+const AnnouncementAdmin = lazy(() => import('./pages/announcements/AnnouncementAdmin'));
 
 export default function App() {
   return (
@@ -83,6 +99,10 @@ export default function App() {
           <Route path="attendance" element={<AttendanceList />} />
           <Route path="attendance/presence" element={<AttendancePresence />} />
           <Route path="attendance/devices" element={<Devices />} />
+          <Route path="attendance/roster" element={<RosterGrid />} />
+          <Route path="attendance/late-early" element={<LateEarly />} />
+          <Route path="attendance/overtime" element={<OvertimeApprovals />} />
+          <Route path="settings/shifts" element={<SettingsShifts />} />
           <Route path="my-attendance" element={<EmployeeAttendance />} />
           <Route path="leave" element={<LeaveRequests />} />
           <Route path="recruitment" element={<JobOpenings />} />
@@ -105,7 +125,10 @@ export default function App() {
           <Route path="salary/structure" element={<SalaryStructurePage />} />
           <Route path="salary/payroll-processing" element={<PayrollProcessing />} />
           <Route path="salary/reports" element={<SalaryReports />} />
+          <Route path="salary/settings" element={<PayrollSettings />} />
+          <Route path="salary/tax-declarations" element={<TaxDeclarations />} />
           <Route path="my-payslip" element={<SalaryDetails />} />
+          <Route path="my-tax-declaration" element={<MyTaxDeclaration />} />
           <Route path="my-profile" element={<MyProfileRoute />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="billing/invoices" element={<BillingInvoices />} />
@@ -118,8 +141,17 @@ export default function App() {
           <Route path="settings/audit" element={<SettingsAudit />} />
           <Route path="settings/platform" element={<SettingsPlatform />} />
           <Route path="settings/preferences" element={<SettingsPreferences />} />
+          <Route path="account/security" element={<AccountSecurity />} />
           <Route path="onboarding" element={<Onboarding />} />
+          <Route path="settings/letters" element={<SettingsLetters />} />
+          <Route path="hr-onboarding" element={<OnboardingDashboard />} />
+          <Route path="my-onboarding" element={<MyOnboarding />} />
           <Route path="support" element={<SupportInfo />} />
+          <Route path="my-expenses" element={<MyExpenses />} />
+          <Route path="expenses/approvals" element={<ExpenseApprovals />} />
+          <Route path="settings/expenses" element={<ExpenseSettings />} />
+          <Route path="announcements" element={<AnnouncementsFeed />} />
+          <Route path="announcements/manage" element={<AnnouncementAdmin />} />
         </Route>
       </Route>
 
@@ -138,10 +170,8 @@ function RootRoute() {
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 }
 
+// My Profile is the employee's own record; its Attendance tab stays inside
+// the profile. Check-in/out lives on the dedicated /my-attendance page.
 function MyProfileRoute() {
-  const [searchParams] = useSearchParams();
-  if (searchParams.get('tab') === 'attendance') {
-    return <Navigate to="/my-attendance" replace />;
-  }
   return <EmployeeProfile />;
 }

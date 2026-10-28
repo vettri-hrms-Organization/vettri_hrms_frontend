@@ -11,6 +11,7 @@ import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
 import { useAuth } from '../../hooks/useAuth';
+import MyShiftOvertime from './MyShiftOvertime';
 
 const GOOD_ACCURACY_METERS = 100;
 const MAX_ACCEPTABLE_ACCURACY_METERS = 200;
@@ -435,6 +436,8 @@ export default function EmployeeAttendance() {
           </div>
         )}
       </Card>
+
+      <MyShiftOvertime from={historyRange.from} to={historyRange.to} />
 
       <Card title="Request work from home" subtitle="Submit a future-date request for manager approval."><div className="row g-3 align-items-end"><div className="col-12 col-md-3"><label className="form-label" htmlFor="wfh-date">Work date</label><input id="wfh-date" className="form-control" type="date" min={localDate(1)} value={workDate} onChange={(event) => setWorkDate(event.target.value)} /></div><div className="col-12 col-md-6"><label className="form-label" htmlFor="wfh-reason">Reason</label><input id="wfh-reason" className="form-control" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Optional reason" maxLength={500} /></div><div className="col-12 col-md-3"><Button className="w-100" icon={CalendarDays} onClick={() => requestWfh.mutate()} loading={requestWfh.isPending} disabled={!workDate}>Request approval</Button></div></div></Card>
 

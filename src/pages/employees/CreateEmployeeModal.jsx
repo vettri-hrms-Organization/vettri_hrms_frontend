@@ -6,8 +6,10 @@ import Button from '../../components/ui/Button';
 import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import { BankStatutoryFields, EMPTY_BANK_STATUTORY, normalizeBankStatutory, validateBankStatutory } from './BankStatutoryFields';
 
 const EMPTY_FORM = {
+  ...EMPTY_BANK_STATUTORY,
   firstName: '',
   lastName: '',
   email: '',
@@ -51,9 +53,15 @@ export default function CreateEmployeeModal({ onClose }) {
 
   function handleSubmit(e) {
     e.preventDefault();
+    const bankError = validateBankStatutory(form);
+    if (bankError) {
+      setError(bankError);
+      return;
+    }
     setError(null);
     const payload = {
       ...form,
+      ...normalizeBankStatutory(form),
       departmentId: form.departmentId || null,
       designationId: form.designationId || null,
       teamId: form.teamId || null,
@@ -136,6 +144,9 @@ export default function CreateEmployeeModal({ onClose }) {
           <FormField col={6} label="Contact Name" value={form.emergencyContactName} onChange={(v) => set('emergencyContactName', v)} />
           <FormField col={6} label="Contact Phone" value={form.emergencyContactPhone} onChange={(v) => set('emergencyContactPhone', v)} />
         </div>
+
+        <SectionLabel>Bank &amp; Statutory</SectionLabel>
+        <BankStatutoryFields form={form} set={set} />
 
         <div className="d-flex justify-content-end gap-2 mt-4">
           <Button variant="secondary" type="button" onClick={onClose}>

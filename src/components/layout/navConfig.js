@@ -26,6 +26,11 @@ import {
   Bell,
   PackageOpen,
   Network,
+  KeyRound,
+  CalendarRange,
+  AlarmClock,
+  Timer,
+  Megaphone,
 } from 'lucide-react';
 
 /**
@@ -68,6 +73,9 @@ export const NAV_SECTIONS = [
       { to: '/my-attendance', icon: Clock, label: 'My Attendance', permission: 'SELF_ATTENDANCE_VIEW' },
       { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave', permission: 'SELF_LEAVE_VIEW' },
       { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents', permission: 'SELF_DOCUMENT_VIEW' },
+      { to: '/my-onboarding', icon: ListChecks, label: 'My Onboarding', permission: 'SELF_PROFILE_VIEW' },
+      { to: '/my-expenses', icon: Receipt, label: 'My Expenses', permission: 'SELF_EXPENSE_SUBMIT' },
+      { to: '/announcements', icon: Megaphone, label: 'Announcements', permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-interviews', icon: CalendarClock, label: 'My Interviews' },
     ],
   },
@@ -87,13 +95,17 @@ export const NAV_SECTIONS = [
     permission: 'SELF_PAYSLIP_VIEW',
     collapsible: true,
     badge: null,
-    items: [{ to: '/my-payslip', icon: Wallet, label: 'My Pay' }],
+    items: [
+      { to: '/my-payslip', icon: Wallet, label: 'My Pay' },
+      { to: '/my-tax-declaration', icon: Receipt, label: 'Tax Declaration' },
+    ],
   },
   {
     id: 'employee-performance',
     label: 'Performance',
     description: 'Your goals and performance reviews',
-    permission: 'PERFORMANCE_VIEW',
+    // Everyone can see their own goals and reviews (the backend allows self access).
+    permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
     items: [{ to: '/performance', icon: TrendingUp, label: 'My Performance' }],
@@ -146,6 +158,9 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/attendance', icon: Clock, label: 'Attendance', permission: 'ATTENDANCE_VIEW' },
       { to: '/leave', icon: CalendarDays, label: 'Leave Management', permission: 'LEAVE_VIEW' },
+      { to: '/attendance/roster', icon: CalendarRange, label: 'Roster', permission: 'ATTENDANCE_VIEW' },
+      { to: '/attendance/late-early', icon: AlarmClock, label: 'Late & Early', permission: 'ATTENDANCE_VIEW' },
+      { to: '/attendance/overtime', icon: Timer, label: 'Overtime Approvals', permission: 'OVERTIME_APPROVE' },
     ],
   },
   {
@@ -159,6 +174,7 @@ export const NAV_SECTIONS = [
       { to: '/my-recruitment', icon: UserCheck, label: 'My Recruiting', permission: 'RECRUITMENT_MANAGE' },
       { to: '/my-interviews', icon: CalendarClock, label: 'My Interviews' },
       { to: '/performance', icon: TrendingUp, label: 'Performance', permission: 'PERFORMANCE_VIEW' },
+      { to: '/hr-onboarding', icon: ListChecks, label: 'Onboarding', permission: 'ONBOARDING_MANAGE' },
     ],
   },
   {
@@ -184,6 +200,8 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/monitoring', icon: MonitorSmartphone, label: 'Live Activity', end: true, permission: 'MONITORING_VIEW' },
       { to: '/monitoring/devices', icon: MonitorSmartphone, label: 'Devices', permission: 'MONITORING_VIEW' },
+      { to: '/monitoring/activity', icon: Clock, label: 'Activity Log', permission: 'MONITORING_VIEW' },
+      { to: '/monitoring/reports', icon: FileBarChart, label: 'Reports', permission: 'MONITORING_VIEW' },
       { to: '/attendance/devices', icon: Radio, label: 'Biometric Devices', permission: 'DEVICE_MANAGE' },
       { to: '/software', icon: PackageOpen, label: 'Software', permission: 'SOFTWARE_VIEW' },
     ],
@@ -201,6 +219,8 @@ export const NAV_SECTIONS = [
       { to: '/salary/structure', icon: FileSpreadsheet, label: 'Salary Structure' },
       { to: '/salary/payroll-processing', icon: PlayCircle, label: 'Payroll Processing' },
       { to: '/salary/reports', icon: FileBarChart, label: 'Reports' },
+      { to: '/salary/tax-declarations', icon: Receipt, label: 'Tax Declarations' },
+      { to: '/salary/settings', icon: ShieldCheck, label: 'Payroll Settings', permission: 'SALARY_MANAGE' },
     ],
   },
   {
@@ -213,6 +233,17 @@ export const NAV_SECTIONS = [
       { to: '/executive', icon: Presentation, label: 'Executive Dashboard', permission: 'REPORTS_VIEW' },
       { to: '/reports', icon: FileBarChart, label: 'Reports', permission: 'REPORTS_VIEW' },
       { to: '/requirements', icon: ClipboardList, label: 'Requirements', permission: 'REQUIREMENT_VIEW' },
+    ],
+  },
+  {
+    id: 'workplace',
+    label: 'Expenses & Announcements',
+    description: 'Expense approvals and company announcements',
+    collapsible: true,
+    badge: null,
+    items: [
+      { to: '/expenses/approvals', icon: Receipt, label: 'Expense Approvals', permissionsAny: ['EXPENSE_APPROVE', 'EXPENSE_MANAGE'] },
+      { to: '/announcements/manage', icon: Megaphone, label: 'Manage Announcements', permission: 'ANNOUNCEMENT_MANAGE' },
     ],
   },
   {
@@ -234,10 +265,14 @@ export const NAV_SECTIONS = [
         ],
       },
       { to: '/settings/leave', icon: CalendarDays, label: 'Leave Configuration', permission: 'LEAVE_MANAGE' },
+      { to: '/settings/letters', icon: FileText, label: 'Letter Templates', permission: 'LETTER_MANAGE' },
+      { to: '/settings/shifts', icon: Clock, label: 'Shifts', permission: 'ATTENDANCE_MANAGE' },
+      { to: '/settings/expenses', icon: Receipt, label: 'Expense Settings', permission: 'EXPENSE_MANAGE' },
       { to: '/settings/audit', icon: ScrollText, label: 'Audit Logs', permission: 'AUDIT_VIEW' },
       { to: '/settings/platform', icon: ShieldCheck, label: 'Platform Admin', role: 'SUPER_ADMIN' },
       { to: '/onboarding', icon: ClipboardList, label: 'Workspace Setup', roles: ['COMPANY_ADMIN', 'SUPER_ADMIN'] },
       { to: '/support', icon: LifeBuoy, label: 'Support Information' },
+      { to: '/account/security', icon: KeyRound, label: 'Change Password' },
     ],
   },
 ];

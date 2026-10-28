@@ -3,6 +3,7 @@ export const LEAVE_STATUS_META = {
   APPROVED: { label: 'Approved', variant: 'success' },
   REJECTED: { label: 'Rejected', variant: 'danger' },
   CANCELLED: { label: 'Cancelled', variant: 'neutral' },
+  PAID: { label: 'Paid', variant: 'info' },
 };
 
 export function leaveStatusMeta(status) {

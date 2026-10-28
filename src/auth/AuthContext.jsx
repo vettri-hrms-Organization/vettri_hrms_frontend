@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useState } from 'react';
 import { resetSessionExpirationHandling } from '../api/axiosClient';
 import { authApi } from '../api/endpoints/auth';
 import { queryClient } from '../api/queryClient';
-import { tokenStorage } from './tokenStorage';
+import { mfaDeviceStorage, tokenStorage } from './tokenStorage';
 import { tenantStorage } from './tenantStorage';
 import { clearQueue } from '../utils/offlineRequestQueue';
 
@@ -61,13 +61,17 @@ export function AuthProvider({ children }) {
     restoreSession();
   }, []);
 
-  const login = useCallback(async (username, password) => {
-    const data = await authApi.login(username, password);
+  // Stores the tokens from a login-shaped response ({accessToken, refreshToken, user})
+  // and makes that user current. Shared by password login, the two-factor step
+  // and change-password (which hands back a fresh session).
+  const establishSession = useCallback(async (data) => {
     const accessToken = data.accessToken || data.token;
     const refreshToken = data.refreshToken || data.refreshToken;
 
     tokenStorage.setTokens(accessToken, refreshToken);
     resetSessionExpirationHandling();
+    // Cached queries aren't keyed by user, so a previous user's data must not survive a login.
+    queryClient.clear();
     clearQueue();
     tenantStorage.clear();
     setSelectedCompanyIdState(null);
@@ -81,6 +85,42 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
+  /**
+   * Resolves to the signed-in user, or - when the account needs a second
+   * factor - to `{ mfaRequired: true, mfaToken, methods, maskedEmail,
+   * expiresInSeconds, identifier }` with nothing stored yet; finish with
+   * verifyMfa(). A remembered-device token for this identifier is sent along.
+   */
+  const login = useCallback(async (username, password) => {
+    const data = await authApi.login(username, password, mfaDeviceStorage.get(username));
+    if (data?.mfaRequired) {
+      return {
+        mfaRequired: true,
+        mfaToken: data.mfaToken,
+        methods: data.methods || [],
+        maskedEmail: data.maskedEmail || null,
+        expiresInSeconds: data.mfaExpiresInSeconds || 300,
+        identifier: username,
+      };
+    }
+    return establishSession(data);
+  }, [establishSession]);
+
+  const verifyMfa = useCallback(async ({ mfaToken, method, code, rememberDevice = false, identifier }) => {
+    const data = await authApi.verifyMfa({ mfaToken, method, code, rememberDevice });
+    if (rememberDevice && data?.deviceToken) {
+      mfaDeviceStorage.set(identifier, data.deviceToken);
+    }
+    return establishSession(data);
+  }, [establishSession]);
+
+  /** Re-reads /api/auth/me (e.g. after enrolling in 2FA clears mfaEnrollmentRequired). */
+  const refreshUser = useCallback(async () => {
+    const me = await authApi.me();
+    setUser(me);
+    return me;
+  }, []);
+
   const logout = useCallback(async () => {
     const refreshToken = tokenStorage.getRefreshToken();
     try {
@@ -91,6 +131,7 @@ export function AuthProvider({ children }) {
       // Best-effort - clear local state regardless of whether the server call succeeded.
     }
     tokenStorage.clear();
+    queryClient.clear();
     clearQueue();
     tenantStorage.clear();
     resetSessionExpirationHandling();
@@ -120,6 +161,9 @@ export function AuthProvider({ children }) {
     selectedCompanyId,
     setSelectedCompanyId,
     login,
+    verifyMfa,
+    establishSession,
+    refreshUser,
     logout,
     hasRole,
     hasAnyRole,

@@ -22,6 +22,7 @@ import PageHeader from '../components/ui/PageHeader';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import { useAuth } from '../hooks/useAuth';
 import { formatDateTimeIST } from '../utils/formatDateTime';
+import { ResetTwoFactorButton, TwoFactorPolicyCard, canManageTwoFactor } from '../components/auth/TwoFactorAdmin';
 
 const ROLE_LABELS = {
   COMPANY_ADMIN: 'Organization Administrator',
@@ -152,6 +153,8 @@ function UsersPanel() {
         )}
       </div>
 
+      {canManageTwoFactor(currentUser, hasPermission, hasRole) && <TwoFactorPolicyCard />}
+
       <Card bodyClassName="p-0">
         {isLoading && (
           <div className="p-4">
@@ -238,6 +241,7 @@ function UsersPanel() {
                           {u.active ? 'Deactivate' : 'Activate'}
                         </Button>
                       )}
+                      {canManageTwoFactor(currentUser, hasPermission, hasRole) && <ResetTwoFactorButton user={u} />}
                     </div>
                   </td>
                 </tr>

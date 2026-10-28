@@ -5,6 +5,7 @@ import { candidatesApi } from '../../api/endpoints/recruitment';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { formatDateTimeIST } from '../../utils/formatDateTime';
+import GenerateOfferLetterAction from '../letters/GenerateOfferLetterAction';
 
 const ACCEPTED_EXTENSIONS = '.pdf,.doc,.docx';
 
@@ -124,6 +125,7 @@ export default function OfferLetterPanel({ candidate }) {
             <Button size="sm" variant="secondary" icon={Eye} onClick={handlePreview} disabled={busy}>Preview</Button>
             <Button size="sm" variant="secondary" icon={Download} onClick={handleDownload} disabled={busy}>Download</Button>
             <Button size="sm" variant="secondary" icon={Upload} onClick={() => fileInputRef.current?.click()} loading={upload.isPending}>Replace</Button>
+            <GenerateOfferLetterAction candidate={candidate} onGenerated={invalidate} label="Regenerate" />
             <Button size="sm" icon={alreadySent ? RefreshCw : Send} onClick={() => send.mutate()} loading={send.isPending}>
               {alreadySent ? 'Resend Offer Letter' : 'Send Offer Letter'}
             </Button>
@@ -132,11 +134,14 @@ export default function OfferLetterPanel({ candidate }) {
       ) : (
         <>
           <div style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-muted)', marginBottom: 8 }}>
-            No offer letter uploaded yet. Upload the signed offer letter (PDF, DOC, or DOCX) before it can be sent to the candidate.
+            No offer letter yet. Generate one from a letter template, or upload a signed offer letter (PDF, DOC, or DOCX), before it can be sent to the candidate.
           </div>
-          <Button size="sm" icon={Upload} onClick={() => fileInputRef.current?.click()} loading={upload.isPending}>
-            Upload Offer Letter
-          </Button>
+          <div className="d-flex flex-wrap gap-2">
+            <GenerateOfferLetterAction candidate={candidate} onGenerated={invalidate} label="Generate offer letter" />
+            <Button size="sm" icon={Upload} onClick={() => fileInputRef.current?.click()} loading={upload.isPending}>
+              Upload Offer Letter
+            </Button>
+          </div>
         </>
       )}
 

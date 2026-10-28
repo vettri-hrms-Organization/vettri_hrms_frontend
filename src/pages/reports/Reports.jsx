@@ -391,9 +391,13 @@ function AttendanceReportPanel({ startDate, endDate, onChangeStart, onChangeEnd 
  */
 function AttendanceHeatmapSection() {
   const WEEKS = 12;
-  const today = new Date();
-  const rangeEnd = today.toISOString().slice(0, 10);
-  const rangeStart = new Date(today.getTime() - (WEEKS * 7 - 1) * 86400000).toISOString().slice(0, 10);
+  // Calendar keys (yyyy-mm-dd) built from local date parts; toISOString() would give the UTC day,
+  // which is the previous day for most of the morning in IST.
+  const dateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const rangeEnd = toISTDateInputValue();
+  const startDate = new Date(rangeEnd + 'T00:00:00');
+  startDate.setDate(startDate.getDate() - (WEEKS * 7 - 1));
+  const rangeStart = dateKey(startDate);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['report-attendance-heatmap', rangeStart, rangeEnd],
@@ -415,7 +419,7 @@ function AttendanceHeatmapSection() {
   const startPad = start.getDay();
   for (let i = 0; i < startPad; i++) days.push(null);
   for (let d = new Date(start); d <= new Date(rangeEnd + 'T00:00:00'); d.setDate(d.getDate() + 1)) {
-    days.push(d.toISOString().slice(0, 10));
+    days.push(dateKey(d));
   }
   const weeks = [];
   for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));

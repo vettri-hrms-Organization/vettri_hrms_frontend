@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PlusCircle, PlayCircle, Wallet, PauseCircle, Play, XCircle, Receipt, Download } from 'lucide-react';
+import { PlusCircle, PlayCircle, Wallet, PauseCircle, Play, XCircle, Receipt, Download, Landmark, FileText } from 'lucide-react';
 import { payrollApi } from '../../api/endpoints/salary';
+import { useAuth } from '../../hooks/useAuth';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -13,6 +14,7 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { exportToCsv } from '../../utils/exportToCsv';
 import PayrollStatusBadge from './components/PayrollStatusBadge';
 import NewPayrollRunModal from './components/NewPayrollRunModal';
+import StatutoryExportsCard from './components/StatutoryExportsCard';
 import PageHeader from '../../components/ui/PageHeader';
 import StatCard from '../../components/ui/StatCard';
 
@@ -22,6 +24,10 @@ export default function PayrollProcessing() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [showNewRun, setShowNewRun] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [downloading, setDownloading] = useState(null);
+  const { hasPermission } = useAuth();
+  // The bank file carries full account numbers, so it is SALARY_MANAGE only (enforced server-side too).
+  const canManage = hasPermission('SALARY_MANAGE');
 
   const { data: runs = [], isLoading: loadingRuns } = useQuery({ queryKey: ['payroll-runs'], queryFn: payrollApi.listRuns });
 
@@ -99,6 +105,25 @@ export default function PayrollProcessing() {
     setConfirmAction(action);
   }
 
+  async function download(key, request, failureMessage) {
+    setDownloading(key);
+    try {
+      await request();
+    } catch {
+      toast.error(failureMessage);
+    } finally {
+      setDownloading(null);
+    }
+  }
+
+  function handleBankExport() {
+    download('bank', () => payrollApi.downloadBankTransferCsv(activeRunId, `bank-transfer-${run?.periodLabel?.replace(' ', '-') || activeRunId}.csv`), 'Could not export the bank transfer file');
+  }
+
+  function handlePayslip(i) {
+    download(`item-${i.id}`, () => payrollApi.downloadPayslipPdf(i.id, `payslip-${i.employeeCode}-${i.periodYear}-${String(i.periodMonth).padStart(2, '0')}.pdf`), 'Could not download the payslip');
+  }
+
   function handleExport() {
     exportToCsv(
       `payroll-${run?.periodLabel?.replace(' ', '-') || 'run'}.csv`,
@@ -106,9 +131,18 @@ export default function PayrollProcessing() {
         'Employee ID': i.employeeCode,
         'Employee Name': i.employeeName,
         Department: i.departmentName || '',
+        'Paid Days': i.paidDays ?? '',
+        'LOP Days': i.lopDays ?? '',
         'Gross Salary': i.grossSalary,
+        'Additional Earnings': i.adjustmentsTotal ?? 0,
+        PF: i.components?.pf ?? 0,
+        ESI: i.components?.esi ?? 0,
+        'Professional Tax': i.components?.professionalTax ?? 0,
+        TDS: i.components?.tds ?? 0,
         'Total Deductions': i.totalDeductions,
         'Net Salary': i.netSalary,
+        'Employer PF (EPF+EPS)': Number(i.employerEpf || 0) + Number(i.employerEps || 0),
+        'Employer ESI': i.employerEsi ?? 0,
         Status: i.status,
         'Payment Date': i.paymentDate || '',
       }))
@@ -180,6 +214,16 @@ export default function PayrollProcessing() {
                     <button className="btn btn-outline-secondary d-inline-flex align-items-center gap-2" onClick={handleExport} disabled={items.length === 0}>
                       <Download size={16} /> Export
                     </button>
+                    {canManage && (
+                      <button
+                        className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+                        onClick={handleBankExport}
+                        disabled={items.length === 0 || downloading === 'bank'}
+                        title="Employee name, code, bank, account number, IFSC and net pay for every item not on hold"
+                      >
+                        <Landmark size={16} /> {downloading === 'bank' ? 'Exporting…' : 'Export bank transfer CSV'}
+                      </button>
+                    )}
                     {run?.status === 'DRAFT' && (
                       <>
                         <Button variant="secondary" icon={XCircle} onClick={() => requestConfirmation('cancel')} loading={cancelMutation.isPending}>
@@ -215,6 +259,8 @@ export default function PayrollProcessing() {
                 </div>
               </Card>}
 
+              {canManage && run && items.length > 0 && <StatutoryExportsCard runId={activeRunId} run={run} />}
+
               <Card bodyClassName="p-0" title="Employees in this Run">
                 {loadingDetail && (
                   <div className="p-3">
@@ -228,6 +274,12 @@ export default function PayrollProcessing() {
                         <tr>
                           <th className="px-3 py-3 text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
                             Employee
+                          </th>
+                          <th className="px-3 py-3 text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+                            Paid days
+                          </th>
+                          <th className="px-3 py-3 text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+                            LOP
                           </th>
                           <th className="px-3 py-3 text-secondary-hz" style={{ fontSize: 12, textTransform: 'uppercase' }}>
                             Gross
@@ -251,6 +303,10 @@ export default function PayrollProcessing() {
                               <div style={{ fontWeight: 600 }}>{i.employeeName}</div>
                               <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{i.employeeCode}</div>
                             </td>
+                            <td className="px-3 py-3">{i.paidDays != null ? `${Number(i.paidDays)} / ${i.daysInPeriod}` : '—'}</td>
+                            <td className="px-3 py-3" style={Number(i.lopDays) > 0 ? { color: 'var(--hz-danger-600)', fontWeight: 600 } : undefined}>
+                              {Number(i.lopDays) > 0 ? Number(i.lopDays) : '—'}
+                            </td>
                             <td className="px-3 py-3">{formatCurrency(i.grossSalary)}</td>
                             <td className="px-3 py-3">{formatCurrency(i.totalDeductions)}</td>
                             <td className="px-3 py-3" style={{ fontWeight: 600 }}>
@@ -260,6 +316,14 @@ export default function PayrollProcessing() {
                               <PayrollStatusBadge status={i.status} />
                             </td>
                             <td className="px-3 py-3 text-end">
+                              <button
+                                className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 me-2"
+                                onClick={() => handlePayslip(i)}
+                                disabled={downloading === `item-${i.id}`}
+                                title="Download payslip PDF"
+                              >
+                                <FileText size={13} /> PDF
+                              </button>
                               {run?.status === 'DRAFT' && (i.status === 'PENDING' || i.status === 'ON_HOLD') && (
                                 <button
                                   className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"

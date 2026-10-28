@@ -18,6 +18,7 @@ import FilterBar from '../../components/ui/FilterBar';
 import SearchField from '../../components/ui/SearchField';
 import StatusBadge, { formatStatusLabel } from '../../components/ui/StatusBadge';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import { useAuth } from '../../hooks/useAuth';
 
 const STATUS_VARIANT = { OPEN: 'success', ON_HOLD: 'warning', CLOSED: 'neutral' };
 const STATUS_TABS = [
@@ -28,6 +29,8 @@ const STATUS_TABS = [
 ];
 
 export default function JobOpenings() {
+  const { hasPermission } = useAuth();
+  const canManageRecruitment = hasPermission('RECRUITMENT_MANAGE');
   const [showCreate, setShowCreate] = useState(false);
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
@@ -53,7 +56,7 @@ export default function JobOpenings() {
 
   return (
     <div className="hz-module-page hz-module-page--recruitment d-flex flex-column gap-4">
-      <PageHeader eyebrow="Talent" title="Recruitment" description="Job openings and candidate pipelines" actions={<Button icon={Plus} onClick={() => setShowCreate(true)}>New Requisition</Button>} />
+      <PageHeader eyebrow="Talent" title="Recruitment" description="Job openings and candidate pipelines" actions={canManageRecruitment ? <Button icon={Plus} onClick={() => setShowCreate(true)}>New Requisition</Button> : null} />
 
       <FilterBar className="justify-content-between">
         <Tabs items={STATUS_TABS} value={status} onChange={setStatus} className="border-0" />

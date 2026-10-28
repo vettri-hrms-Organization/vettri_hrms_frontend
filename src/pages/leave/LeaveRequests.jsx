@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Navigate } from 'react-router-dom';
-import { CalendarPlus, Check, X as XIcon, Calendar, CalendarDays, BarChart3 } from 'lucide-react';
+import { CalendarPlus, Check, X as XIcon, Calendar, CalendarDays, BarChart3, Download } from 'lucide-react';
+import { exportToCsv } from '../../utils/exportToCsv';
+import { formatDateIST, toISTDateInputValue } from '../../utils/formatDateTime';
 import { leaveRequestsApi } from '../../api/endpoints/leave';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -12,6 +14,7 @@ import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import ApplyLeaveModal from './ApplyLeaveModal';
 import { leaveStatusMeta } from './leaveStatusMeta';
+import { formatLeaveDuration } from '../../utils/formatLeave';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import PageHeader from '../../components/ui/PageHeader';
@@ -20,6 +23,9 @@ import SearchField from '../../components/ui/SearchField';
 import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
 import Tabs from '../../components/ui/Tabs';
+import Badge from '../../components/ui/Badge';
+import LeaveSelfServicePanel from './LeaveSelfServicePanel';
+import { CompOffApprovals, EncashmentApprovals } from './LeaveExtraApprovals';
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const TABS = [
@@ -27,18 +33,52 @@ const TABS = [
   { key: '', label: 'All Requests' },
 ];
 
+/** One CSV row of the leave register export (dates in IST). */
+function toLeaveExportRow(r) {
+  const meta = leaveStatusMeta(r.status);
+  const appliedOn = r.appliedOn || r.appliedAt || r.createdAt;
+  return {
+    Employee: r.employeeName || '',
+    'Employee Code': r.employeeCode || '',
+    Department: r.departmentName || '',
+    'Leave Type': r.leaveTypeName || '',
+    Start: r.startDate ? formatDateIST(r.startDate) : '',
+    End: r.endDate ? formatDateIST(r.endDate) : '',
+    Days: r.halfDay ? formatLeaveDuration(r) : r.days ?? '',
+    Status: meta?.label || r.status || '',
+    'Applied On': appliedOn ? formatDateIST(appliedOn) : '',
+    'Decided By': r.decidedByName || '',
+    'Decided On': r.decidedAt ? formatDateIST(r.decidedAt) : '',
+    Note: r.decisionNote || '',
+  };
+}
+
+// Routing gate only - hooks live in LeaveManagement so they always run in the same order.
 export default function LeaveRequests() {
+  const { hasPermission, user } = useAuth();
+  const canView = hasPermission('LEAVE_VIEW') || hasPermission('LEAVE_APPROVE') || hasPermission('LEAVE_MANAGE');
+  if (user?.employeeId && !canView) return <EmployeeLeaveWorkspace employeeId={user.employeeId} />;
+  if (!canView) return <Navigate to="/my-profile?tab=leave" replace />;
+  return <LeaveManagement />;
+}
+
+function LeaveManagement() {
   const [tab, setTab] = useState('PENDING');
   const [search, setSearch] = useState('');
   const [showApply, setShowApply] = useState(false);
   const [decision, setDecision] = useState(null);
   const [decisionNote, setDecisionNote] = useState('');
   const queryClient = useQueryClient();
-  const { hasPermission, hasRole, user } = useAuth();
+  const { hasPermission } = useAuth();
   const toast = useToast();
-
-  if (user?.employeeId && !hasPermission('LEAVE_VIEW') && !hasPermission('LEAVE_APPROVE') && !hasPermission('LEAVE_MANAGE')) return <EmployeeLeaveWorkspace employeeId={user.employeeId} />;
-  if (!hasPermission('LEAVE_APPROVE') && !hasPermission('LEAVE_MANAGE')) return <Navigate to="/my-profile?tab=leave" replace />;
+  const canDecide = hasPermission('LEAVE_APPROVE');
+  const canApplyForOthers = hasPermission('LEAVE_APPLY');
+  const [section, setSection] = useState('leave');
+  const sectionTabs = [
+    { key: 'leave', label: 'Leave requests' },
+    ...(canDecide ? [{ key: 'compoff', label: 'Comp-off' }] : []),
+    ...(hasPermission('LEAVE_MANAGE') ? [{ key: 'encashment', label: 'Encashment' }] : []),
+  ];
 
   // A Manager (LEAVE_APPROVE without the broader LEAVE_MANAGE HR/Admin
   // hold) should only see their own team's requests here - the plain
@@ -90,9 +130,26 @@ export default function LeaveRequests() {
         eyebrow="Workforce"
         title="Leave"
         description={isTeamScoped ? "Your team's requests, approvals, and balances" : 'Requests, approvals, and balances'}
-        actions={<Button icon={CalendarPlus} onClick={() => setShowApply(true)}>Apply Leave</Button>}
+        actions={(
+          <div className="d-flex gap-2">
+            <Button
+              variant="secondary"
+              icon={Download}
+              disabled={isLoading || isError || !filteredRequests?.length}
+              onClick={() => exportToCsv(`leave-register-${tab ? tab.toLowerCase() : 'all'}-${toISTDateInputValue()}`, filteredRequests.map(toLeaveExportRow))}
+            >
+              Export
+            </Button>
+            {canApplyForOthers && <Button icon={CalendarPlus} onClick={() => setShowApply(true)}>Apply Leave</Button>}
+          </div>
+        )}
       />
 
+      {sectionTabs.length > 1 && <Tabs items={sectionTabs} value={section} onChange={setSection} ariaLabel="Leave workflows" />}
+      {section === 'compoff' && <CompOffApprovals />}
+      {section === 'encashment' && <EncashmentApprovals />}
+
+      {section === 'leave' && (<>
       {!isLoading && !isError && requests && (
         <div className="hz-inline-summary" aria-label="Leave request summary">
           <InlineSummary label="Total requests" value={requests.length} />
@@ -168,12 +225,12 @@ export default function LeaveRequests() {
                     <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
                       {new Date(r.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} – {new Date(r.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
-                    <td style={{ fontSize: 'var(--hz-text-sm)' }}>{r.days}</td>
+                    <td style={{ fontSize: 'var(--hz-text-sm)' }}>{r.halfDay ? formatLeaveDuration(r) : r.days}</td>
                     <td>
                       <StatusBadge status={r.status} variant={meta.variant} dot>{meta.label}</StatusBadge>
                     </td>
                     <td className="pe-4 text-end">
-                      {r.status === 'PENDING' && (
+                      {canDecide && r.status === 'PENDING' && (
                         <div className="d-flex justify-content-end gap-2">
                           <button
                             type="button"
@@ -204,6 +261,7 @@ export default function LeaveRequests() {
           </div>
         )}
       </Card>
+      </>)}
 
       {showApply && <ApplyLeaveModal onClose={() => setShowApply(false)} />}
       <Dialog open={!!decision} onClose={() => setDecision(null)} title={decision?.approve ? 'Approve leave request' : 'Reject leave request'} description={`${decision?.employeeName || 'This employee'} · add context for the request record.`}>
@@ -269,7 +327,8 @@ function EmployeeLeaveWorkspace({ employeeId }) {
 
       <section className="hz-keka-leave-page__analytics" aria-labelledby="leave-analytics-title"><div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Insights</span><h2 id="leave-analytics-title">Leave usage</h2></div><span>Available vs consumed</span></div>{chartData.length ? <div className="hz-keka-leave-page__chart"><ResponsiveContainer width="100%" height={230}><BarChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 8 }} barGap={8}><CartesianGrid vertical={false} stroke="var(--hz-border)" strokeDasharray="3 3" /><XAxis dataKey="name" tick={{ fill: 'var(--hz-text-secondary)', fontSize: 11 }} tickLine={false} axisLine={false} /><YAxis allowDecimals={false} tick={{ fill: 'var(--hz-text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ border: '1px solid var(--hz-border)', borderRadius: 8, fontSize: 12 }} /><Bar dataKey="available" name="Available" fill="var(--hz-primary-500)" radius={[4, 4, 0, 0]} /><Bar dataKey="consumed" name="Consumed" fill="var(--hz-accent-500)" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div> : <div className="hz-keka-leave-page__chart-empty"><BarChart3 size={20} /> Usage will appear once leave types are configured.</div>}</section>
 
-      <section id="leave-history" aria-labelledby="leave-history-title"><div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Requests</span><h2 id="leave-history-title">Leave history</h2></div></div><div className="hz-keka-leave-page__history"><div className="hz-keka-leave-page__history-head"><span>Leave dates</span><span>Leave type</span><span>Days</span><span>Status</span></div>{requestsLoading && <SkeletonText lines={4} />}{!requestsLoading && leaveRequests.length === 0 && <EmptyState icon={Calendar} title="No leave requests yet" description="Request leave to start your history." />}{!requestsLoading && leaveRequests.map((request) => { const meta = leaveStatusMeta(request.status); return <div className="hz-keka-leave-page__history-row" key={request.id}><span>{new Date(request.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}<small>{new Date(request.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</small></span><strong>{request.leaveTypeName}</strong><span>{request.days} day(s)</span><Badge variant={meta.variant} dot>{meta.label}</Badge></div>; })}</div></section>
+      <section id="leave-history" aria-labelledby="leave-history-title"><div className="hz-dashboard__section-heading"><div><span className="hz-dashboard__section-kicker">Requests</span><h2 id="leave-history-title">Leave history</h2></div></div><div className="hz-keka-leave-page__history"><div className="hz-keka-leave-page__history-head"><span>Leave dates</span><span>Leave type</span><span>Days</span><span>Status</span></div>{requestsLoading && <SkeletonText lines={4} />}{!requestsLoading && leaveRequests.length === 0 && <EmptyState icon={Calendar} title="No leave requests yet" description="Request leave to start your history." />}{!requestsLoading && leaveRequests.map((request) => { const meta = leaveStatusMeta(request.status); return <div className="hz-keka-leave-page__history-row" key={request.id}><span>{new Date(request.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}<small>{new Date(request.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</small></span><strong>{request.leaveTypeName}</strong><span>{formatLeaveDuration(request)}</span><Badge variant={meta.variant} dot>{meta.label}</Badge></div>; })}</div></section>
+      <section aria-label="Leave balance details"><LeaveSelfServicePanel employeeId={employeeId} /></section>
       {showApply && <ApplyLeaveModal defaultEmployeeId={employeeId} onClose={() => setShowApply(false)} />}
     </div>
   );

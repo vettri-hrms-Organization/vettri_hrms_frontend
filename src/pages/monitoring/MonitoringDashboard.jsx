@@ -26,6 +26,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonCard, SkeletonText } from '../../components/ui/Skeleton';
 import PageHeader from '../../components/ui/PageHeader';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function MonitoringDashboard() {
   const { from, to } = useMemo(() => todayRangeIST(), []);
@@ -38,7 +39,9 @@ export default function MonitoringDashboard() {
     dataUpdatedAt: devicesUpdatedAt,
   } = useQuery({ queryKey: ['monitoring-devices'], queryFn: monitoringApi.devices, refetchInterval: 20_000 });
 
-  const { data: employees } = useQuery({ queryKey: ['employees'], queryFn: employeesApi.list });
+  const { hasPermission } = useAuth();
+  const canViewEmployees = hasPermission('EMPLOYEE_VIEW');
+  const { data: employees } = useQuery({ queryKey: ['employees'], queryFn: employeesApi.list, enabled: canViewEmployees });
 
   const {
     data: todaySessions,
@@ -47,7 +50,10 @@ export default function MonitoringDashboard() {
     refetch: refetchSessions,
   } = useQuery({ queryKey: ['monitoring-sessions-today', from, to], queryFn: () => monitoringApi.sessions(from, to) });
 
-  const totalEmployees = employees?.length ?? 0;
+  // IT admins may not have EMPLOYEE_VIEW; then count the people with an enrolled device instead.
+  const totalEmployees = canViewEmployees
+    ? employees?.length ?? 0
+    : new Set((devices || []).map((device) => device.employeeId).filter(Boolean)).size;
   const onlineDevices = useMemo(() => (devices || []).filter(isDeviceOnline), [devices]);
   const onlineEmployeeIds = useMemo(() => new Set(onlineDevices.map((device) => device.employeeId).filter(Boolean)), [onlineDevices]);
   const activeEmployees = useMemo(() => onlineDevices.filter((device) => ['ONLINE', 'ACTIVE'].includes(getDeviceStatus(device))).length, [onlineDevices]);
@@ -75,7 +81,7 @@ export default function MonitoringDashboard() {
   );
 
   const kpis = [
-    { label: 'Employees', value: totalEmployees, icon: Monitor, accent: 'var(--hz-primary-600)' },
+    { label: canViewEmployees ? 'Employees' : 'People with devices', value: totalEmployees, icon: Monitor, accent: 'var(--hz-primary-600)' },
     { label: 'Active', value: activeEmployees, icon: Activity, accent: 'var(--hz-success-500)' },
     { label: 'Idle', value: idleEmployees, icon: CircleDot, accent: 'var(--hz-warning-500)' },
     { label: 'Offline', value: offlineEmployees, icon: WifiOff, accent: 'var(--hz-gray-500)' },

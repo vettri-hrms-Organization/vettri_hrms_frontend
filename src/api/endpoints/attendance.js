@@ -13,6 +13,14 @@ export const attendanceApi = {
   context: () => axiosClient.get('/api/attendance/policy/context').then((res) => res.data),
   policy: () => axiosClient.get('/api/attendance/policy').then((res) => res.data),
   updatePolicy: (payload) => axiosClient.put('/api/attendance/policy', payload).then((res) => res.data),
+  workingWeek: () => axiosClient.get('/api/attendance/policy/working-week').then((res) => res.data),
+  updateWorkingWeek: (weeklyOffDays) => axiosClient.put('/api/attendance/policy/working-week', { weeklyOffDays }).then((res) => res.data),
+  downloadMonthlyMuster: (year, month) => axiosClient
+    .get('/api/attendance/muster/export', { params: { year, month }, responseType: 'blob' })
+    .then((res) => {
+      const url = URL.createObjectURL(res.data); const anchor = document.createElement('a');
+      anchor.href = url; anchor.download = `attendance-muster-${year}-${String(month).padStart(2, '0')}.xlsx`; anchor.click(); URL.revokeObjectURL(url);
+    }),
   employeeConfiguration: (employeeId) => axiosClient.get(`/api/attendance/employee/${employeeId}/configuration`).then((res) => res.data),
   updateEmployeeConfiguration: (employeeId, payload) => axiosClient.put(`/api/attendance/employee/${employeeId}/configuration`, payload).then((res) => res.data),
   biometricDevices: (employeeId) => axiosClient.get(`/api/attendance/employee/${employeeId}/biometric-devices`).then((res) => res.data),

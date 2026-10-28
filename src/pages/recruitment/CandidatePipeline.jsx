@@ -16,6 +16,7 @@ import CandidateDetailModal from './CandidateDetailModal';
 import { useBreadcrumbLabel } from '../../components/layout/BreadcrumbContext';
 import PageHeader from '../../components/ui/PageHeader';
 import StatCard from '../../components/ui/StatCard';
+import { useAuth } from '../../hooks/useAuth';
 
 // Main flow left to right, then the two exception/terminal columns
 // (On Hold, Rejected) pinned at the end - a candidate can land in either
@@ -86,6 +87,8 @@ function resolveDragAction(fromStage, toStage) {
 
 export default function CandidatePipeline() {
   const { jobOpeningId } = useParams();
+  const { hasPermission } = useAuth();
+  const canManageRecruitment = hasPermission('RECRUITMENT_MANAGE');
   const [showAddCandidate, setShowAddCandidate] = useState(false);
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
   const [dragCandidate, setDragCandidate] = useState(null); // { id, stage } of the card currently being dragged
@@ -154,9 +157,9 @@ export default function CandidatePipeline() {
         eyebrow="Talent pipeline"
         title={opening?.title || 'Candidate Pipeline'}
         description={`${opening?.departmentName || 'Any department'}${opening?.designationTitle ? ` · ${opening.designationTitle}` : ''}${candidates ? ` · ${candidates.length} candidate${candidates.length === 1 ? '' : 's'}` : ''}`}
-        actions={<Button icon={UserPlus} onClick={() => setShowAddCandidate(true)}>
+        actions={canManageRecruitment ? <Button icon={UserPlus} onClick={() => setShowAddCandidate(true)}>
           Add Candidate
-        </Button>}
+        </Button> : null}
       />
 
       {isLoading && (
@@ -214,7 +217,7 @@ export default function CandidatePipeline() {
                   <button
                     key={c.id}
                     type="button"
-                    draggable
+                    draggable={canManageRecruitment}
                     onDragStart={(e) => {
                       setDragCandidate({ id: c.id, stage: c.stage });
                       e.dataTransfer.effectAllowed = 'move';

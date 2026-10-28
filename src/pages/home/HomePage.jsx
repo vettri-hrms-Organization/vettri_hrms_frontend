@@ -168,7 +168,12 @@ function InlineLoginCard() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(username, password);
+      const result = await login(username, password);
+      if (result?.mfaRequired) {
+        // Second factor is collected on the full sign-in page.
+        navigate('/login', { state: { mfaChallenge: result } });
+        return;
+      }
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid username or password');

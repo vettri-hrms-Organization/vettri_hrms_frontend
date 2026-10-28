@@ -19,13 +19,20 @@ import ErrorState from '../../components/ui/ErrorState';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { statusMeta, STATUS_META, SELECTABLE_STATUSES, EMPLOYMENT_TYPE_LABEL } from './statusMeta';
+import ExitStatusDialog, { isExitStatus } from './ExitStatusDialog';
+import { BankStatutoryCard } from './BankStatutoryFields';
 import { leaveStatusMeta } from '../leave/leaveStatusMeta';
 import { useBreadcrumbLabel } from '../../components/layout/BreadcrumbContext';
 import Tabs from '../../components/ui/Tabs';
 import { useAuth } from '../../hooks/useAuth';
 import ApplyLeaveModal from '../leave/ApplyLeaveModal';
+import LeaveSelfServicePanel from '../leave/LeaveSelfServicePanel';
 import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
+import { formatLeaveDuration } from '../../utils/formatLeave';
 import { categoricalColor } from '../../design-system/palette';
+import { ScrollText, ListChecks } from 'lucide-react';
+import EmployeeLettersTab from '../letters/EmployeeLettersTab';
+import EmployeeOnboardingTab from '../onboarding/EmployeeOnboardingTab';
 
 const TABS = [
   { key: 'overview', label: 'Profile', icon: ClipboardList },
@@ -34,9 +41,11 @@ const TABS = [
   { key: 'attendance', label: 'Attendance', icon: Clock },
   { key: 'leave', label: 'Leave', icon: CalendarDays },
   { key: 'documents', label: 'Documents', icon: FileText },
+  { key: 'letters', label: 'Letters', icon: ScrollText },
+  { key: 'onboarding', label: 'Onboarding', icon: ListChecks },
 ];
 const VALID_TAB_KEYS = TABS.map((tab) => tab.key);
-const EMPLOYEE_TAB_KEYS = ['overview', 'job', 'attendance', 'leave', 'documents'];
+const EMPLOYEE_TAB_KEYS = ['overview', 'job', 'attendance', 'leave', 'documents', 'letters', 'onboarding'];
 
 export default function EmployeeProfile() {
   const { id } = useParams();
@@ -70,15 +79,29 @@ export default function EmployeeProfile() {
 
   useBreadcrumbLabel(employee?.fullName);
 
+  const [pendingExitStatus, setPendingExitStatus] = useState(null);
   const changeStatus = useMutation({
-    mutationFn: (status) => employeesApi.updateStatus(id, status),
+    mutationFn: (input) => {
+      const { status, reason, lastWorkingDate } = typeof input === 'string' ? { status: input } : input;
+      return employeesApi.updateStatus(id, status, reason, lastWorkingDate);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee', employeeId] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       setStatusMenuOpen(false);
+      setPendingExitStatus(null);
     },
   });
+
+  function selectStatus(key) {
+    if (isExitStatus(key)) {
+      setStatusMenuOpen(false);
+      setPendingExitStatus(key);
+      return;
+    }
+    changeStatus.mutate(key);
+  }
 
   if (isLoading) {
     return (
@@ -146,7 +169,7 @@ export default function EmployeeProfile() {
                     <button
                       key={key}
                       disabled={key === employee.status || changeStatus.isPending}
-                      onClick={() => changeStatus.mutate(key)}
+                      onClick={() => selectStatus(key)}
                       className="btn btn-light border-0 w-100 text-start px-2 py-2 d-flex align-items-center gap-2"
                       style={{ opacity: key === employee.status ? 0.5 : 1 }}
                     >
@@ -173,6 +196,9 @@ export default function EmployeeProfile() {
           <ProfileSummary label="Direct reports" value={employee.directReports?.length || 0} />
           <ProfileSummary label="Employment" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType || 'Not set'} />
           <ProfileSummary label="Department" value={employee.departmentName || 'Not set'} />
+          {employee.lastWorkingDate && (
+            <ProfileSummary label="Last working day" value={formatDateIST(employee.lastWorkingDate)} />
+          )}
         </dl>
 
         <div className="hz-profile-contact-strip">
@@ -190,6 +216,8 @@ export default function EmployeeProfile() {
       {tab === 'hierarchy' && <HierarchyTab employee={employee} />}
       {tab === 'attendance' && <AttendanceTab employee={employee} />}
       {tab === 'leave' && <LeaveTab employee={employee} onApplyLeave={() => setShowApplyLeave(true)} />}
+      {tab === 'letters' && <EmployeeLettersTab employee={employee} />}
+      {tab === 'onboarding' && <EmployeeOnboardingTab employee={employee} />}
       {tab === 'documents' && (
         <DocumentsTab
           employee={employee}
@@ -199,6 +227,15 @@ export default function EmployeeProfile() {
       )}
 
       {showApplyLeave && <ApplyLeaveModal defaultEmployeeId={employee.id} onClose={() => setShowApplyLeave(false)} />}
+
+      <ExitStatusDialog
+        open={!!pendingExitStatus}
+        status={pendingExitStatus}
+        employeeName={employee.fullName}
+        loading={changeStatus.isPending}
+        onClose={() => setPendingExitStatus(null)}
+        onConfirm={({ lastWorkingDate, reason }) => changeStatus.mutate({ status: pendingExitStatus, lastWorkingDate, reason })}
+      />
     </div>
   );
 }
@@ -336,6 +373,9 @@ function OverviewTab({ employee }) {
         </Card>
       </div>
       <div className="col-12 col-lg-6">
+        <BankStatutoryCard employee={employee} canEdit={hasPermission('EMPLOYEE_MANAGE')} InfoRow={InfoRow} />
+      </div>
+      <div className="col-12 col-lg-6">
         <Card title="Biometric Enrollment" subtitle="The PIN this employee is enrolled under on the fingerprint device">
           <div className="d-flex align-items-center gap-2 py-2">
             <Fingerprint size={15} style={{ color: 'var(--hz-text-muted)', flexShrink: 0 }} />
@@ -453,8 +493,9 @@ function HierarchyTab({ employee }) {
 
 function AttendanceTab({ employee }) {
   const queryClient = useQueryClient();
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const canManageAttendance = hasPermission('ATTENDANCE_MANAGE');
+  const isOwnRecord = !!user?.employeeId && String(user.employeeId) === String(employee.id);
   const [configurationForm, setConfigurationForm] = useState({
     attendanceMethodOverride: '',
     biometricDeviceId: '',
@@ -500,6 +541,13 @@ function AttendanceTab({ employee }) {
 
   return (
     <div className="d-flex flex-column gap-4">
+    {isOwnRecord && (
+      <div className="hz-dash__notice hz-profile-checkin-hint">
+        <Clock size={16} aria-hidden="true" />
+        <span>Need to check in or out, or request WFH? Use My Attendance.</span>
+        <Link to="/my-attendance" className="btn btn-sm btn-primary">Open My Attendance</Link>
+      </div>
+    )}
     <Card title="Attendance configuration" subtitle="Effective policy and biometric enrollment">
       {configuration.isLoading && <SkeletonText lines={2} />}
       {configuration.isError && <ErrorState description="Couldn't load attendance configuration." onRetry={configuration.refetch} />}
@@ -1066,7 +1114,7 @@ function LeaveTab({ employee, onApplyLeave }) {
                     <div>
                       <div style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{r.leaveTypeName}</div>
                       <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>
-                        {new Date(r.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} – {new Date(r.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {r.days} day(s)
+                        {new Date(r.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} – {new Date(r.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {formatLeaveDuration(r)}
                       </div>
                     </div>
                     <Badge variant={meta.variant} dot>
@@ -1078,6 +1126,10 @@ function LeaveTab({ employee, onApplyLeave }) {
             </div>
           )}
         </Card>
+      </div>
+      {/* Accrual as of today, balance ledger, comp-off and encashment (leave policies). */}
+      <div className="col-12">
+        <LeaveSelfServicePanel employeeId={employee.id} />
       </div>
     </div>
   );

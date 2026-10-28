@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Navigate } from 'react-router-dom';
-import { Radio, Clock, Fingerprint, AlertTriangle, CalendarOff, Users } from 'lucide-react';
+import { Radio, Clock, Fingerprint, AlertTriangle, CalendarOff, Users, Download } from 'lucide-react';
 import { attendanceApi } from '../../api/endpoints/attendance';
+import { authApi } from '../../api/endpoints/auth';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Avatar from '../../components/ui/Avatar';
@@ -13,7 +14,8 @@ import { SkeletonText } from '../../components/ui/Skeleton';
 import PageHeader from '../../components/ui/PageHeader';
 import StatCard from '../../components/ui/StatCard';
 import { useAuth } from '../../hooks/useAuth';
-import { formatTimeIST } from '../../utils/formatDateTime';
+import { formatTimeIST, toISTDateInputValue } from '../../utils/formatDateTime';
+import { useToast } from '../../components/ui/Toast';
 
 function PunchBadge({ type }) {
   return <StatusBadge status={type === 'IN' ? 'PRESENT' : type === 'OUT' ? 'COMPLETED' : type} variant={type === 'IN' ? 'success' : type === 'OUT' ? 'info' : 'neutral'} dot={false}>{type}</StatusBadge>;
@@ -144,17 +146,63 @@ function AttendanceRegularizationReviewCard() {
 
 export default function AttendanceList() {
   const { user, hasPermission } = useAuth();
-  if (user?.employeeId && !hasPermission('ATTENDANCE_VIEW')) return <Navigate to="/my-profile?tab=attendance" replace />;
+  if (user?.employeeId && !hasPermission('ATTENDANCE_VIEW')) return <Navigate to="/my-attendance" replace />;
   return <AttendanceManagement />;
 }
 
+function MonthlyMusterExport() {
+  const toast = useToast();
+  const [month, setMonth] = useState(() => toISTDateInputValue(new Date()).slice(0, 7));
+  const [downloading, setDownloading] = useState(false);
+
+  async function download() {
+    const [year, monthNumber] = month.split('-').map(Number);
+    if (!year || !monthNumber) return;
+    setDownloading(true);
+    try {
+      await attendanceApi.downloadMonthlyMuster(year, monthNumber);
+    } catch (error) {
+      let message = 'Could not export the attendance muster.';
+      try {
+        const body = error.response?.data instanceof Blob ? JSON.parse(await error.response.data.text()) : error.response?.data;
+        if (body?.message) message = body.message;
+      } catch {
+        // keep the generic message
+      }
+      toast.error(message);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <div className="d-flex align-items-center gap-2">
+      <label className="visually-hidden" htmlFor="attendance-muster-month">Muster month</label>
+      <input
+        id="attendance-muster-month"
+        type="month"
+        className="form-control form-control-sm"
+        style={{ width: 150 }}
+        value={month}
+        max={toISTDateInputValue(new Date()).slice(0, 7)}
+        onChange={(event) => setMonth(event.target.value)}
+      />
+      <Button variant="secondary" size="sm" icon={Download} onClick={download} loading={downloading} disabled={!month}>
+        Export monthly muster
+      </Button>
+    </div>
+  );
+}
+
 function AttendanceManagement() {
+  const { hasPermission } = useAuth();
   const [liveRecords, setLiveRecords] = useState([]);
   const [connectionState, setConnectionState] = useState('connecting');
   const eventSourceRef = useRef(null);
+  const [streamGeneration, setStreamGeneration] = useState(0);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['attendance-today'],
+    queryKey: ['attendance-records-live'],
     queryFn: () => attendanceApi.byDate(),
   });
 
@@ -177,10 +225,23 @@ function AttendanceManagement() {
         setConnectionState('disconnected');
       }
     });
-    es.onerror = () => setConnectionState('disconnected');
+    // The stream URL carries the access token, which expires after ~15 minutes and
+    // EventSource would keep retrying with the stale one. On error, make one normal
+    // API call (which refreshes the token if needed) and reopen with a fresh URL.
+    let retryTimer = null;
+    es.onerror = () => {
+      setConnectionState('disconnected');
+      es.close();
+      retryTimer = setTimeout(() => {
+        authApi.me().catch(() => null).finally(() => setStreamGeneration((generation) => generation + 1));
+      }, 5000);
+    };
 
-    return () => es.close();
-  }, []);
+    return () => {
+      clearTimeout(retryTimer);
+      es.close();
+    };
+  }, [streamGeneration]);
 
   const uniqueEmployees = new Set(liveRecords.filter((record) => record.employeeId).map((record) => record.employeeId)).size;
   const unmappedPunches = liveRecords.filter((record) => !record.mapped).length;
@@ -191,12 +252,15 @@ function AttendanceManagement() {
         eyebrow="Workforce"
         title="Attendance"
         description="Live punches from your biometric devices, today"
-        actions={<div className="d-flex align-items-center gap-2">
-          <Link to="/attendance/devices">
-            <Button variant="secondary" size="sm" icon={Fingerprint}>
-              Devices
-            </Button>
-          </Link>
+        actions={<div className="d-flex align-items-center gap-2 flex-wrap">
+          <MonthlyMusterExport />
+          {hasPermission('DEVICE_MANAGE') && (
+            <Link to="/attendance/devices">
+              <Button variant="secondary" size="sm" icon={Fingerprint}>
+                Devices
+              </Button>
+            </Link>
+          )}
           <Link to="/attendance/presence">
             <Button variant="secondary" size="sm" icon={Users}>
               Team presence

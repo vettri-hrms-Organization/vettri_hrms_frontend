@@ -221,6 +221,14 @@ function isMultipartUploadRequest(request) {
 }
 
 export function queueRequestForRetry(request, error) {
+  // Only reads are replayed. A write that failed with a timeout or 5xx may already
+  // have been applied on the server (payroll processed, leave approved, email sent),
+  // so replaying it in the background could perform it twice.
+  const method = String(request?.method || 'get').toLowerCase();
+  if (method !== 'get' && method !== 'head') {
+    return false;
+  }
+
   if (isMultipartUploadRequest(request)) {
     state.connectionState = ConnectionState.DEGRADED;
     state.lastError = 'Multipart uploads cannot be queued for offline retry because FormData is not serializable in localStorage.';

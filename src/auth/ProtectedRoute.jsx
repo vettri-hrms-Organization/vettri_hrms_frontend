@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 import PageLoader from '../components/ui/PageLoader';
 import { NAV_INDEX } from '../components/layout/navConfig';
 
+export const CHANGE_PASSWORD_PATH = '/account/security';
+
 /**
  * Wraps a set of routes (via <Outlet/>) behind authentication. Pass
  * `allowedRoles` to additionally gate by role - if the user is signed in
@@ -21,6 +23,18 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Temporary/admin-issued passwords: nothing else is reachable until the
+  // user picks their own (the flag comes from /api/auth/me).
+  if (user?.mustChangePassword && location.pathname !== CHANGE_PASSWORD_PATH) {
+    return <Navigate to={CHANGE_PASSWORD_PATH} replace />;
+  }
+
+  // Company policy requires two-factor and this user hasn't enrolled yet:
+  // same treatment - the security page is the only reachable screen.
+  if (user?.mfaEnrollmentRequired && location.pathname !== CHANGE_PASSWORD_PATH) {
+    return <Navigate to={CHANGE_PASSWORD_PATH} replace />;
   }
 
   if (user?.employeeId && !hasPermission('ATTENDANCE_VIEW') && location.pathname === '/attendance') {

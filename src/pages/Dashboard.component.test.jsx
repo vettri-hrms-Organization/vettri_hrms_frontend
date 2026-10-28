@@ -25,6 +25,7 @@ vi.mock('../api/endpoints/employees', () => ({ employeesApi: { getById: vi.fn() 
 vi.mock('../api/endpoints/attendance', () => ({ attendanceApi: { byEmployee: vi.fn() } }));
 vi.mock('../api/endpoints/salary', () => ({ employeeSalaryApi: { getDetail: vi.fn() } }));
 vi.mock('../api/endpoints/selfService', () => ({ selfServiceApi: { notifications: vi.fn() } }));
+vi.mock('../api/endpoints/announcements', () => ({ announcementsApi: { feed: vi.fn().mockResolvedValue([]) } }));
 
 const SUMMARY = {
   totalEmployees: 42,

@@ -18,6 +18,7 @@ import { useToast } from '../components/ui/Toast';
 import { getDisplayName, getWelcomeGreeting } from '../utils/vettriMicrocopy';
 import { timeAgoIST, toISTDateInputValue } from '../utils/formatDateTime';
 import { AttendanceWidget, LeaveWidget, FinanceWidget } from './dashboard/components/EmployeeWidgets';
+import AnnouncementsCard from './announcements/AnnouncementsCard';
 
 async function safeAuthorizedQuery(request, fallbackValue = null) {
   try {
@@ -345,6 +346,8 @@ export default function Dashboard() {
         </section>
       </div>
 
+      <AnnouncementsCard />
+
       <section className="hz-dash__panel" aria-labelledby="dash-activity-title">
         <PanelHeading id="dash-activity-title" title="Recent notifications" link={{ to: '/notifications', label: 'View all' }} />
         {inboxLoading ? <ListSkeleton rows={3} /> : notifications.length === 0 ? (
@@ -562,6 +565,13 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
     enabled: !!employeeId,
     retry: false,
   });
+  // Biometric punches come from byEmployee; browser/WFH check-ins are sessions from /today.
+  const { data: todaySession } = useQuery({
+    queryKey: ['employee-dashboard-today-session', employeeId],
+    queryFn: () => safeAuthorizedQuery(() => attendanceApi.today(), null),
+    enabled: !!employeeId,
+    retry: false,
+  });
   const { data: leaveBalanceData, isLoading: leaveLoading } = useQuery({
     queryKey: ['employee-dashboard-leave-balance', employeeId, year],
     queryFn: () => safeAuthorizedQuery(() => leaveRequestsApi.balance(employeeId, year), []),
@@ -607,8 +617,9 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
   // punchTime is a UTC instant; "today" means today in IST, not UTC.
   const todayKey = toISTDateInputValue();
   const todayPunches = attendance.filter((record) => typeof record.punchTime === 'string' && toISTDateInputValue(record.punchTime) === todayKey);
-  const hasCheckedIn = todayPunches.some((record) => record.punchType === 'IN');
-  const hasCheckedOut = todayPunches.some((record) => record.punchType === 'OUT');
+  const session = todaySession && typeof todaySession === 'object' && todaySession.status ? todaySession : null;
+  const hasCheckedIn = !!session || todayPunches.some((record) => record.punchType === 'IN');
+  const hasCheckedOut = session?.status === 'CHECKED_OUT' || todayPunches.some((record) => record.punchType === 'OUT');
   const nextHoliday = holidays
     .filter((holiday) => typeof holiday.date === 'string' && holiday.date >= todayKey)
     .sort((first, second) => first.date.localeCompare(second.date))[0];
@@ -721,7 +732,7 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
           </div>
           <div className="hz-dashboard__action-grid">
             <Link to="/my-profile"><UserCheck size={18} /><span>My profile</span></Link>
-            <Link to="/my-profile?tab=attendance"><Clock3 size={18} /><span>My attendance</span></Link>
+            <Link to="/my-attendance"><Clock3 size={18} /><span>My attendance</span></Link>
             <Link to="/my-profile?tab=leave"><CalendarOff size={18} /><span>Manage leave</span></Link>
             <Link to="/my-payslip"><WalletCards size={18} /><span>View payslip</span></Link>
           </div>
@@ -742,6 +753,8 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
         holidaysLoading={holidaysLoading}
         holidaysError={holidaysError}
       />
+
+      <AnnouncementsCard />
 
       <div className="hz-dash__grid hz-dash__grid--main">
         <section className="hz-dashboard__surface" aria-labelledby="employee-record-title">

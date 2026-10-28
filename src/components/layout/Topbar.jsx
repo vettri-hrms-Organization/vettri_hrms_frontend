@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles, KeyRound } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
 import { adminApi } from '../../api/endpoints/admin';
@@ -325,6 +325,16 @@ export default function Topbar({ onOpenMobileNav }) {
                   className="btn btn-light border-0 w-100 d-flex align-items-center gap-2 text-start px-2 py-2"
                 >
                   <UserCircle size={16} /> {profileLoading ? 'Opening profile…' : 'My Profile'}
+                </button>
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate('/account/security');
+                  }}
+                  className="btn btn-light border-0 w-100 d-flex align-items-center gap-2 text-start px-2 py-2"
+                >
+                  <KeyRound size={16} /> Change password
                 </button>
                 <button
                   role="menuitem"

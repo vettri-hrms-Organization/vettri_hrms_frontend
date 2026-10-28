@@ -65,6 +65,14 @@ const ROUTES = [
     crumbs: [{ label: 'Payroll', path: '/salary' }, { label: 'Payroll Processing' }],
   },
   {
+    pattern: '/salary/settings',
+    crumbs: [{ label: 'Payroll', path: '/salary' }, { label: 'Payroll Settings' }],
+  },
+  {
+    pattern: '/salary/tax-declarations',
+    crumbs: [{ label: 'Payroll', path: '/salary' }, { label: 'Tax Declarations' }],
+  },
+  {
     pattern: '/salary/reports',
     crumbs: [{ label: 'Payroll', path: '/salary' }, { label: 'Salary Reports' }],
   },

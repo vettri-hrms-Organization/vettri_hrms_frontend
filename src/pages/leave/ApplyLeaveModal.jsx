@@ -15,7 +15,10 @@ export default function ApplyLeaveModal({ onClose, defaultEmployeeId }) {
     startDate: '',
     endDate: '',
     reason: '',
+    halfDay: false,
+    halfDaySession: 'FIRST_HALF',
   });
+  const singleDay = Boolean(form.startDate) && form.startDate === form.endDate;
   const [error, setError] = useState(null);
 
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => employeesApi.list(), enabled: !defaultEmployeeId });
@@ -50,11 +53,12 @@ export default function ApplyLeaveModal({ onClose, defaultEmployeeId }) {
   function handleSubmit(e) {
     e.preventDefault();
     setError(null);
-    apply.mutate(form);
+    const halfDay = singleDay && form.halfDay;
+    apply.mutate({ ...form, halfDay, halfDaySession: halfDay ? form.halfDaySession : null });
   }
 
   return (
-    <Dialog open onClose={onClose} title="Apply Leave" size="md" hasUnsavedChanges={Object.values(form).some(Boolean) && !apply.isSuccess}>
+    <Dialog open onClose={onClose} title="Apply Leave" size="md" hasUnsavedChanges={[form.employeeId, form.leaveTypeId, form.startDate, form.endDate, form.reason, form.halfDay].some(Boolean) && !apply.isSuccess}>
       <form onSubmit={handleSubmit}>
         {error && (
           <ErrorBanner>{error}</ErrorBanner>
@@ -78,6 +82,31 @@ export default function ApplyLeaveModal({ onClose, defaultEmployeeId }) {
           <FormField col={6} label="Start Date" type="date" required value={form.startDate} onChange={(v) => set('startDate', v)} />
           <FormField col={6} label="End Date" type="date" required value={form.endDate} onChange={(v) => set('endDate', v)} />
         </div>
+
+        {singleDay && (
+          <div className="row g-3 mb-3 align-items-end">
+            <div className="col-6">
+              <div className="form-check">
+                <input
+                  id="apply-leave-half-day"
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={form.halfDay}
+                  onChange={(e) => set('halfDay', e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="apply-leave-half-day" style={{ fontSize: 'var(--hz-text-sm)' }}>
+                  Half day (0.5 day)
+                </label>
+              </div>
+            </div>
+            {form.halfDay && (
+              <FormField col={6} as="select" label="Session" required value={form.halfDaySession} onChange={(v) => set('halfDaySession', v)}>
+                <option value="FIRST_HALF">First half</option>
+                <option value="SECOND_HALF">Second half</option>
+              </FormField>
+            )}
+          </div>
+        )}
 
         <FormField as="textarea" label="Reason (optional)" rows={2} value={form.reason} onChange={(v) => set('reason', v)} />
 

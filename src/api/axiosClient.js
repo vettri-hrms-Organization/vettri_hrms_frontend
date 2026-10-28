@@ -97,13 +97,49 @@ function resolveQueue(error, token) {
   pendingQueue = [];
 }
 
+/**
+ * Refresh tokens rotate on every use and the old one is revoked, while all tabs
+ * share localStorage. Without coordination two tabs refresh with the same token,
+ * the loser gets a 401 and logs everybody out. So refreshes are serialised with a
+ * cross-tab lock, and a tab that finds the token already rotated just reuses it.
+ */
+async function refreshAcrossTabs(startingRefreshToken, originalError, usedAccessToken) {
+  const run = async () => {
+    const current = tokenStorage.getRefreshToken();
+    const stored = tokenStorage.getAccessToken();
+    if (stored && usedAccessToken && stored !== usedAccessToken) {
+      return stored;
+    }
+    if (current && current !== startingRefreshToken && stored) {
+      return tokenStorage.getAccessToken();
+    }
+    if (!current) {
+      throw originalError;
+    }
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/api/auth/refresh`, { refreshToken: current });
+      const accessToken = data.accessToken || data.token;
+      tokenStorage.setTokens(accessToken, data.refreshToken);
+      return accessToken;
+    } catch (refreshError) {
+      // Another tab without lock support may have rotated it in the meantime.
+      const latest = tokenStorage.getRefreshToken();
+      if (latest && latest !== current && tokenStorage.getAccessToken()) {
+        return tokenStorage.getAccessToken();
+      }
+      throw refreshError;
+    }
+  };
+  if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+    return navigator.locks.request('vettri-token-refresh', run);
+  }
+  return run();
+}
+
 function shouldQueueForOfflineRetry(config, status) {
-  if (status === 401) return false;
-  if (status === 403) return false;
-  if (status === 429) return false;
-  if (status === 400 || status === 404 || status === 422) return false;
   if (!config || config._queueReplayed || config._skipOfflineQueue) return false;
-  return true;
+  // Only transient failures are worth retrying; every 4xx (incl. 409 conflicts) is final.
+  return status == null || status >= 500;
 }
 
 axiosClient.interceptors.response.use(
@@ -147,13 +183,8 @@ axiosClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = tokenStorage.getRefreshToken();
-        if (!refreshToken) {
-          throw error;
-        }
-        const { data } = await axios.post(`${API_BASE_URL}/api/auth/refresh`, { refreshToken });
-        const accessToken = data.accessToken || data.token;
-        tokenStorage.setTokens(accessToken, data.refreshToken);
+        const usedHeader = String(originalRequest.headers?.Authorization || '');
+        const accessToken = await refreshAcrossTabs(tokenStorage.getRefreshToken(), error, usedHeader.replace(/^Bearer\s+/i, ''));
         resetSessionExpirationHandling();
         resolveQueue(null, accessToken);
         originalRequest.headers = originalRequest.headers || {};

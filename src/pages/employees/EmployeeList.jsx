@@ -7,7 +7,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Download,
 } from 'lucide-react';
+import { exportToCsv } from '../../utils/exportToCsv';
+import { formatDateIST, toISTDateInputValue } from '../../utils/formatDateTime';
 
 import { employeesApi } from '../../api/endpoints/employees';
 import { dashboardApi } from '../../api/endpoints/dashboard';
@@ -125,6 +128,24 @@ const COLUMNS = [
   },
 ];
 
+/** One CSV row of the employee master export. */
+export function toEmployeeExportRow(emp) {
+  return {
+    'Employee Code': emp.employeeCode || '',
+    Name: emp.fullName || '',
+    Email: emp.email || '',
+    Phone: emp.phone || '',
+    Department: emp.departmentName || '',
+    Designation: emp.designationTitle || '',
+    Team: emp.teamName || '',
+    Manager: emp.reportingManagerName || '',
+    Status: statusMeta(emp.status).label || '',
+    'Employment Type': EMPLOYMENT_TYPE_LABEL[emp.employmentType] || emp.employmentType || '',
+    'Date of Joining': emp.dateOfJoining ? formatDateIST(emp.dateOfJoining) : '',
+    'Work Location': emp.workLocation || '',
+  };
+}
+
 export default function EmployeeList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasPermission } = useAuth();
@@ -177,6 +198,9 @@ export default function EmployeeList() {
   const totalPages = data?.totalPages ?? 0;
   const totalElements = data?.totalElements ?? 0;
   const canImportEmployees = hasPermission('EMPLOYEE_IMPORT');
+  const canCreateEmployees = hasPermission('EMPLOYEE_CREATE');
+  const canManageEmployees = hasPermission('EMPLOYEE_MANAGE');
+  const canViewEmployees = hasPermission('EMPLOYEE_VIEW');
 
   const bulkUpdate = useMutation({
     mutationFn: async () =>
@@ -195,6 +219,37 @@ export default function EmployeeList() {
       setBulkStatus(null);
     },
   });
+
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+
+  // Pages through the same scoped /api/employees/paged endpoint the table
+  // uses (with the current search + department filter), so the file only
+  // ever contains employees this user is allowed to list.
+  async function handleExport() {
+    setExporting(true);
+    setExportError('');
+    try {
+      const byId = new Map();
+      const exportPageSize = 100;
+      for (let p = 0; p < 500; p += 1) {
+        const result = await employeesApi.listPaged(search, p, exportPageSize, departmentId);
+        const content = result?.content ?? [];
+        content.forEach((emp) => byId.set(emp.id, emp));
+        if (content.length === 0 || p >= (result?.totalPages ?? 1) - 1) break;
+      }
+      const rows = Array.from(byId.values()).map(toEmployeeExportRow);
+      if (rows.length === 0) {
+        setExportError('There are no employees to export.');
+        return;
+      }
+      exportToCsv(`employees-${toISTDateInputValue()}`, rows);
+    } catch {
+      setExportError("Couldn't export employees. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function handleSearchChange(value) {
     setSearch(value);
@@ -236,6 +291,18 @@ export default function EmployeeList() {
         description="Your organization's people, all in one place"
         actions={
           <div className="d-flex gap-2">
+            {canViewEmployees && (
+              <Button
+                variant="secondary"
+                icon={Download}
+                loading={exporting}
+                disabled={totalElements === 0}
+                onClick={handleExport}
+              >
+                Export
+              </Button>
+            )}
+
             {canImportEmployees && (
               <Link
                 to="/employees/import"
@@ -246,12 +313,14 @@ export default function EmployeeList() {
               </Link>
             )}
 
-            <Button
-              icon={UserPlus}
-              onClick={() => setShowCreate(true)}
-            >
-              Onboard Employee
-            </Button>
+            {canCreateEmployees && (
+              <Button
+                icon={UserPlus}
+                onClick={() => setShowCreate(true)}
+              >
+                Onboard Employee
+              </Button>
+            )}
           </div>
         }
       />
@@ -319,7 +388,9 @@ export default function EmployeeList() {
         )}
       </FilterBar>
 
-      {selectedIds.size > 0 && (
+      {exportError && <p role="alert" className="text-danger mb-0">{exportError}</p>}
+
+      {canManageEmployees && selectedIds.size > 0 && (
         <div
           className="hz-bulk-toolbar"
           role="toolbar"
@@ -362,7 +433,7 @@ export default function EmployeeList() {
           columns={COLUMNS}
           rows={employees}
           getRowKey={(emp) => emp.id}
-          selectable
+          selectable={canManageEmployees}
           selectedKeys={selectedIds}
           onToggleRow={toggleRow}
           onToggleAll={toggleAll}

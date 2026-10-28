@@ -2876,3 +2876,8 @@ button:focus-visible,
   :root { --app-zoom: 0.8; }
   html { zoom: 0.8; }
 }
+
+/* Own-profile attendance tab: shortcut to the check-in page. */
+.hz-profile-checkin-hint { margin-top: 0; background: var(--hz-primary-50) !important; color: var(--hz-text-primary) !important; }
+.hz-profile-checkin-hint svg { color: var(--hz-primary-600); }
+.hz-profile-checkin-hint .btn { flex-shrink: 0; }

@@ -4,7 +4,7 @@ import { clearQueue, queueRequestForRetry, readQueue } from './offlineRequestQue
 
 function buildRequest(companyId, overrides = {}) {
   return {
-    method: 'POST',
+    method: 'GET',
     url: '/api/employee-documents',
     baseURL: '',
     params: { page: 1 },
@@ -15,6 +15,14 @@ function buildRequest(companyId, overrides = {}) {
 }
 
 describe('offline queue tenant scoping', () => {
+  it('never queues writes, which may already have been applied on the server', () => {
+    localStorage.clear();
+    clearQueue();
+    expect(queueRequestForRetry(buildRequest('company-1', { method: 'POST' }), new Error('timeout'))).toBe(false);
+    expect(queueRequestForRetry(buildRequest('company-1', { method: 'patch' }), new Error('timeout'))).toBe(false);
+    expect(readQueue()).toHaveLength(0);
+  });
+
   beforeEach(() => {
     localStorage.clear();
     clearQueue();

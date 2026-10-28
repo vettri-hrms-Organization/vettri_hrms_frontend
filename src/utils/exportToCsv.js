@@ -10,13 +10,17 @@ export function exportToCsv(filename, rows) {
 
   const headers = Object.keys(rows[0]);
   const escape = (value) => {
-    const str = String(value ?? '');
-    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    let str = String(value ?? '');
+    // Cells starting with = + - @ (or tab/CR) are run as formulas by Excel/Sheets, so a
+    // malicious employee name could execute on HR's machine. Prefix them so they stay text.
+    if (typeof value === 'string' && /^[=+\-@\t\r]/.test(str)) str = `'${str}`;
+    return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
   };
 
-  const csvLines = [headers.join(','), ...rows.map((row) => headers.map((h) => escape(row[h])).join(','))];
+  const csvLines = [headers.map(escape).join(','), ...rows.map((row) => headers.map((h) => escape(row[h])).join(','))];
 
-  const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  // BOM so Excel opens UTF-8 correctly (₹, non-Latin names).
+  const blob = new Blob(['﻿' + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
