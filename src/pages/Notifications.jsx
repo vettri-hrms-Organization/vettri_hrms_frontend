@@ -10,6 +10,7 @@ import SectionHeader from '../components/ui/SectionHeader';
 import { notificationsApi } from '../api/endpoints/notifications';
 import { groupNotificationsByDay, isNotificationRead } from '../api/notificationDisplay';
 import { useAuth } from '../hooks/useAuth';
+import { formatDateTimeIST } from '../utils/formatDateTime';
 
 const PAGE_SIZE = 20;
 const FILTERS = [
@@ -27,7 +28,7 @@ const FILTERS = [
 function notificationTime(value) {
   if (!value) return '';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? '' : formatDateTimeIST(value);
 }
 
 export default function Notifications() {

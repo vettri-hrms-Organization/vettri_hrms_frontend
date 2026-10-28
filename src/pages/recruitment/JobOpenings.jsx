@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, Plus } from 'lucide-react';
 import { jobOpeningsApi } from '../../api/endpoints/recruitment';
 import { departmentsApi, designationsApi } from '../../api/endpoints/organization';
 import Card from '../../components/ui/Card';
@@ -15,6 +15,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton';
 import PageHeader from '../../components/ui/PageHeader';
 import Tabs from '../../components/ui/Tabs';
 import FilterBar from '../../components/ui/FilterBar';
+import SearchField from '../../components/ui/SearchField';
 import StatusBadge, { formatStatusLabel } from '../../components/ui/StatusBadge';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 
@@ -56,16 +57,13 @@ export default function JobOpenings() {
 
       <FilterBar className="justify-content-between">
         <Tabs items={STATUS_TABS} value={status} onChange={setStatus} className="border-0" />
-        <div className="position-relative" style={{ width: 240 }}>
-          <Search size={14} className="position-absolute" style={{ left: 10, top: 9, color: 'var(--hz-text-muted)' }} />
-          <input
-            type="search"
-            placeholder="Search title or department…"
-            className="form-control form-control-sm ps-4"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          placeholder="Search title or department…"
+          aria-label="Search job openings by title or department"
+          style={{ width: 300 }}
+        />
       </FilterBar>
 
       {isError && <ErrorState description="Couldn't load job openings." onRetry={refetch} />}
@@ -98,23 +96,7 @@ export default function JobOpenings() {
           {!isLoading &&
             filteredOpenings?.map((o) => (
               <div className="col-12 col-md-6 col-xl-4" key={o.id}>
-                <Link to={`/recruitment/${o.id}`} className="text-decoration-none">
-                  <Card hoverable>
-                    <div className="d-flex align-items-start justify-content-between mb-2">
-                      <h3 style={{ fontSize: 'var(--hz-text-base)', fontWeight: 600, color: 'var(--hz-text-primary)', margin: 0 }}>{o.title}</h3>
-                      <StatusBadge status={o.status} variant={STATUS_VARIANT[o.status]} dot>{formatStatusLabel(o.status)}</StatusBadge>
-                    </div>
-                    <p style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)', marginBottom: 12 }}>
-                      {o.departmentName || 'Any department'} {o.designationTitle ? `· ${o.designationTitle}` : ''}
-                    </p>
-                    <div className="d-flex justify-content-between" style={{ fontSize: 'var(--hz-text-sm)' }}>
-                      <span style={{ color: 'var(--hz-text-muted)' }}>{o.openingsCount} opening(s)</span>
-                      <span>
-                        <strong>{o.candidateCount}</strong> candidate(s) · <strong>{o.hiredCount}</strong> hired
-                      </span>
-                    </div>
-                  </Card>
-                </Link>
+                <JobOpeningCard opening={o} />
               </div>
             ))}
         </div>
@@ -122,6 +104,42 @@ export default function JobOpenings() {
 
       {showCreate && <CreateJobOpeningModal onClose={() => setShowCreate(false)} />}
     </div>
+  );
+}
+
+function plural(count, word) {
+  const n = Number(count) || 0;
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
+}
+
+function JobOpeningCard({ opening }) {
+  const openings = Number(opening.openingsCount) || 0;
+  const hired = Number(opening.hiredCount) || 0;
+  const filled = openings ? Math.min(100, Math.round((hired / openings) * 100)) : 0;
+
+  return (
+    <Link to={`/recruitment/${opening.id}`} className="hz-job-card" aria-label={`${opening.title}, ${formatStatusLabel(opening.status)}. Open candidate pipeline`}>
+      <div className="hz-job-card__head">
+        <span className="hz-job-card__icon" aria-hidden="true"><BriefcaseBusiness size={18} /></span>
+        <span className="hz-job-card__title">
+          <strong>{opening.title}</strong>
+          <small>{[opening.departmentName || 'Any department', opening.designationTitle].filter(Boolean).join(' · ')}</small>
+        </span>
+        <StatusBadge status={opening.status} variant={STATUS_VARIANT[opening.status]} dot>{formatStatusLabel(opening.status)}</StatusBadge>
+      </div>
+
+      <dl className="hz-job-card__stats">
+        <div><dt>Openings</dt><dd>{openings}</dd></div>
+        <div><dt>Candidates</dt><dd>{Number(opening.candidateCount) || 0}</dd></div>
+        <div><dt>Hired</dt><dd>{hired}</dd></div>
+      </dl>
+
+      <div className="hz-job-card__progress" title={`${plural(hired, 'hire')} of ${plural(openings, 'opening')}`}>
+        <span style={{ width: `${filled}%` }} />
+      </div>
+
+      <span className="hz-job-card__cta">View pipeline <ArrowRight size={14} aria-hidden="true" /></span>
+    </Link>
   );
 }
 

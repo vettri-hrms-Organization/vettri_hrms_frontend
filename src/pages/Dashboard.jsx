@@ -12,6 +12,7 @@ import { selfServiceApi } from '../api/endpoints/selfService';
 import { notificationsApi } from '../api/endpoints/notifications';
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import AnimatedNumber from '../components/ui/AnimatedNumber';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { getDisplayName, getWelcomeGreeting } from '../utils/vettriMicrocopy';
@@ -419,7 +420,7 @@ function WorkforceKpis({ data, loading, error, onRetry }) {
           {loading ? (
             <span className="hz-dash__skeleton hz-dash__skeleton--kpi" aria-hidden="true" />
           ) : (
-            <strong>{(value ?? 0).toLocaleString('en-IN')}</strong>
+            <strong><AnimatedNumber value={value ?? 0} /></strong>
           )}
           <small>{loading ? ' ' : note}</small>
         </article>
@@ -666,7 +667,7 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
             <div className="hz-dashboard__metric-icon" style={{ color: 'var(--hz-primary-600)' }}><CalendarDays size={19} /></div>
             <span>Next holiday</span>
             <strong>{nextHoliday?.name || 'None'}</strong>
-            <small>{nextHoliday?.date ? new Date(`${nextHoliday.date}T00:00:00`).toLocaleDateString() : 'Company calendar'}</small>
+            <small>{nextHoliday?.date ? new Date(`${nextHoliday.date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Company calendar'}</small>
           </article>
         </div>
       </section>

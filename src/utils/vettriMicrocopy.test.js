@@ -14,22 +14,22 @@ test('display names are taken from authenticated user data and fall back safely'
   assert.equal(getDisplayName({ fullName: '  ' }, 'You'), 'You');
 });
 
-test('dashboard greetings use the time of day and real display name', () => {
+test('dashboard greetings use the time of day and first name', () => {
   assert.equal(
     getWelcomeGreeting({ fullName: 'Avery Employee' }, new Date(2026, 0, 1, 9)),
-    '☀️ Good morning, Avery Employee.'
+    'Good morning, Avery'
   );
   assert.equal(
     getWelcomeGreeting({ fullName: 'Avery Employee' }, new Date(2026, 0, 1, 14)),
-    '👋 Good afternoon, Avery Employee.'
+    'Good afternoon, Avery'
   );
   assert.equal(
     getWelcomeGreeting({ fullName: 'Avery Employee' }, new Date(2026, 0, 1, 20)),
-    '🌙 Good evening, Avery Employee.'
+    'Good evening, Avery'
   );
   assert.equal(
     getWelcomeGreeting({}, new Date(2026, 0, 1, 9)),
-    '👋 Welcome back.'
+    'Welcome back'
   );
 });
 

@@ -10,6 +10,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { useAuth } from '../../hooks/useAuth';
+import { formatDateTimeIST } from '../../utils/formatDateTime';
 
 export default function Devices() {
   const queryClient = useQueryClient();
@@ -128,7 +129,7 @@ export default function Devices() {
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{d.serialNumber}</td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{d.lastIpAddress || '—'}</td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                    {d.lastSeenAt ? new Date(d.lastSeenAt).toLocaleString() : 'Never'}
+                    {d.lastSeenAt ? formatDateTimeIST(d.lastSeenAt) : 'Never'}
                   </td>
                   <td className="pe-4">
                     <Badge variant={d.online ? 'success' : 'neutral'} dot>

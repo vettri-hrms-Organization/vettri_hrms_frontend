@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { employeesApi } from '../../api/endpoints/employees';
+import { dashboardApi } from '../../api/endpoints/dashboard';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
@@ -116,7 +117,7 @@ const COLUMNS = [
     className: 'pe-4',
     render: (emp) =>
       emp.dateOfJoining
-        ? new Date(emp.dateOfJoining).toLocaleDateString()
+        ? new Date(emp.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
         : '—',
     style: {
       color: 'var(--hz-text-secondary)',
@@ -162,6 +163,14 @@ export default function EmployeeList() {
         pageSize,
         departmentId
       ),
+  });
+
+  // Workforce-wide figures for the summary tiles (shares the dashboard's
+  // cache entry, so this is usually already loaded).
+  const { data: summary } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: dashboardApi.summary,
+    retry: false,
   });
 
   const employees = data?.content ?? [];
@@ -247,23 +256,23 @@ export default function EmployeeList() {
         }
       />
 
-      {!isLoading && !isError && (
-        <div className="hz-inline-summary" aria-label="Employee directory summary">
+      {summary && (
+        <div className="hz-inline-summary" aria-label="Workforce summary">
           <div className="hz-inline-summary__item">
-            <strong>{totalElements}</strong>
-            <span>People in directory</span>
+            <strong>{summary.totalEmployees.toLocaleString('en-IN')}</strong>
+            <span>Total employees</span>
           </div>
-          <div className="hz-inline-summary__item">
-            <strong>{employees.length}</strong>
-            <span>On this page</span>
+          <div className="hz-inline-summary__item hz-inline-summary__item--success">
+            <strong>{summary.activeEmployees.toLocaleString('en-IN')}</strong>
+            <span>Active</span>
           </div>
-          <div className="hz-inline-summary__item">
-            <strong>{selectedIds.size}</strong>
-            <span>Selected</span>
+          <div className="hz-inline-summary__item hz-inline-summary__item--warning">
+            <strong>{summary.onLeave.toLocaleString('en-IN')}</strong>
+            <span>On leave</span>
           </div>
           <div className="hz-inline-summary__item hz-inline-summary__item--info">
-            <strong>{page + 1}/{Math.max(totalPages, 1)}</strong>
-            <span>Current page</span>
+            <strong>{(summary.departmentBreakdown?.length ?? 0).toLocaleString('en-IN')}</strong>
+            <span>Departments</span>
           </div>
         </div>
       )}

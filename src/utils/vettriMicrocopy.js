@@ -4,10 +4,10 @@ const safeDisplayName = (value) => (
 
 export const vettriMicrocopy = Object.freeze({
   welcome: Object.freeze({
-    morning: '☀️ Good morning',
-    afternoon: '👋 Good afternoon',
-    evening: '🌙 Good evening',
-    generic: '👋 Welcome back',
+    morning: 'Good morning',
+    afternoon: 'Good afternoon',
+    evening: 'Good evening',
+    generic: 'Welcome back',
     assistant: 'What can I help you with today?',
   }),
   loading: Object.freeze({
@@ -90,9 +90,9 @@ export function getWelcomeGreeting(user, date = new Date()) {
     : hour < 18
       ? vettriMicrocopy.welcome.afternoon
       : vettriMicrocopy.welcome.evening;
-  const name = getDisplayName(user);
+  const firstName = getDisplayName(user).split(' ')[0];
 
-  return name ? `${greeting}, ${name}.` : `${vettriMicrocopy.welcome.generic}.`;
+  return firstName ? `${greeting}, ${firstName}` : vettriMicrocopy.welcome.generic;
 }
 
 export function getAssistantWelcome(user) {

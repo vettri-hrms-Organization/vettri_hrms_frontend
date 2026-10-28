@@ -117,7 +117,7 @@ export function LeaveWidget({ balances, requests, loading, year, holidays = [], 
           )}
 
           <div className="hz-leave-widget__footer">
-            <span>{upcoming ? `Next leave: ${upcoming.leaveTypeName} · ${new Date(upcoming.startDate).toLocaleDateString()}` : 'Plan time away with confidence.'}</span>
+            <span>{upcoming ? `Next leave: ${upcoming.leaveTypeName} · ${new Date(upcoming.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Plan time away with confidence.'}</span>
             <Link to="/my-profile?tab=leave" className="hz-dashboard__text-link">Manage leave <ArrowRight size={15} /></Link>
           </div>
         </div>
@@ -222,7 +222,7 @@ export function FinanceWidget({ salary }) {
       <span className="hz-finance-widget__label">Net pay</span>
       <strong className="hz-finance-widget__amount">{structure ? formatCurrency(structure.netSalary) : '--'}</strong>
       <div className="hz-finance-widget__details"><span>Earnings <strong>{structure ? formatCurrency(structure.grossSalary) : '--'}</strong></span><span>Deductions <strong>{structure ? formatCurrency(structure.totalDeductions) : '--'}</strong></span></div>
-      <p>{latestPayslip ? `Latest payslip · ${latestPayslip.paymentDate ? new Date(latestPayslip.paymentDate).toLocaleDateString() : 'Pending payment'}` : 'Your latest payslip will appear here.'}</p>
+      <p>{latestPayslip ? `Latest payslip · ${latestPayslip.paymentDate ? new Date(latestPayslip.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Pending payment'}` : 'Your latest payslip will appear here.'}</p>
       <Link to="/my-payslip" className="hz-dashboard__text-link">View payslip <ArrowRight size={15} /></Link>
     </section>
   );

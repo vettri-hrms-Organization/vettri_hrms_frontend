@@ -9,6 +9,7 @@ import { notificationsApi } from '../../api/endpoints/notifications';
 import Avatar from '../ui/Avatar';
 import { NAV_INDEX } from './navConfig';
 import { useTheme } from '../../contexts/ThemeContext';
+import { formatRole } from '../../utils/formatRole';
 import CommandCenter from './CommandCenter';
 import AskVettriPanel from './AskVettriPanel';
 
@@ -143,8 +144,9 @@ export default function Topbar({ onOpenMobileNav }) {
         <span>Search employees, pages, actions...</span>
         <kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'} K</kbd>
       </button>
-      <button type="button" className="hz-icon-btn d-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }} onClick={() => openAskVettri()} aria-label="Ask Vettri" title="Ask Vettri">
-        <Sparkles size={18} />
+      <button type="button" className="vettri-ask-trigger" onClick={() => openAskVettri()} aria-label="Ask Vettri" title="Ask Vettri, your HR assistant">
+        <Sparkles size={16} aria-hidden="true" />
+        <span>Ask Vettri</span>
       </button>
       <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} onAskVettri={openAskVettri} />
       <AskVettriPanel open={askVettriOpen} initialQuery={askVettriQuery} onClose={() => setAskVettriOpen(false)} />
@@ -299,7 +301,7 @@ export default function Topbar({ onOpenMobileNav }) {
               <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600, color: 'var(--hz-text-primary)' }}>
                 {user?.fullName}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--hz-text-muted)' }}>{user?.roles?.[0]}</span>
+              <span style={{ fontSize: 11.5, color: 'var(--hz-text-muted)' }}>{formatRole(user?.roles?.[0])}</span>
             </div>
             <ChevronDown size={14} />
           </button>

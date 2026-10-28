@@ -9,6 +9,7 @@ import { SkeletonText } from '../components/ui/Skeleton';
 import ErrorState from '../components/ui/ErrorState';
 import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/ui/PageHeader';
+import { formatDateTimeIST } from '../utils/formatDateTime';
 
 const ACTION_VARIANT = {
   CREATE: 'success',
@@ -240,7 +241,7 @@ export default function SettingsAudit() {
                         }}
                       >
                         {log.performedAt
-                          ? new Date(log.performedAt).toLocaleString()
+                          ? formatDateTimeIST(log.performedAt)
                           : '—'}
                       </td>
 

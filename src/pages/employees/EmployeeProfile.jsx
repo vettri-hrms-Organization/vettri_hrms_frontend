@@ -150,7 +150,7 @@ export default function EmployeeProfile() {
           )}
         </div>
         <div className="hz-profile-summary">
-          <ProfileSummary label="Joined" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString() : 'Not set'} />
+          <ProfileSummary label="Joined" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'} />
           <ProfileSummary label="Reports" value={`${employee.directReports?.length || 0} direct reports`} />
           <ProfileSummary label="Employment" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType || 'Not set'} />
         </div>
@@ -260,14 +260,14 @@ function OverviewTab({ employee }) {
       </div>
       <div className="col-12 col-lg-6">
         <Card title="Employment">
-          <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString() : null} />
+          <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
           <InfoRow icon={Briefcase} label="Employment Type" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType} />
           <InfoRow icon={Users} label="Team" value={employee.teamName} />
         </Card>
       </div>
       <div className="col-12 col-lg-6">
         <Card title="Personal">
-          <InfoRow icon={Calendar} label="Date of Birth" value={employee.dateOfBirth ? new Date(employee.dateOfBirth).toLocaleDateString() : null} />
+          <InfoRow icon={Calendar} label="Date of Birth" value={employee.dateOfBirth ? new Date(employee.dateOfBirth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
           <InfoRow label="Gender" value={employee.gender} />
         </Card>
       </div>
@@ -323,7 +323,7 @@ function JobTab({ employee }) {
           <InfoRow label="Employee Number" value={employee.employeeCode} />
           <InfoRow icon={Briefcase} label="Job Title" value={employee.designationTitle} />
           <InfoRow label="Worker Type" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType} />
-          <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString() : null} />
+          <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
         </Card>
       </div>
       <div className="col-12 col-lg-6">
@@ -726,7 +726,7 @@ function DocumentsTab({ employee, canUploadOwnDocument, canReviewDocuments: canR
                   </td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{d.documentNumber || '—'}</td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                    {d.issueDate ? new Date(d.issueDate).toLocaleDateString() : '—'}
+                    {d.issueDate ? new Date(d.issueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                   </td>
                   <td style={{ fontSize: 'var(--hz-text-sm)' }}>
                     <span style={{ color: expiry.color, fontWeight: expiry.label ? 600 : 400 }}>
@@ -787,7 +787,7 @@ function DocumentsTab({ employee, canUploadOwnDocument, canReviewDocuments: canR
             <div><strong>Employee:</strong> {employee.fullName}</div>
             <div><strong>Document:</strong> {DOCUMENT_TYPE_LABEL[reviewingDocument.documentType] || reviewingDocument.documentType}</div>
             <div><strong>Document number:</strong> {reviewingDocument.documentNumber || '—'}</div>
-            <div><strong>Issue date:</strong> {reviewingDocument.issueDate ? new Date(`${reviewingDocument.issueDate}T00:00:00`).toLocaleDateString() : '—'}</div>
+            <div><strong>Issue date:</strong> {reviewingDocument.issueDate ? new Date(`${reviewingDocument.issueDate}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</div>
             <div><strong>Expiry date:</strong> {getExpiryPresentation(reviewingDocument).date}</div>
             <div><strong>Status:</strong> {docStatusLabel(reviewingDocument.status)}</div>
             {reviewingDocument.s3ObjectKey && (
@@ -1008,7 +1008,7 @@ function LeaveTab({ employee, onApplyLeave }) {
                     <div>
                       <div style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{r.leaveTypeName}</div>
                       <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>
-                        {new Date(r.startDate).toLocaleDateString()} – {new Date(r.endDate).toLocaleDateString()} · {r.days} day(s)
+                        {new Date(r.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} – {new Date(r.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {r.days} day(s)
                       </div>
                     </div>
                     <Badge variant={meta.variant} dot>

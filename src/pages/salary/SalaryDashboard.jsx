@@ -13,6 +13,7 @@ import { formatCompactCurrency } from '../../utils/formatCurrency';
 import PayrollTrendChart from './components/PayrollTrendChart';
 import DepartmentDonutChart from './components/DepartmentDonutChart';
 import DepartmentComparisonBars from './components/DepartmentComparisonBars';
+import { formatDateTimeIST } from '../../utils/formatDateTime';
 
 export default function SalaryDashboard() {
   const { data, isLoading, isError, refetch } = useQuery({
@@ -189,7 +190,7 @@ export default function SalaryDashboard() {
                     <div>
                       <p style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500, color: 'var(--hz-text-primary)', marginBottom: 2 }}>{a.details}</p>
                       <p style={{ fontSize: 12, color: 'var(--hz-text-muted)', marginBottom: 0 }}>
-                        {a.performedBy || 'System'} &middot; {new Date(a.performedAt).toLocaleString()}
+                        {a.performedBy || 'System'} &middot; {formatDateTimeIST(a.performedAt)}
                       </p>
                     </div>
                   </div>

@@ -36,6 +36,7 @@ import Table from '../../components/ui/Table';
 import PageHeader from '../../components/ui/PageHeader';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import Dialog from '../../components/ui/Dialog';
+import { formatDateTimeIST } from '../../utils/formatDateTime';
 
 
 /* ============================================================
@@ -2073,9 +2074,7 @@ export default function SoftwareManagement() {
 
                         {
                           item.startedAt
-                            ? new Date(
-                                item.startedAt
-                              ).toLocaleString()
+                            ? formatDateTimeIST(item.startedAt)
                             : '—'
                         }
 
@@ -2695,9 +2694,7 @@ export default function SoftwareManagement() {
                         <small>
                           {
                             stage.event?.occurredAt
-                              ? new Date(
-                                  stage.event.occurredAt
-                                ).toLocaleString()
+                              ? formatDateTimeIST(stage.event.occurredAt)
                               : ''
                           }
                         </small>

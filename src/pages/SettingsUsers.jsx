@@ -21,6 +21,7 @@ import { useToast } from '../components/ui/Toast';
 import PageHeader from '../components/ui/PageHeader';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import { useAuth } from '../hooks/useAuth';
+import { formatDateTimeIST } from '../utils/formatDateTime';
 
 const ROLE_LABELS = {
   COMPANY_ADMIN: 'Organization Administrator',
@@ -203,7 +204,7 @@ function UsersPanel() {
                     </StatusBadge>
                   </td>
                   <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                    {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}
+                    {u.lastLoginAt ? formatDateTimeIST(u.lastLoginAt) : 'Never'}
                   </td>
                   <td className="text-end pe-4">
                     <div className="d-flex justify-content-end gap-2">
@@ -450,8 +451,8 @@ function UserPermissionsModal({ user, onClose }) {
                         {item.active ? 'Active' : item.expiresAt && new Date(item.expiresAt) <= new Date() ? 'Expired' : 'Revoked'}
                       </StatusBadge>
                     </td>
-                    <td>{item.grantedAt ? new Date(item.grantedAt).toLocaleString() : '—'}</td>
-                    <td>{item.expiresAt ? new Date(item.expiresAt).toLocaleString() : 'Never'}</td>
+                    <td>{item.grantedAt ? formatDateTimeIST(item.grantedAt) : '—'}</td>
+                    <td>{item.expiresAt ? formatDateTimeIST(item.expiresAt) : 'Never'}</td>
                     <td className="text-end">
                       {item.active && (
                         <Button
@@ -875,7 +876,7 @@ function AuditHistoryPanel() {
                 <tbody>
                   {records.map((record) => (
                     <tr key={record.id}>
-                      <td>{record.performedAt ? new Date(record.performedAt).toLocaleString() : '—'}</td>
+                      <td>{record.performedAt ? formatDateTimeIST(record.performedAt) : '—'}</td>
                       <td>{record.performedBy || 'System'}</td>
                       <td>{record.action}</td>
                       <td>{record.entityName} {record.entityId ?? ''}</td>

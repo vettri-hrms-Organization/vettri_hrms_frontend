@@ -181,26 +181,6 @@ export default function Login() {
                   </button>
                 </form>
 
-                <div className="d-flex align-items-center gap-3 my-4">
-                  <hr className="flex-grow-1 border-secondary-subtle my-0" />
-                  <span className="small text-secondary fw-semibold">OR</span>
-                  <hr className="flex-grow-1 border-secondary-subtle my-0" />
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary w-100 py-2 fw-semibold bg-white"
-                  disabled
-                  aria-label="Continue with Google (coming soon)"
-                  title="Google sign-in will be available soon"
-                >
-                  <span className="d-inline-flex align-items-center gap-2">
-                    <span className="fw-bold">G</span>
-                    <span>Continue with Google</span>
-                    <span className="badge rounded-pill bg-light text-secondary border">Soon</span>
-                  </span>
-                </button>
-
                 <p className="text-center text-secondary small mt-4 mb-0">
                   Don&apos;t have an account?{' '}
                   <Link to="/signup" className="text-primary text-decoration-none fw-semibold">

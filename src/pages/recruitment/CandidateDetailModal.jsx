@@ -13,6 +13,7 @@ import InterviewFeedbackModal from './InterviewFeedbackModal';
 import GenerateOfferModal from './GenerateOfferModal';
 import OfferLetterPanel from './OfferLetterPanel';
 import Drawer from '../../components/ui/Drawer';
+import { formatDateTimeIST } from '../../utils/formatDateTime';
 
 const STAGE_VARIANT = {
   APPLIED: 'neutral', SHORTLISTED: 'info', HOLD: 'warning',
@@ -122,7 +123,7 @@ export default function CandidateDetailModal({ candidateId, onClose }) {
                       <div>
                         <div style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{ROUND_LABEL[iv.roundNumber] || `Round ${iv.roundNumber}`}</div>
                         <div style={{ fontSize: 12, color: 'var(--hz-text-secondary)' }}>
-                          {new Date(iv.scheduledAt).toLocaleString()} {iv.interviewerName ? `· ${iv.interviewerName}` : ''}
+                          {formatDateTimeIST(iv.scheduledAt)} {iv.interviewerName ? `· ${iv.interviewerName}` : ''}
                         </div>
                         {iv.feedback && <div style={{ fontSize: 12, color: 'var(--hz-text-secondary)', marginTop: 4 }}>{iv.feedback}</div>}
                         {iv.meetingLink && (
@@ -161,7 +162,7 @@ export default function CandidateDetailModal({ candidateId, onClose }) {
             {candidate.offerAmount != null && (
               <div className="p-3" style={{ background: 'var(--hz-gray-50)', borderRadius: 8 }}>
                 <div style={{ fontSize: 11, color: 'var(--hz-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Offer</div>
-                <div style={{ fontSize: 'var(--hz-text-sm)' }}>Amount: {candidate.offerAmount.toLocaleString()}</div>
+                <div style={{ fontSize: 'var(--hz-text-sm)' }}>Amount: {candidate.offerAmount.toLocaleString('en-IN')}</div>
                 <div style={{ fontSize: 'var(--hz-text-sm)' }}>Joining: {candidate.expectedJoiningDate}</div>
                 {candidate.offerAcceptedAt && (
                   <div className="d-flex align-items-center gap-1 mt-1" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-success-600)' }}>

@@ -11,6 +11,7 @@ import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import InterviewDecisionModal from './InterviewDecisionModal';
 import { useAuth } from '../../hooks/useAuth';
+import { formatDateTimeIST } from '../../utils/formatDateTime';
 
 const ROUND_LABEL = { 2: 'Manager Interview', 3: 'Final Interview' };
 
@@ -66,7 +67,7 @@ export default function MyInterviews() {
                   </div>
                   <div className="d-flex flex-wrap gap-3 mt-2" style={{ fontSize: 'var(--hz-text-sm)' }}>
                     <span className="d-flex align-items-center gap-1">
-                      <CalendarClock size={14} /> {new Date(iv.scheduledAt).toLocaleString()}
+                      <CalendarClock size={14} /> {formatDateTimeIST(iv.scheduledAt)}
                     </span>
                     {iv.meetingLink && (
                       <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="d-flex align-items-center gap-1">

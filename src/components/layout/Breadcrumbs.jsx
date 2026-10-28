@@ -106,15 +106,10 @@ export default function Breadcrumbs() {
 
   const matched = ROUTES.find((r) => matchPath({ path: r.pattern, end: true }, location.pathname));
 
-  // Dashboard is the app's home - showing "Home > Dashboard" is redundant,
-  // so the trail collapses to just the Home icon there.
-  if (!matched || matched.pattern === '/dashboard') {
-    return (
-      <nav aria-label="Breadcrumb" className="hz-breadcrumbs d-flex align-items-center gap-1">
-        <Home size={14} color="var(--hz-text-muted)" />
-      </nav>
-    );
-  }
+  // A single-level trail ("Home > Employees") only repeats the page title
+  // directly below it, so breadcrumbs render only when there is a real
+  // hierarchy to navigate back up.
+  if (!matched || matched.crumbs.length < 2) return null;
 
   const crumbs = matched.crumbs.map((c) => (c.dynamic ? { ...c, label: override || c.label } : c));
 

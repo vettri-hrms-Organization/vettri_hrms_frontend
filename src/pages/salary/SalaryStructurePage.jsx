@@ -114,7 +114,7 @@ export default function SalaryStructurePage() {
                       <SummaryTile label="Gross Salary" value={currentStructure.grossSalary} />
                       <SummaryTile label="Total Deductions" value={currentStructure.totalDeductions} tone="danger" />
                       <SummaryTile label="Net Salary" value={currentStructure.netSalary} tone="primary" />
-                      <SummaryTile label="Effective From" value={new Date(currentStructure.effectiveFrom).toLocaleDateString()} isText />
+                      <SummaryTile label="Effective From" value={new Date(currentStructure.effectiveFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} isText />
                     </div>
                     <div className="row g-3">
                       {Object.entries(currentStructure.components).map(([key, value]) => (
@@ -135,7 +135,7 @@ export default function SalaryStructurePage() {
                     {history.map((h) => (
                       <div key={h.id} className="d-flex align-items-center justify-content-between p-2" style={{ borderBottom: '1px solid var(--hz-border)' }}>
                         <div>
-                          <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500 }}>{new Date(h.effectiveFrom).toLocaleDateString()}</span>
+                          <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500 }}>{new Date(h.effectiveFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                           {h.active && <span className="ms-2 badge text-bg-light" style={{ fontSize: 10 }}>Current</span>}
                           {h.notes && <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{h.notes}</div>}
                         </div>

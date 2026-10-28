@@ -100,7 +100,7 @@ export default function SalaryDetails() {
 
       <div className="row g-3">
         <div className="col-12 col-lg-7">
-          <Card title={isEmployee ? 'Salary details' : 'Current Compensation'} subtitle={structure ? `Effective from ${new Date(structure.effectiveFrom).toLocaleDateString()}` : undefined}>
+          <Card title={isEmployee ? 'Salary details' : 'Current Compensation'} subtitle={structure ? `Effective from ${new Date(structure.effectiveFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}>
             {!structure && <EmptyState icon={FileSpreadsheet} title="No payslip available yet" description={isEmployee ? 'Your salary information will appear here once payroll has been configured.' : 'Define a structure to include this employee in payroll.'} />}
             {structure && (
               <div className="d-flex flex-column gap-3">
@@ -133,7 +133,7 @@ export default function SalaryDetails() {
                 {data.structureHistory.map((h) => (
                   <div key={h.id} className="d-flex align-items-center justify-content-between p-2" style={{ borderBottom: '1px solid var(--hz-border)' }}>
                     <div>
-                      <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500 }}>{new Date(h.effectiveFrom).toLocaleDateString()}</span>
+                      <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500 }}>{new Date(h.effectiveFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                       {h.active && (
                         <span className="ms-2 badge text-bg-light" style={{ fontSize: 10 }}>
                           Current
@@ -176,7 +176,7 @@ export default function SalaryDetails() {
                     <td>
                       <PayrollStatusBadge status={p.status} />
                     </td>
-                    <td>{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : '—'}</td>
+                    <td>{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
                   </tr>
                 ))}
               </tbody>

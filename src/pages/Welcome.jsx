@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 export default function Welcome() {
   const { user, hasPermission } = useAuth();
   const firstName = user?.fullName?.split(' ')[0] || 'there';
-  const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const todayLabel = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
 
   const quickActions = [
     { title: 'Dashboard', description: 'Review workspace signals and action items.', to: '/dashboard', icon: LayoutDashboard },

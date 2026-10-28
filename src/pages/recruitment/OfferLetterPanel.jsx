@@ -4,6 +4,7 @@ import { Upload, Download, Eye, RefreshCw, Send } from 'lucide-react';
 import { candidatesApi } from '../../api/endpoints/recruitment';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import { formatDateTimeIST } from '../../utils/formatDateTime';
 
 const ACCEPTED_EXTENSIONS = '.pdf,.doc,.docx';
 
@@ -110,12 +111,12 @@ export default function OfferLetterPanel({ candidate }) {
         <>
           <div style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>{candidate.offerLetterOriginalName}</div>
           <div style={{ fontSize: 12, color: 'var(--hz-text-secondary)', marginTop: 2 }}>
-            Uploaded {new Date(candidate.offerLetterUploadedAt).toLocaleString()}
+            Uploaded {formatDateTimeIST(candidate.offerLetterUploadedAt)}
             {candidate.offerLetterUploadedBy ? ` by ${candidate.offerLetterUploadedBy}` : ''}
           </div>
           {alreadySent && candidate.offerLetterSentAt && (
             <div style={{ fontSize: 12, color: 'var(--hz-text-secondary)', marginTop: 2 }}>
-              Sent {new Date(candidate.offerLetterSentAt).toLocaleString()}
+              Sent {formatDateTimeIST(candidate.offerLetterSentAt)}
             </div>
           )}
 
