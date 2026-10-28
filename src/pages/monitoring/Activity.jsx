@@ -38,7 +38,7 @@ import FilterBar from '../../components/ui/FilterBar';
 
 const PAGE_SIZE =10;
 
-const HEADER_COLOR = '#0B2342';
+const HEADER_COLOR = 'var(--vettri-navy)';
 
 
 /* ============================================================
@@ -458,7 +458,7 @@ export default function Activity() {
       '#ffffff',
 
     borderColor:
-      '#18385c',
+      'var(--hz-primary-800)',
 
     fontWeight:
       600,
@@ -484,7 +484,7 @@ export default function Activity() {
     height: 42,
 
     borderColor:
-      '#d9e1e8',
+      'var(--hz-border)',
 
     fontSize:
       12,
@@ -555,7 +555,7 @@ export default function Activity() {
               transform:
                 'translateY(-50%)',
               color:
-                '#64748B',
+                'var(--hz-text-secondary)',
               pointerEvents:
                 'none',
               zIndex: 2,
@@ -579,7 +579,7 @@ export default function Activity() {
               fontSize:
                 13,
               borderColor:
-                '#CBD5E1',
+                'var(--hz-border-strong)',
               boxShadow:
                 'none',
             }}
@@ -625,7 +625,7 @@ export default function Activity() {
                 width: 28,
                 height: 28,
                 color:
-                  '#64748B',
+                  'var(--hz-text-secondary)',
               }}
               onClick={
                 clearSearch
@@ -663,7 +663,7 @@ export default function Activity() {
             borderRadius:
               8,
             borderColor:
-              '#CBD5E1',
+              'var(--hz-border-strong)',
           }}
           value={
             employeeId
@@ -737,7 +737,7 @@ export default function Activity() {
               borderRadius:
                 8,
               borderColor:
-                '#CBD5E1',
+                'var(--hz-border-strong)',
             }}
             value={
               dateFrom
@@ -759,7 +759,7 @@ export default function Activity() {
           <span
             style={{
               color:
-                '#64748B',
+                'var(--hz-text-secondary)',
               fontSize:
                 12,
               fontWeight:
@@ -784,7 +784,7 @@ export default function Activity() {
               borderRadius:
                 8,
               borderColor:
-                '#CBD5E1',
+                'var(--hz-border-strong)',
             }}
             value={
               dateTo
@@ -842,7 +842,7 @@ export default function Activity() {
               minWidth:
                 1050,
               borderColor:
-                '#d9e1e8',
+                'var(--hz-border)',
             }}
           >
 
@@ -1029,7 +1029,7 @@ export default function Activity() {
                           size={28}
                           style={{
                             color:
-                              '#DC3545',
+                              'var(--hz-danger-500)',
                           }}
                         />
 
@@ -1109,14 +1109,14 @@ export default function Activity() {
                           size={30}
                           style={{
                             color:
-                              '#94A3B8',
+                              'var(--hz-gray-400)',
                           }}
                         />
 
                         <strong
                           style={{
                             color:
-                              '#334155',
+                              'var(--hz-gray-700)',
                           }}
                         >
 
@@ -1186,7 +1186,7 @@ export default function Activity() {
                           fontWeight:
                             600,
                           color:
-                            '#0B2342',
+                            'var(--vettri-navy)',
                         }}
                       >
 
@@ -1378,9 +1378,9 @@ export default function Activity() {
               "
               style={{
                 borderTop:
-                  '1px solid #d9e1e8',
+                  '1px solid var(--hz-border)',
                 backgroundColor:
-                  '#f8fafc',
+                  'var(--hz-surface-subtle)',
                 minHeight:
                   58,
               }}
@@ -1393,7 +1393,7 @@ export default function Activity() {
               <div
                 style={{
                   color:
-                    '#64748B',
+                    'var(--hz-text-secondary)',
                   fontSize:
                     12,
                 }}
@@ -1404,7 +1404,7 @@ export default function Activity() {
                 <strong
                   style={{
                     color:
-                      '#334155',
+                      'var(--hz-gray-700)',
                   }}
                 >
                   {
@@ -1417,7 +1417,7 @@ export default function Activity() {
                 <strong
                   style={{
                     color:
-                      '#334155',
+                      'var(--hz-gray-700)',
                   }}
                 >
                   {
@@ -1430,7 +1430,7 @@ export default function Activity() {
                 <strong
                   style={{
                     color:
-                      '#334155',
+                      'var(--hz-gray-700)',
                   }}
                 >
                   {
@@ -1476,13 +1476,13 @@ export default function Activity() {
                       '#ffffff',
 
                     border:
-                      '1px solid #CBD5E1',
+                      '1px solid var(--hz-border-strong)',
 
                     color:
                       currentPage ===
                       0
-                        ? '#CBD5E1'
-                        : '#334155',
+                        ? 'var(--hz-border-strong)'
+                        : 'var(--hz-gray-700)',
 
                     borderRadius:
                       6,
@@ -1531,7 +1531,7 @@ export default function Activity() {
                     fontSize:
                       12,
                     color:
-                      '#334155',
+                      'var(--hz-gray-700)',
                     fontWeight:
                       500,
                   }}
@@ -1586,14 +1586,14 @@ export default function Activity() {
                       '#ffffff',
 
                     border:
-                      '1px solid #CBD5E1',
+                      '1px solid var(--hz-border-strong)',
 
                     color:
                       currentPage >=
                       totalPages -
                         1
-                        ? '#CBD5E1'
-                        : '#334155',
+                        ? 'var(--hz-border-strong)'
+                        : 'var(--hz-gray-700)',
 
                     borderRadius:
                       6,

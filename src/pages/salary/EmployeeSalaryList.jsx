@@ -38,7 +38,7 @@ import AssignSalaryStructureModal from './components/AssignSalaryStructureModal'
 
 const PAGE_SIZE = 10;
 
-const HEADER_COLOR = '#0B2342';
+const HEADER_COLOR = 'var(--vettri-navy)';
 
 
 /* ============================================================
@@ -436,7 +436,7 @@ export default function EmployeeSalaryList() {
       '#ffffff',
 
     borderColor:
-      '#18385c',
+      'var(--hz-primary-800)',
 
     fontWeight:
       600,
@@ -469,7 +469,7 @@ export default function EmployeeSalaryList() {
       50,
 
     borderColor:
-      '#d9e1e8',
+      'var(--hz-border)',
 
     fontSize:
       12,
@@ -662,7 +662,7 @@ export default function EmployeeSalaryList() {
                 transform:
                   'translateY(-50%)',
                 color:
-                  '#64748B',
+                  'var(--hz-text-secondary)',
                 pointerEvents:
                   'none',
                 zIndex:
@@ -699,7 +699,7 @@ export default function EmployeeSalaryList() {
                 borderRadius:
                   8,
                 borderColor:
-                  '#CBD5E1',
+                  'var(--hz-border-strong)',
                 fontSize:
                   13,
                 boxShadow:
@@ -732,7 +732,7 @@ export default function EmployeeSalaryList() {
                   height:
                     28,
                   color:
-                    '#64748B',
+                    'var(--hz-text-secondary)',
                 }}
                 onClick={
                   clearSearch
@@ -794,7 +794,7 @@ export default function EmployeeSalaryList() {
                   borderRadius:
                     8,
                   borderColor:
-                    '#CBD5E1',
+                    'var(--hz-border-strong)',
                 }}
               >
 
@@ -860,7 +860,7 @@ export default function EmployeeSalaryList() {
                   borderRadius:
                     8,
                   borderColor:
-                    '#CBD5E1',
+                    'var(--hz-border-strong)',
                 }}
               >
 
@@ -919,7 +919,7 @@ export default function EmployeeSalaryList() {
                   height:
                     40,
                   color:
-                    '#64748B',
+                    'var(--hz-text-secondary)',
                   fontSize:
                     12,
                 }}
@@ -1005,7 +1005,7 @@ export default function EmployeeSalaryList() {
                 minWidth:
                   1050,
                 borderColor:
-                  '#d9e1e8',
+                  'var(--hz-border)',
                 fontSize:
                   12,
               }}
@@ -1242,7 +1242,7 @@ export default function EmployeeSalaryList() {
                                   fontSize:
                                     11,
                                   color:
-                                    '#64748B',
+                                    'var(--hz-text-secondary)',
                                   marginTop:
                                     2,
                                 }}
@@ -1295,7 +1295,7 @@ export default function EmployeeSalaryList() {
                                 fontSize:
                                   11,
                                 color:
-                                  '#64748B',
+                                  'var(--hz-text-secondary)',
                                 marginTop:
                                   2,
                               }}
@@ -1531,9 +1531,9 @@ export default function EmployeeSalaryList() {
                 "
                 style={{
                   borderTop:
-                    '1px solid #d9e1e8',
+                    '1px solid var(--hz-border)',
                   backgroundColor:
-                    '#f8fafc',
+                    'var(--hz-surface-subtle)',
                   minHeight:
                     58,
                 }}
@@ -1546,7 +1546,7 @@ export default function EmployeeSalaryList() {
                 <div
                   style={{
                     color:
-                      '#64748B',
+                      'var(--hz-text-secondary)',
                     fontSize:
                       12,
                   }}
@@ -1557,7 +1557,7 @@ export default function EmployeeSalaryList() {
                   <strong
                     style={{
                       color:
-                        '#334155',
+                        'var(--hz-gray-700)',
                     }}
                   >
                     {
@@ -1570,7 +1570,7 @@ export default function EmployeeSalaryList() {
                   <strong
                     style={{
                       color:
-                        '#334155',
+                        'var(--hz-gray-700)',
                     }}
                   >
                     {
@@ -1583,7 +1583,7 @@ export default function EmployeeSalaryList() {
                   <strong
                     style={{
                       color:
-                        '#334155',
+                        'var(--hz-gray-700)',
                     }}
                   >
                     {
@@ -1629,13 +1629,13 @@ export default function EmployeeSalaryList() {
                         '#ffffff',
 
                       border:
-                        '1px solid #CBD5E1',
+                        '1px solid var(--hz-border-strong)',
 
                       color:
                         currentPage ===
                         0
-                          ? '#CBD5E1'
-                          : '#334155',
+                          ? 'var(--hz-border-strong)'
+                          : 'var(--hz-gray-700)',
 
                       borderRadius:
                         6,
@@ -1684,7 +1684,7 @@ export default function EmployeeSalaryList() {
                       fontSize:
                         12,
                       color:
-                        '#475569',
+                        'var(--hz-gray-600)',
                     }}
                   >
 
@@ -1741,14 +1741,14 @@ export default function EmployeeSalaryList() {
                         '#ffffff',
 
                       border:
-                        '1px solid #CBD5E1',
+                        '1px solid var(--hz-border-strong)',
 
                       color:
                         currentPage >=
                         totalPages -
                           1
-                          ? '#CBD5E1'
-                          : '#334155',
+                          ? 'var(--hz-border-strong)'
+                          : 'var(--hz-gray-700)',
 
                       borderRadius:
                         6,

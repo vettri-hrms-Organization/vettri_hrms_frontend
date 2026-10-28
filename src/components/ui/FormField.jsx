@@ -78,7 +78,7 @@ export default function FormField({
       {label && (
         <label className="hz-form-label" htmlFor={controlId}>
           {label}
-          {required && <span style={{ color: 'var(--hz-danger-500)' }}> *</span>}
+          {required && <span className="hz-form-required" aria-hidden="true"> *</span>}
         </label>
       )}
       {control}

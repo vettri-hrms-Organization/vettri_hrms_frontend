@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Building2, CalendarDays, CheckSquare, Clock3, ShieldCheck, Users, Wallet } from 'lucide-react';
+import { ArrowRight, Building2, CalendarDays, Check, CheckSquare, Clock3, ShieldCheck, Users, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
@@ -64,7 +64,7 @@ export default function Onboarding() {
                     className={`hz-onboarding-step ${activeStep === index ? 'hz-onboarding-step--active' : ''}`}
                     onClick={() => setActiveStep(index)}
                   >
-                    <span className="hz-onboarding-step__number">{completion[index] ? '✓' : index + 1}</span>
+                    <span className="hz-onboarding-step__number">{completion[index] ? <Check size={13} strokeWidth={2.5} aria-label="Completed" /> : index + 1}</span>
                     <Icon size={16} />
                     <span>{item.title}</span>
                   </button>

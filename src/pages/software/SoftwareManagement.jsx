@@ -1684,7 +1684,7 @@ export default function SoftwareManagement() {
             style={{
               fontSize: '12px',
               borderColor:
-                '#d9e1e8',
+                'var(--hz-border)',
               width: '100%',
             }}
           >
@@ -1706,11 +1706,11 @@ export default function SoftwareManagement() {
                   style={{
                     height: 42,
                     backgroundColor:
-                      '#0B2342',
+                      'var(--vettri-navy)',
                     color:
                       '#ffffff',
                     borderColor:
-                      '#18385c',
+                      'var(--hz-primary-800)',
                     fontWeight:
                       600,
                     fontSize: 12,
@@ -1731,11 +1731,11 @@ export default function SoftwareManagement() {
                   style={{
                     height: 42,
                     backgroundColor:
-                      '#0B2342',
+                      'var(--vettri-navy)',
                     color:
                       '#ffffff',
                     borderColor:
-                      '#18385c',
+                      'var(--hz-primary-800)',
                     fontWeight:
                       600,
                     fontSize: 12,
@@ -1756,11 +1756,11 @@ export default function SoftwareManagement() {
                   style={{
                     height: 42,
                     backgroundColor:
-                      '#0B2342',
+                      'var(--vettri-navy)',
                     color:
                       '#ffffff',
                     borderColor:
-                      '#18385c',
+                      'var(--hz-primary-800)',
                     fontWeight:
                       600,
                     fontSize: 12,
@@ -1781,11 +1781,11 @@ export default function SoftwareManagement() {
                   style={{
                     height: 42,
                     backgroundColor:
-                      '#0B2342',
+                      'var(--vettri-navy)',
                     color:
                       '#ffffff',
                     borderColor:
-                      '#18385c',
+                      'var(--hz-primary-800)',
                     fontWeight:
                       600,
                     fontSize: 12,
@@ -1806,11 +1806,11 @@ export default function SoftwareManagement() {
                   style={{
                     height: 42,
                     backgroundColor:
-                      '#0B2342',
+                      'var(--vettri-navy)',
                     color:
                       '#ffffff',
                     borderColor:
-                      '#18385c',
+                      'var(--hz-primary-800)',
                     fontWeight:
                       600,
                     fontSize: 12,
@@ -1831,11 +1831,11 @@ export default function SoftwareManagement() {
                   style={{
                     height: 42,
                     backgroundColor:
-                      '#0B2342',
+                      'var(--vettri-navy)',
                     color:
                       '#ffffff',
                     borderColor:
-                      '#18385c',
+                      'var(--hz-primary-800)',
                     fontWeight:
                       600,
                     fontSize: 12,
@@ -2005,7 +2005,7 @@ export default function SoftwareManagement() {
                         style={{
                           height: 42,
                           borderColor:
-                            '#d9e1e8',
+                            'var(--hz-border)',
                         }}
                       >
 
@@ -2015,7 +2015,7 @@ export default function SoftwareManagement() {
                           "
                           style={{
                             color:
-                              '#0B2342',
+                              'var(--vettri-navy)',
                           }}
                         >
                           {
@@ -2036,7 +2036,7 @@ export default function SoftwareManagement() {
                         style={{
                           height: 42,
                           borderColor:
-                            '#d9e1e8',
+                            'var(--hz-border)',
                         }}
                       >
 
@@ -2067,7 +2067,7 @@ export default function SoftwareManagement() {
                         style={{
                           height: 42,
                           borderColor:
-                            '#d9e1e8',
+                            'var(--hz-border)',
                         }}
                       >
 
@@ -2092,7 +2092,7 @@ export default function SoftwareManagement() {
                         style={{
                           height: 42,
                           borderColor:
-                            '#d9e1e8',
+                            'var(--hz-border)',
                         }}
                       >
 
@@ -2133,7 +2133,7 @@ export default function SoftwareManagement() {
                           height: 42,
                           maxWidth: 320,
                           borderColor:
-                            '#d9e1e8',
+                            'var(--hz-border)',
                         }}
                       >
 
@@ -2169,7 +2169,7 @@ export default function SoftwareManagement() {
                         style={{
                           height: 42,
                           borderColor:
-                            '#d9e1e8',
+                            'var(--hz-border)',
                         }}
                       >
 
@@ -2217,7 +2217,7 @@ export default function SoftwareManagement() {
             "
             style={{
               backgroundColor:
-                '#f8fafc',
+                'var(--hz-surface-subtle)',
               minHeight: 52,
             }}
           >
@@ -2330,20 +2330,20 @@ export default function SoftwareManagement() {
                       backgroundColor:
                         safeDeploymentPage ===
                         page
-                          ? '#0B2342'
+                          ? 'var(--vettri-navy)'
                           : '#ffffff',
 
                       color:
                         safeDeploymentPage ===
                         page
                           ? '#ffffff'
-                          : '#334155',
+                          : 'var(--hz-gray-700)',
 
                       border:
                         safeDeploymentPage ===
                         page
-                          ? '1px solid #0B2342'
-                          : '1px solid #cbd5e1',
+                          ? '1px solid var(--vettri-navy)'
+                          : '1px solid var(--hz-border-strong)',
 
                       fontWeight:
                         safeDeploymentPage ===

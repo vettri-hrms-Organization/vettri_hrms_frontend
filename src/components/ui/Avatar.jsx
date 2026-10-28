@@ -5,6 +5,15 @@ function getInitials(name = '') {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+// Same name -> same tint on every screen, so people are recognisable in
+// long tables. Tones are defined in hrms-product.css (.hz-avatar--tone-N).
+const TONE_COUNT = 6;
+function getTone(name = '') {
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  return Math.abs(hash) % TONE_COUNT;
+}
+
 const SIZES = { sm: 28, md: 36, lg: 48, xl: 64 };
 
 export default function Avatar({ name, size = 'md', src }) {
@@ -15,8 +24,9 @@ export default function Avatar({ name, size = 'md', src }) {
     return <img src={src} alt={name} className="hz-avatar" style={{ ...style, objectFit: 'cover' }} />;
   }
 
+  const tone = getTone(name || '');
   return (
-    <span className="hz-avatar" style={style}>
+    <span className={`hz-avatar${tone ? ` hz-avatar--tone-${tone}` : ''}`} style={style} aria-hidden="true">
       {getInitials(name)}
     </span>
   );

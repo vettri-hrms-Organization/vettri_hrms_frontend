@@ -5,14 +5,14 @@
  */
 
 :root {
-  --vettri-q-canvas: #f4f7fb;
-  --vettri-q-surface: #ffffff;
-  --vettri-q-ink: #172033;
-  --vettri-q-muted: #64748b;
-  --vettri-q-line: #e2e8f0;
-  --vettri-q-blue: #2563eb;
-  --vettri-q-blue-deep: #1e40af;
-  --vettri-q-shadow: 0 8px 24px rgba(15, 27, 61, .045), 0 1px 3px rgba(15,27,61,.035);
+  --vettri-q-canvas: var(--hz-bg-canvas);
+  --vettri-q-surface: var(--hz-bg-surface);
+  --vettri-q-ink: var(--hz-text-primary);
+  --vettri-q-muted: var(--hz-text-secondary);
+  --vettri-q-line: var(--hz-border);
+  --vettri-q-blue: var(--hz-primary-500);
+  --vettri-q-blue-deep: var(--hz-primary-600);
+  --vettri-q-shadow: var(--hz-shadow-md);
 }
 
 html { overflow-x: hidden; }
@@ -85,7 +85,7 @@ body { overflow-x: hidden; background: var(--vettri-q-canvas); }
 .hz-kpi,
 .hz-surface {
   min-width: 0;
-  border-color: rgba(15,27,61,.08);
+  border-color: rgba(16, 23, 42, .08);
 }
 
 .hz-card__title,
@@ -133,7 +133,7 @@ textarea.form-control {
 .form-select:focus,
 textarea.form-control:focus {
   border-color: var(--vettri-q-blue);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.11);
+  box-shadow: 0 0 0 3px rgba(var(--hz-primary-rgb), .11);
 }
 .form-label, .hz-form-label { margin-bottom: 6px; color: #334155; font-weight: 650; font-size: 12px; }
 
@@ -150,7 +150,7 @@ textarea.form-control:focus {
   border: 1px solid var(--vettri-q-line);
   border-radius: 12px;
   background: rgba(255,255,255,.9);
-  box-shadow: 0 1px 2px rgba(15, 27, 61, 0.02);
+  box-shadow: 0 1px 2px rgba(16, 23, 42,  0.02);
 }
 
 .hz-module-page .hz-filter-bar {
@@ -170,7 +170,7 @@ textarea.form-control:focus {
 .hz-module-page .hz-card,
 .hz-module-page .hz-stat-card {
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(15, 27, 61, 0.04), 0 1px 3px rgba(15, 27, 61, 0.04);
+  box-shadow: 0 8px 24px rgba(16, 23, 42,  0.04), 0 1px 3px rgba(16, 23, 42,  0.04);
 }
 
 .hz-dashboard__metric,
@@ -265,10 +265,10 @@ textarea.form-control:focus {
 .hz-quick-actions,
 .hz-topbar-notifications,
 .hz-rail-profile__menu {
-  border: 1px solid rgba(15,27,61,.09);
+  border: 1px solid rgba(16, 23, 42, .09);
   border-radius: 14px;
   background: rgba(255,255,255,.98);
-  box-shadow: 0 20px 55px rgba(15,27,61,.14), 0 4px 12px rgba(15,27,61,.05);
+  box-shadow: 0 20px 55px rgba(16, 23, 42, .14), 0 4px 12px rgba(16, 23, 42, .05);
 }
 
 .hz-dialog-backdrop,
@@ -670,7 +670,7 @@ textarea.form-control:focus {
 .vettri-topbar {
   background: linear-gradient(110deg, #F8FAFF 0%, #EDF4FF 55%, #E4EDFF 100%) !important;
   border-color: #D7E5FF !important;
-  color: #0F1B3D !important;
+  color: var(--vettri-navy) !important;
 }
 
 .vettri-topbar-crumb,
@@ -679,18 +679,18 @@ textarea.form-control:focus {
 .vettri-topbar .hz-current-workspace,
 .vettri-topbar > label,
 .vettri-topbar-crumb span {
-  color: #0F1B3D !important;
+  color: var(--vettri-navy) !important;
 }
 
 .vettri-topbar .hz-current-workspace svg,
 .vettri-topbar > label > svg {
-  color: #2563EB !important;
+  color: var(--hz-primary-500) !important;
 }
 
 .vettri-topbar .vettri-command-trigger,
 .vettri-topbar .vettri-command-trigger:hover {
   background: #fff !important;
-  color: #0F1B3D !important;
+  color: var(--vettri-navy) !important;
 }
 
 .vettri-topbar .vettri-command-trigger {
@@ -698,7 +698,7 @@ textarea.form-control:focus {
 }
 
 .vettri-topbar .vettri-command-trigger > svg {
-  color: #2563EB !important;
+  color: var(--hz-primary-500) !important;
 }
 
 .vettri-topbar .vettri-command-trigger kbd {
@@ -710,13 +710,13 @@ textarea.form-control:focus {
 .vettri-topbar .hz-icon-btn {
   background: #EAF1FF !important;
   border-color: #D7E5FF !important;
-  color: #2563EB !important;
+  color: var(--hz-primary-500) !important;
 }
 
 .vettri-topbar .hz-icon-btn:hover {
   background: #DDE9FF !important;
   border-color: #BFD3FF !important;
-  color: #1D4ED8 !important;
+  color: var(--hz-primary-600) !important;
 }
 
 .vettri-topbar .hz-icon-btn[aria-label='Account menu'] {
@@ -728,7 +728,7 @@ textarea.form-control:focus {
 }
 
 .vettri-topbar .hz-icon-btn[aria-label='Account menu'] > div > span {
-  color: #0F1B3D !important;
+  color: var(--vettri-navy) !important;
 }
 
 .vettri-topbar .hz-icon-btn .hz-avatar {
@@ -742,22 +742,22 @@ textarea.form-control:focus {
 .vettri-topbar > label .form-select {
   background-color: #fff !important;
   border-color: #D7E5FF !important;
-  color: #0F1B3D !important;
+  color: var(--vettri-navy) !important;
 }
 
 .vettri-topbar .hz-topbar-menu {
   background: #fff !important;
   border-color: #D7E5FF !important;
-  color: #0F1B3D !important;
+  color: var(--vettri-navy) !important;
 }
 
 .vettri-topbar .hz-topbar-menu > div:first-child > div,
 .vettri-topbar .hz-topbar-menu button[role='menuitem']:not([style]) {
-  color: #0F1B3D !important;
+  color: var(--vettri-navy) !important;
 }
 
 .vettri-topbar .hz-topbar-menu button[role='menuitem'] svg {
-  color: #2563EB !important;
+  color: var(--hz-primary-500) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

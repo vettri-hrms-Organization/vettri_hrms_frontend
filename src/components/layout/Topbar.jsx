@@ -84,10 +84,18 @@ export default function Topbar({ onOpenMobileNav }) {
     function openFromSidebar() {
       setCommandCenterOpen(true);
     }
+    function closeMenusOnEscape(e) {
+      if (e.key !== 'Escape') return;
+      setMenuOpen(false);
+      setNotificationsOpen(false);
+      setQuickCreateOpen(false);
+    }
+    document.addEventListener('keydown', closeMenusOnEscape);
     document.addEventListener('keydown', handleKeyDown);
     window.addEventListener('vettri:open-command-center', openFromSidebar);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', closeMenusOnEscape);
       window.removeEventListener('vettri:open-command-center', openFromSidebar);
     };
   }, []);

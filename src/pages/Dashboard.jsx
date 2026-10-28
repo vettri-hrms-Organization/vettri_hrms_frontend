@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Users, UserCheck, CalendarOff, CalendarDays, Clock3, Inbox, FileText, ArrowRight, ClipboardCheck, Sparkles, BarChart3, BriefcaseBusiness, Settings2, WalletCards, TrendingUp, LifeBuoy } from 'lucide-react';
+import { Users, UserCheck, CalendarOff, CalendarDays, Clock3, Inbox, FileText, ArrowRight, ClipboardCheck, BriefcaseBusiness, Settings2, WalletCards, LifeBuoy, Bell, Cake, AlertCircle } from 'lucide-react';
 import { dashboardApi } from '../api/endpoints/dashboard';
 import { holidaysApi, leaveRequestsApi } from '../api/endpoints/leave';
-import { documentsApi, DOCUMENT_TYPE_LABEL } from '../api/endpoints/documents';
+import { documentsApi } from '../api/endpoints/documents';
 import { employeesApi } from '../api/endpoints/employees';
 import { attendanceApi } from '../api/endpoints/attendance';
 import { employeeSalaryApi } from '../api/endpoints/salary';
 import { selfServiceApi } from '../api/endpoints/selfService';
+import { notificationsApi } from '../api/endpoints/notifications';
 import Avatar from '../components/ui/Avatar';
-import EmptyState from '../components/ui/EmptyState';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { getDisplayName, getWelcomeGreeting } from '../utils/vettriMicrocopy';
-import { EmployeeMetric, AttendanceWidget, LeaveWidget, FinanceWidget } from './dashboard/components/EmployeeWidgets';
+import { timeAgoIST, toISTDateInputValue } from '../utils/formatDateTime';
+import { AttendanceWidget, LeaveWidget, FinanceWidget } from './dashboard/components/EmployeeWidgets';
 
 async function safeAuthorizedQuery(request, fallbackValue = null) {
   try {
@@ -32,6 +34,7 @@ export default function Dashboard() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const firstName = getDisplayName(user).split(' ')[0] || '';
+  const [rejectTarget, setRejectTarget] = useState(null);
 
   const isAdminDashboardUser = hasAnyRole(['SUPER_ADMIN', 'HR_ADMIN', 'COMPANY_ADMIN', 'MANAGER'])
     || hasPermission('EMPLOYEE_VIEW')
@@ -43,7 +46,12 @@ export default function Dashboard() {
 
   const canViewOrgSummary = hasPermission('EMPLOYEE_VIEW');
 
-  const { data } = useQuery({
+  const {
+    data,
+    isLoading: summaryLoading,
+    isError: summaryError,
+    refetch: refetchSummary,
+  } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => safeAuthorizedQuery(dashboardApi.summary, null),
     enabled: canViewOrgSummary,
@@ -51,6 +59,7 @@ export default function Dashboard() {
   });
 
   const canViewApprovals = hasPermission('LEAVE_VIEW') || hasPermission('LEAVE_APPROVE');
+  const canDecideLeave = hasPermission('LEAVE_APPROVE') || hasPermission('LEAVE_MANAGE');
   const isTeamScoped = hasPermission('LEAVE_APPROVE') && !hasPermission('LEAVE_MANAGE');
 
   const {
@@ -77,35 +86,38 @@ export default function Dashboard() {
     retry: false,
   });
 
-  const approvalQueue = isTeamScoped ? myTeam?.pendingApprovals : pendingLeave;
+  const approvalQueue = (isTeamScoped ? myTeam?.pendingApprovals : pendingLeave) || [];
   const approvalQueueLoading = isTeamScoped ? myTeamLoading : pendingLeaveLoading;
   const approvalQueueError = isTeamScoped ? myTeamError : pendingLeaveError;
   const refetchApprovalQueue = isTeamScoped ? refetchMyTeam : refetchPendingLeave;
 
   const canViewExpiringDocs = hasPermission('EMPLOYEE_MANAGE');
-  const {
-    data: expiringDocs,
-    isLoading: expiringDocsLoading,
-    isError: expiringDocsError,
-    refetch: refetchExpiringDocs,
-  } = useQuery({
+  const { data: expiringDocs } = useQuery({
     queryKey: ['documents-expiring-soon'],
     queryFn: () => safeAuthorizedQuery(() => documentsApi.expiringSoon(30), []),
     enabled: canViewExpiringDocs,
     retry: false,
   });
 
-  const { data: holidaysData, isLoading: holidaysLoading, isError: holidaysError } = useQuery({
+  const { data: holidaysData, isLoading: holidaysLoading } = useQuery({
     queryKey: ['dashboard-holidays'],
     queryFn: () => safeAuthorizedQuery(holidaysApi.list, []),
     enabled: canViewOrgSummary,
     retry: false,
   });
 
+  // Shares its cache key with the topbar bell, so this costs no extra request.
+  const { data: inbox, isLoading: inboxLoading } = useQuery({
+    queryKey: ['notifications', 'inbox', 0, 5],
+    queryFn: () => notificationsApi.inbox({ page: 0, size: 5 }),
+    enabled: !!user,
+  });
+
   const decideLeave = useMutation({
     mutationFn: ({ id, approve }) => (approve ? leaveRequestsApi.approve(id) : leaveRequestsApi.reject(id)),
-    onSuccess: () => {
-      toast.success('Leave request updated.');
+    onSuccess: (_result, { approve }) => {
+      toast.success(approve ? 'Leave request approved.' : 'Leave request rejected.');
+      setRejectTarget(null);
       queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-my-team'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
@@ -113,258 +125,426 @@ export default function Dashboard() {
     onError: (error) => toast.error(error.response?.data?.message || 'Could not update the leave request.'),
   });
 
-  const pendingCount = approvalQueue?.length || 0;
-  const expiringCount = expiringDocs?.length || 0;
-  const totalEmployees = data?.totalEmployees || 0;
-  const activeEmployees = data?.activeEmployees || 0;
-  const onLeaveEmployees = data?.onLeave || 0;
-  const otherEmployees = Math.max(totalEmployees - activeEmployees - onLeaveEmployees, 0);
-  const composition = totalEmployees
-    ? [
-        { key: 'active', value: activeEmployees, width: `${(activeEmployees / totalEmployees) * 100}%` },
-        { key: 'leave', value: onLeaveEmployees, width: `${(onLeaveEmployees / totalEmployees) * 100}%` },
-        { key: 'other', value: otherEmployees, width: `${(otherEmployees / totalEmployees) * 100}%` },
-      ]
-    : [];
-  const kpis = data
-    ? [
-        { label: 'Total Employees', value: data.totalEmployees, icon: Users, accent: 'var(--hz-primary-600)' },
-        { label: 'Active', value: data.activeEmployees, icon: UserCheck, accent: 'var(--hz-success-500)' },
-        { label: 'On Leave', value: data.onLeave, icon: CalendarOff, accent: 'var(--hz-warning-500)' },
-        { label: 'Pending Actions', value: pendingCount, icon: ClipboardCheck, accent: 'var(--hz-primary-600)' },
-      ]
-    : [];
-
   const now = new Date();
-  const today = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const today = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
   const greeting = getWelcomeGreeting(user, now);
 
   if (!isAdminDashboardUser && (user?.employeeId || hasRole('EMPLOYEE'))) {
     return <EmployeeDashboard employeeId={user?.employeeId} firstName={firstName} greeting={greeting} today={today} />;
   }
 
-  const attentionItems = [
-    { label: 'Leave requests', count: pendingCount, detail: pendingCount ? 'Waiting for review' : 'All requests are up to date', icon: CalendarOff, to: '/leave' },
-    { label: 'Attendance exceptions', count: null, detail: 'Review attendance records', icon: Clock3, to: '/attendance' },
-    { label: 'Employee documents', count: expiringCount, detail: expiringCount ? 'Expiring within 30 days' : 'No documents need attention', icon: FileText, to: '/employees' },
-  ];
-
-  const todayKeyAdmin = now.toISOString().slice(0, 10);
-  const holidaysList = Array.isArray(holidaysData) ? holidaysData : [];
-  const nextOrgHoliday = holidaysList
-    .filter((holiday) => typeof holiday.date === 'string' && holiday.date >= todayKeyAdmin)
+  const pendingCount = approvalQueue.length;
+  const expiringCount = expiringDocs?.length || 0;
+  const todayKey = toISTDateInputValue();
+  const nextOrgHoliday = (Array.isArray(holidaysData) ? holidaysData : [])
+    .filter((holiday) => typeof holiday.date === 'string' && holiday.date >= todayKey)
     .sort((first, second) => first.date.localeCompare(second.date))[0];
+  const notifications = inbox?.items || [];
 
-  const modules = [
-    { title: 'Workforce', description: 'Manage employees, profiles, and organization structure.', icon: Users, to: '/employees' },
-    { title: 'Attendance', description: 'Track attendance and workforce records.', icon: Clock3, to: '/attendance' },
-    { title: 'Leave', description: 'Manage leave and time-off workflows.', icon: CalendarOff, to: '/leave' },
-    { title: 'Payroll', description: 'Manage salary and payroll actions.', icon: WalletCards, to: '/salary', permission: 'SALARY_VIEW' },
-    { title: 'Performance', description: 'View goals and reviews.', icon: TrendingUp, to: '/performance' },
-    { title: 'Reports', description: 'Access workforce and HR reports.', icon: FileText, to: '/reports', permission: 'REPORTS_VIEW' },
-    { title: 'Recruitment', description: 'Manage hiring stages and candidate pipelines.', icon: BriefcaseBusiness, to: '/recruitment', permission: 'RECRUITMENT_VIEW' },
-    { title: 'Settings', description: 'Configure workspace preferences.', icon: Settings2, to: '/settings/organization', permission: 'ORG_VIEW' },
-  ].filter((module) => !module.permission || hasPermission(module.permission));
+  const summaryParts = [
+    canViewApprovals && (pendingCount
+      ? `${pendingCount} leave request${pendingCount === 1 ? '' : 's'} waiting for a decision`
+      : 'No leave requests waiting'),
+    canViewExpiringDocs && expiringCount > 0 && `${expiringCount} document${expiringCount === 1 ? '' : 's'} expiring within 30 days`,
+  ].filter(Boolean);
+
+  const quickActions = [
+    hasPermission('EMPLOYEE_VIEW') && { label: 'Employees', icon: Users, to: '/employees' },
+    hasPermission('EMPLOYEE_IMPORT') && { label: 'Import employees', icon: Inbox, to: '/employees/import' },
+    hasPermission('ATTENDANCE_VIEW') && { label: 'Attendance', icon: Clock3, to: '/attendance' },
+    canViewApprovals && { label: 'Leave requests', icon: CalendarOff, to: '/leave' },
+    hasPermission('SALARY_VIEW') && { label: 'Payroll', icon: WalletCards, to: '/salary' },
+    hasPermission('RECRUITMENT_VIEW') && { label: 'Recruitment', icon: BriefcaseBusiness, to: '/recruitment' },
+    hasPermission('REPORTS_VIEW') && { label: 'Reports', icon: FileText, to: '/reports' },
+    hasPermission('ORG_VIEW') && { label: 'Settings', icon: Settings2, to: '/settings/organization' },
+    { label: 'Support', icon: LifeBuoy, to: '/support' },
+  ].filter(Boolean);
 
   return (
-    <div className="hz-dashboard hz-dashboard--admin">
-      <header className="hz-dashboard__hero">
-        <div className="hz-dashboard__hero-copy">
-          <p className="hz-dashboard__eyebrow">{today}</p>
+    <div className="hz-dash">
+      <header className="hz-dash__hero">
+        <div className="hz-dash__hero-copy">
+          <p className="hz-dash__eyebrow">{today}</p>
           <h1>{greeting}</h1>
-          <p>Here&apos;s what&apos;s happening across your workspace today.</p>
+          {summaryParts.length > 0 && <p className="hz-dash__hero-summary">{summaryParts.join(' · ')}</p>}
         </div>
-        <div className="hz-dashboard__hero-meta">
-          <div className="hz-dashboard__hero-pill">
-            <span>Active workforce</span>
-            <strong>{data?.activeEmployees ?? '--'}</strong>
-          </div>
-          <div className="hz-dashboard__hero-badge">
-            <TrendingUp size={15} />
-            {pendingCount ? `${pendingCount} action${pendingCount === 1 ? '' : 's'} to triage` : 'Everything is current'}
-          </div>
+        <div className="hz-dash__hero-actions">
+          {canViewApprovals && pendingCount > 0 && (
+            <Link to="/leave" className="btn btn-light">
+              <ClipboardCheck size={16} aria-hidden="true" /> Review leave
+            </Link>
+          )}
+          {hasPermission('EMPLOYEE_CREATE') && (
+            <Link to="/employees" className="btn btn-primary">
+              <Users size={16} aria-hidden="true" /> Add employee
+            </Link>
+          )}
         </div>
       </header>
 
-      <section className="hz-dashboard__kpi-grid" aria-labelledby="workforce-metrics-title">
-        <div className="hz-dashboard__section-heading">
-          <div>
-            <span className="hz-dashboard__section-kicker">At a glance</span>
-            <h2 id="workforce-metrics-title">Workforce metrics</h2>
-          </div>
-          <Link to="/employees" className="hz-dashboard__text-link">View workforce <ArrowRight size={15} /></Link>
-        </div>
+      {canViewOrgSummary && (
+        <WorkforceKpis
+          data={data}
+          loading={summaryLoading}
+          error={summaryError}
+          onRetry={refetchSummary}
+        />
+      )}
 
-        <div className="hz-dashboard__metric-grid">
-          {(data ? kpis : [
-            { label: 'Total Employees', value: '--', icon: Users, accent: 'var(--hz-primary-600)' },
-            { label: 'Active', value: '--', icon: UserCheck, accent: 'var(--hz-primary-600)' },
-            { label: 'On Leave', value: '--', icon: CalendarOff, accent: 'var(--hz-primary-600)' },
-            { label: 'Pending Actions', value: '--', icon: ClipboardCheck, accent: 'var(--hz-primary-600)' },
-          ]).map(({ label, value, icon: Icon, accent }) => (
-            <article className="hz-dashboard__metric" key={label}>
-              <div className="hz-dashboard__metric-icon" style={{ color: accent }}><Icon size={19} /></div>
-              <span>{label}</span>
-              <strong>{value}</strong>
-              <small>
-                {label === 'Active' && data
-                  ? `${data.totalEmployees ? ((data.activeEmployees / data.totalEmployees) * 100).toFixed(1) : 0}% of workforce`
-                  : label === 'On Leave'
-                    ? (data?.onLeave ? 'Today' : 'No leave recorded today')
-                    : label === 'Pending Actions'
-                      ? (pendingCount ? 'Requires attention' : 'All caught up')
-                      : (data?.totalEmployees ? 'Current workforce' : 'No employees yet')}
-              </small>
-            </article>
-          ))}
-        </div>
-      </section>
+      <div className="hz-dash__grid hz-dash__grid--main">
+        {canViewApprovals && (
+          <section className="hz-dash__panel" aria-labelledby="dash-approvals-title">
+            <PanelHeading
+              id="dash-approvals-title"
+              title="Leave approvals"
+              meta={approvalQueueLoading ? null : <span className="hz-dash__count">{pendingCount} pending</span>}
+              link={pendingCount > 0 ? { to: '/leave', label: 'View all' } : null}
+            />
+            {approvalQueueLoading ? (
+              <ListSkeleton rows={3} />
+            ) : approvalQueueError ? (
+              <InlineError message="Leave requests could not be loaded." onRetry={() => refetchApprovalQueue()} />
+            ) : pendingCount === 0 ? (
+              <InlineEmpty icon={ClipboardCheck} title="You're all caught up" description="New leave requests will appear here for review." />
+            ) : (
+              <ul className="hz-dash__list">
+                {approvalQueue.slice(0, 5).map((request) => (
+                  <li className="hz-dash__approval" key={request.id}>
+                    <Avatar name={request.employeeName} size="sm" />
+                    <div className="hz-dash__approval-copy">
+                      <strong>{request.employeeName}</strong>
+                      <small>
+                        {request.leaveTypeName} · {formatLeaveRange(request.startDate, request.endDate)}
+                        {request.days ? ` · ${request.days} day${request.days === 1 ? '' : 's'}` : ''}
+                      </small>
+                    </div>
+                    {canDecideLeave && (
+                      <div className="hz-dash__approval-actions">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => setRejectTarget(request)}
+                          disabled={decideLeave.isPending}
+                          aria-label={`Reject leave request from ${request.employeeName}`}
+                        >
+                          Reject
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary"
+                          onClick={() => decideLeave.mutate({ id: request.id, approve: true })}
+                          disabled={decideLeave.isPending}
+                          aria-label={`Approve leave request from ${request.employeeName}`}
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
-      <div className="hz-dashboard__overview-grid">
-        <section className="hz-dashboard__surface" aria-labelledby="attention-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <span className="hz-dashboard__section-kicker">Action queue</span>
-              <h2 id="attention-title">Needs your attention</h2>
-            </div>
-            <span className="hz-dashboard__count-badge">{pendingCount} pending</span>
-          </div>
-          <div className="hz-dashboard__attention-list">
-            {attentionItems.map(({ label, count, detail, icon: Icon, to }) => (
-              <Link to={to} className="hz-dashboard__attention-row" key={label}>
-                <span className="hz-dashboard__row-icon"><Icon size={18} /></span>
-                <span className="hz-dashboard__row-copy">
-                  <strong>{label}</strong>
-                  <small>{detail}</small>
-                </span>
-                <span className={`hz-dashboard__row-count ${count === 0 ? 'is-clear' : ''}`}>{count === null ? 'View' : count}</span>
-                <ArrowRight size={16} />
+        <section className="hz-dash__panel" aria-labelledby="dash-shortcuts-title">
+          <PanelHeading id="dash-shortcuts-title" title="Go to" />
+          <div className="hz-dash__shortcuts">
+            {quickActions.map(({ label, icon: Icon, to }) => (
+              <Link to={to} key={to} className="hz-dash__shortcut">
+                <Icon size={17} aria-hidden="true" />
+                <span>{label}</span>
               </Link>
             ))}
           </div>
-        </section>
-
-        <section className="hz-dashboard__surface" aria-labelledby="quick-actions-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <span className="hz-dashboard__section-kicker">Shortcuts</span>
-              <h2 id="quick-actions-title">Quick actions</h2>
-            </div>
-          </div>
-          <div className="hz-dashboard__action-grid">
-            <Link to="/employees"><Users size={18} /><span>Manage employees</span></Link>
-            {hasPermission('EMPLOYEE_IMPORT') && <Link to="/employees/import"><Inbox size={18} /><span>Import employees</span></Link>}
-            <Link to="/leave"><CalendarOff size={18} /><span>Manage leave</span></Link>
-            <Link to="/reports"><FileText size={18} /><span>Generate report</span></Link>
-          </div>
+          {canViewExpiringDocs && expiringCount > 0 && (
+            <Link to="/employees" className="hz-dash__notice">
+              <FileText size={16} aria-hidden="true" />
+              <span><strong>{expiringCount} document{expiringCount === 1 ? '' : 's'}</strong> expiring within 30 days</span>
+              <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          )}
         </section>
       </div>
 
-      <section className="hz-dashboard__surface hz-dashboard__insights" aria-labelledby="insights-title">
-        <div className="hz-dashboard__section-heading">
-          <div>
-            <span className="hz-dashboard__section-kicker">Workforce intelligence</span>
-            <h2 id="insights-title">Workforce overview</h2>
-          </div>
-          <BarChart3 size={20} aria-hidden="true" />
-        </div>
-        {totalEmployees ? (
-          <div className="hz-dashboard__composition">
-            <div className="hz-dashboard__composition-bar" role="img" aria-label={`Workforce composition: ${activeEmployees} active, ${onLeaveEmployees} on leave, ${otherEmployees} other`}>
-              {composition.map((segment) => <span key={segment.key} style={{ width: segment.width }} />)}
+      {canViewOrgSummary && data && data.totalEmployees > 0 && (
+        <WorkforceOverview data={data} />
+      )}
+
+      <div className="hz-dash__grid hz-dash__grid--three">
+        {canViewOrgSummary && (
+          <section className="hz-dash__panel" aria-labelledby="dash-joiners-title">
+            <PanelHeading id="dash-joiners-title" title="New joiners" />
+            {summaryLoading ? <ListSkeleton rows={3} /> : (
+              (data?.recentJoiners || []).length === 0 ? (
+                <InlineEmpty icon={UserCheck} title="No recent joiners" description="Employees you add will appear here." />
+              ) : (
+                <ul className="hz-dash__list">
+                  {data.recentJoiners.map((employee) => (
+                    <li key={employee.id}>
+                      <Link to={`/employees/${employee.id}`} className="hz-dash__person">
+                        <Avatar name={employee.fullName} src={employee.profilePhotoUrl} size="sm" />
+                        <span>
+                          <strong>{employee.fullName}</strong>
+                          <small>{[employee.designationTitle, employee.departmentName].filter(Boolean).join(' · ') || 'Employee'}</small>
+                        </span>
+                        <time dateTime={employee.dateOfJoining}>{formatShortDate(employee.dateOfJoining)}</time>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )
+            )}
+          </section>
+        )}
+
+        {canViewOrgSummary && (
+          <section className="hz-dash__panel" aria-labelledby="dash-birthdays-title">
+            <PanelHeading id="dash-birthdays-title" title="Upcoming birthdays" />
+            {summaryLoading ? <ListSkeleton rows={3} /> : (
+              (data?.upcomingBirthdays || []).length === 0 ? (
+                <InlineEmpty icon={Cake} title="No birthdays coming up" description="Birthdays appear when date of birth is on the employee record." />
+              ) : (
+                <ul className="hz-dash__list">
+                  {data.upcomingBirthdays.slice(0, 5).map((person) => (
+                    <li key={person.employeeId}>
+                      <Link to={`/employees/${person.employeeId}`} className="hz-dash__person">
+                        <Avatar name={person.fullName} src={person.profilePhotoUrl} size="sm" />
+                        <span><strong>{person.fullName}</strong></span>
+                        <time>{formatBirthday(person.dateOfBirth)}</time>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )
+            )}
+          </section>
+        )}
+
+        <section className="hz-dash__panel" aria-labelledby="dash-holiday-title">
+          <PanelHeading
+            id="dash-holiday-title"
+            title="Next holiday"
+            link={hasPermission('LEAVE_MANAGE') ? { to: '/settings/leave', label: 'Holiday calendar' } : null}
+          />
+          {holidaysLoading ? <ListSkeleton rows={1} /> : nextOrgHoliday ? (
+            <div className="hz-dash__holiday">
+              <span className="hz-dash__holiday-date" aria-hidden="true">
+                <small>{new Date(`${nextOrgHoliday.date}T00:00:00`).toLocaleDateString('en-IN', { month: 'short' })}</small>
+                <strong>{new Date(`${nextOrgHoliday.date}T00:00:00`).getDate()}</strong>
+              </span>
+              <span>
+                <strong>{nextOrgHoliday.name}</strong>
+                <small>{new Date(`${nextOrgHoliday.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</small>
+              </span>
             </div>
-            <div className="hz-dashboard__composition-legend">
-              <span><i className="active" /> {activeEmployees} active</span>
-              <span><i className="leave" /> {onLeaveEmployees} on leave</span>
-              <span><i className="other" /> {otherEmployees} other</span>
-            </div>
-          </div>
+          ) : (
+            <InlineEmpty icon={CalendarDays} title="No upcoming holidays" description="Holidays added to the company calendar appear here." />
+          )}
+        </section>
+      </div>
+
+      <section className="hz-dash__panel" aria-labelledby="dash-activity-title">
+        <PanelHeading id="dash-activity-title" title="Recent notifications" link={{ to: '/notifications', label: 'View all' }} />
+        {inboxLoading ? <ListSkeleton rows={3} /> : notifications.length === 0 ? (
+          <InlineEmpty icon={Bell} title="No notifications yet" description="Workspace notifications will appear here as they arrive." />
         ) : (
-          <div className="hz-dashboard__empty-inline">
-            <BarChart3 size={22} />
-            <div>
-              <strong>Insights will appear as your workforce grows</strong>
-              <small>Connect attendance, leave, and employee data to see trends here.</small>
-            </div>
-          </div>
+          <ul className="hz-dash__list">
+            {notifications.slice(0, 5).map((notification) => (
+              <li key={notification.id} className={`hz-dash__activity${notification.read_at ? '' : ' is-unread'}`}>
+                <span className="hz-dash__activity-dot" aria-hidden="true" />
+                <span className="hz-dash__activity-copy">
+                  <strong>{notification.title}{!notification.read_at && <span className="visually-hidden"> (unread)</span>}</strong>
+                  <small>{notification.message}</small>
+                </span>
+                {notification.created_at && <time dateTime={notification.created_at}>{timeAgoIST(notification.created_at)}</time>}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
-      <div className="hz-dashboard__three-col">
-        <section className="hz-dashboard__surface" aria-labelledby="holiday-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <span className="hz-dashboard__section-kicker">Plan ahead</span>
-              <h2 id="holiday-title">Upcoming holiday</h2>
-            </div>
-          </div>
-          {nextOrgHoliday ? (
-            <div className="hz-dashboard__holiday">
-              <span>{new Date(`${nextOrgHoliday.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
-              <strong>{nextOrgHoliday.name}</strong>
-              <small>Next holiday on the company calendar</small>
-              <Link to="/reports">View holiday calendar <ArrowRight size={14} /></Link>
-            </div>
-          ) : (
-            <div className="hz-dashboard__holiday hz-dashboard__holiday--empty">
-              <span>No upcoming holidays</span>
-              <strong>Holiday calendar</strong>
-              <small>Add company holidays to see them here.</small>
-              <Link to="/reports">View calendar <ArrowRight size={14} /></Link>
-            </div>
-          )}
-        </section>
-
-        <section className="hz-dashboard__surface" aria-labelledby="updates-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <span className="hz-dashboard__section-kicker">Company feed</span>
-              <h2 id="updates-title">Recent activity</h2>
-            </div>
-          </div>
-          <div className="hz-dashboard__mini-list">
-            <div className="hz-dashboard__mini-item">
-              <span className="hz-dashboard__mini-bullet" />
-              <div><strong>Leave review</strong><small>{pendingCount ? `${pendingCount} request${pendingCount === 1 ? '' : 's'} waiting for decision` : 'No pending leave approvals'}</small></div>
-            </div>
-            <div className="hz-dashboard__mini-item">
-              <span className="hz-dashboard__mini-bullet hz-dashboard__mini-bullet--muted" />
-              <div><strong>Documents</strong><small>{expiringCount ? `${expiringCount} items need attention` : 'No document expiries in the next 30 days'}</small></div>
-            </div>
-          </div>
-        </section>
-
-        <section className="hz-dashboard__surface" aria-labelledby="support-strip-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <span className="hz-dashboard__section-kicker">Need a hand?</span>
-              <h2 id="support-strip-title">Support center</h2>
-            </div>
-          </div>
-          <div className="hz-dashboard__support-compact">
-            <p>Reach the right team for your Vettri HRMS questions.</p>
-            <Link to="/support" className="hz-dashboard__text-link">Open support info <ArrowRight size={15} /></Link>
-          </div>
-        </section>
-      </div>
-
-      <section className="hz-dashboard__quicklinks" aria-labelledby="quicklinks-title">
-        <div className="hz-dashboard__section-heading">
-          <div>
-            <span className="hz-dashboard__section-kicker">Workspace</span>
-            <h2 id="quicklinks-title">More in Vettri HRMS</h2>
-          </div>
-        </div>
-        <div className="hz-dashboard__quicklinks-row">
-          {modules.map(({ title, icon: Icon, to }) => (
-            <Link to={to} className="hz-dashboard__quicklink" key={title}>
-              <Icon size={16} /><span>{title}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <ConfirmDialog
+        open={!!rejectTarget}
+        onClose={() => setRejectTarget(null)}
+        onConfirm={() => decideLeave.mutate({ id: rejectTarget.id, approve: false })}
+        loading={decideLeave.isPending}
+        title="Reject leave request?"
+        description={rejectTarget ? `${rejectTarget.employeeName} · ${rejectTarget.leaveTypeName} · ${formatLeaveRange(rejectTarget.startDate, rejectTarget.endDate)}` : undefined}
+        confirmLabel="Reject request"
+      />
     </div>
   );
+}
+
+function PanelHeading({ id, title, meta = null, link = null }) {
+  return (
+    <div className="hz-dash__panel-heading">
+      <h2 id={id}>{title}</h2>
+      <div className="hz-dash__panel-meta">
+        {meta}
+        {link && <Link to={link.to} className="hz-dash__link">{link.label} <ArrowRight size={14} aria-hidden="true" /></Link>}
+      </div>
+    </div>
+  );
+}
+
+function WorkforceKpis({ data, loading, error, onRetry }) {
+  if (error) {
+    return (
+      <section className="hz-dash__panel hz-dash__kpis-error" aria-label="Workforce metrics">
+        <InlineError message="Workforce metrics could not be loaded." onRetry={() => onRetry()} />
+      </section>
+    );
+  }
+
+  const total = data?.totalEmployees || 0;
+  const departments = data?.departmentBreakdown?.length || 0;
+  const share = (value) => (total ? `${Math.round((value / total) * 100)}% of workforce` : '');
+  const kpis = [
+    { label: 'Total employees', value: data?.totalEmployees, icon: Users, note: total ? `Across ${departments} department${departments === 1 ? '' : 's'}` : 'No employees yet' },
+    { label: 'Active', value: data?.activeEmployees, icon: UserCheck, note: share(data?.activeEmployees || 0), tone: 'success' },
+    { label: 'On leave', value: data?.onLeave, icon: CalendarOff, note: share(data?.onLeave || 0), tone: 'warning' },
+    { label: 'Notice period', value: data?.noticePeriod, icon: Clock3, note: data?.noticePeriod ? 'Serving notice' : 'No one serving notice', tone: 'info' },
+  ];
+
+  return (
+    <section className="hz-dash__kpis" aria-label="Workforce metrics" aria-busy={loading}>
+      {kpis.map(({ label, value, icon: Icon, note, tone }) => (
+        <article className={`hz-dash__kpi${tone ? ` hz-dash__kpi--${tone}` : ''}`} key={label}>
+          <div className="hz-dash__kpi-top">
+            <span>{label}</span>
+            <span className="hz-dash__kpi-icon" aria-hidden="true"><Icon size={16} /></span>
+          </div>
+          {loading ? (
+            <span className="hz-dash__skeleton hz-dash__skeleton--kpi" aria-hidden="true" />
+          ) : (
+            <strong>{(value ?? 0).toLocaleString('en-IN')}</strong>
+          )}
+          <small>{loading ? ' ' : note}</small>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function WorkforceOverview({ data }) {
+  const total = data.totalEmployees;
+  const exited = (data.resigned || 0) + (data.terminated || 0);
+  const segments = [
+    { key: 'active', label: 'Active', value: data.activeEmployees || 0 },
+    { key: 'leave', label: 'On leave', value: data.onLeave || 0 },
+    { key: 'notice', label: 'Notice period', value: data.noticePeriod || 0 },
+    { key: 'exited', label: 'Resigned or terminated', value: exited },
+  ].filter((segment) => segment.value > 0);
+  const departments = [...(data.departmentBreakdown || [])].sort((a, b) => b.count - a.count);
+  const maxDepartment = departments[0]?.count || 1;
+
+  return (
+    <section className="hz-dash__panel" aria-labelledby="dash-workforce-title">
+      <PanelHeading id="dash-workforce-title" title="Workforce overview" link={{ to: '/employees', label: 'View employees' }} />
+      <div className="hz-dash__overview">
+        <div>
+          <h3 className="hz-dash__subheading">Employment status</h3>
+          <div className="hz-dash__stack" role="img" aria-label={segments.map((s) => `${s.value} ${s.label.toLowerCase()}`).join(', ')}>
+            {segments.map((segment) => (
+              <span key={segment.key} className={`hz-dash__stack-seg hz-dash__stack-seg--${segment.key}`} style={{ flexGrow: segment.value }} />
+            ))}
+          </div>
+          <ul className="hz-dash__legend">
+            {segments.map((segment) => (
+              <li key={segment.key}>
+                <i className={`hz-dash__stack-seg--${segment.key}`} aria-hidden="true" />
+                <span>{segment.label}</span>
+                <strong>{segment.value.toLocaleString('en-IN')}</strong>
+                <small>{Math.round((segment.value / total) * 100)}%</small>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="hz-dash__subheading">Headcount by department</h3>
+          {departments.length === 0 ? (
+            <p className="hz-dash__muted">Assign employees to departments to see the breakdown.</p>
+          ) : (
+            <ul className="hz-dash__bars">
+              {departments.slice(0, 8).map((department) => (
+                <li key={department.departmentName}>
+                  <span className="hz-dash__bar-label">{department.departmentName}</span>
+                  <span className="hz-dash__bar-track" aria-hidden="true">
+                    <span className="hz-dash__bar-fill" style={{ width: `${(department.count / maxDepartment) * 100}%` }} />
+                  </span>
+                  <strong>{department.count}</strong>
+                </li>
+              ))}
+              {departments.length > 8 && (
+                <li className="hz-dash__muted">+{departments.length - 8} more department{departments.length - 8 === 1 ? '' : 's'}</li>
+              )}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ListSkeleton({ rows = 3 }) {
+  return (
+    <div className="hz-dash__list-skeleton" aria-busy="true" aria-label="Loading">
+      {Array.from({ length: rows }, (_, index) => <span key={index} className="hz-dash__skeleton" />)}
+    </div>
+  );
+}
+
+function InlineEmpty({ icon: Icon, title, description }) {
+  return (
+    <div className="hz-dash__empty">
+      <Icon size={20} aria-hidden="true" />
+      <div>
+        <strong>{title}</strong>
+        <small>{description}</small>
+      </div>
+    </div>
+  );
+}
+
+function InlineError({ message, onRetry }) {
+  return (
+    <div className="hz-dash__empty hz-dash__empty--error" role="alert">
+      <AlertCircle size={20} aria-hidden="true" />
+      <div>
+        <strong>{message}</strong>
+        <small>Check your connection and try again.</small>
+      </div>
+      <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onRetry}>Retry</button>
+    </div>
+  );
+}
+
+function formatShortDate(value) {
+  if (!value) return '';
+  return new Date(`${value}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function formatLeaveRange(start, end) {
+  if (!start) return '';
+  if (!end || end === start) return formatShortDate(start);
+  return `${formatShortDate(start)} – ${formatShortDate(end)}`;
+}
+
+/** Next occurrence of a date of birth, e.g. "Today", "Tomorrow", "14 Nov". */
+function formatBirthday(dateOfBirth) {
+  if (!dateOfBirth) return '';
+  const todayKey = toISTDateInputValue();
+  const [year, month, day] = todayKey.split('-').map(Number);
+  const [, birthMonth, birthDay] = dateOfBirth.split('-').map(Number);
+  const today = Date.UTC(year, month - 1, day);
+  let next = Date.UTC(year, birthMonth - 1, birthDay);
+  if (next < today) next = Date.UTC(year + 1, birthMonth - 1, birthDay);
+  const days = Math.round((next - today) / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  return new Date(next).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
 function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
@@ -423,8 +603,9 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
   const leaveRequests = Array.isArray(leaveRequestsData) ? leaveRequestsData : [];
   const documents = Array.isArray(documentsData) ? documentsData : [];
   const holidays = Array.isArray(holidaysData) ? holidaysData : [];
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const todayPunches = attendance.filter((record) => typeof record.punchTime === 'string' && record.punchTime.slice(0, 10) === todayKey);
+  // punchTime is a UTC instant; "today" means today in IST, not UTC.
+  const todayKey = toISTDateInputValue();
+  const todayPunches = attendance.filter((record) => typeof record.punchTime === 'string' && toISTDateInputValue(record.punchTime) === todayKey);
   const hasCheckedIn = todayPunches.some((record) => record.punchType === 'IN');
   const hasCheckedOut = todayPunches.some((record) => record.punchType === 'OUT');
   const nextHoliday = holidays
@@ -435,31 +616,21 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
   const notifications = Array.isArray(notificationsData) ? notificationsData : [];
   const unreadNotifications = notifications.filter((notification) => !(notification.read_at || notification.readAt)).length;
 
-  const services = [
-    { title: 'My Profile', description: 'Keep your personal and employment details close at hand.', icon: UserCheck, to: '/my-profile' },
-    { title: 'Attendance', description: 'Review your recorded punches and attendance history.', icon: Clock3, to: '/my-profile?tab=attendance' },
-    { title: 'Leave', description: 'View balances and follow your leave requests.', icon: CalendarOff, to: '/my-profile?tab=leave' },
-    { title: 'View Payslip', description: 'Access your salary details and payslip information.', icon: WalletCards, to: '/my-payslip' },
-    { title: 'My Documents', description: 'Review the documents held on your employee record.', icon: FileText, to: '/my-profile?tab=documents' },
-  ];
-
   return (
     <div className="hz-dashboard hz-dashboard--employee">
-      <header className="hz-dashboard__hero">
-        <div className="hz-dashboard__hero-copy">
-          <p className="hz-dashboard__eyebrow">{today}</p>
+      <header className="hz-dash__hero">
+        <div className="hz-dash__hero-copy">
+          <p className="hz-dash__eyebrow">{today}</p>
           <h1>{greeting}</h1>
-          <p>Here&apos;s what&apos;s happening across your workspace today.</p>
+          <p className="hz-dash__hero-summary">
+            {unreadNotifications ? `${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}` : 'No unread notifications'}
+            {pendingLeave ? ` · ${pendingLeave} leave request${pendingLeave === 1 ? '' : 's'} awaiting review` : ''}
+          </p>
         </div>
-        <div className="hz-dashboard__hero-meta">
-          <div className="hz-dashboard__hero-pill">
-            <span>Today</span>
-            <strong>{hasCheckedOut ? 'Complete' : hasCheckedIn ? 'Checked in' : 'Not recorded'}</strong>
-          </div>
-          <div className="hz-dashboard__hero-badge">
-            <TrendingUp size={15} />
-            {unreadNotifications ? `${unreadNotifications} new notification${unreadNotifications === 1 ? '' : 's'}` : 'Everything is current'}
-          </div>
+        <div className="hz-dash__hero-actions">
+          <Link to="/my-profile?tab=leave" className="btn btn-light">
+            <CalendarOff size={16} aria-hidden="true" /> Request leave
+          </Link>
         </div>
       </header>
 
@@ -556,41 +727,6 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
         </section>
       </div>
 
-      <section className="hz-dashboard__surface hz-dashboard__insights" aria-labelledby="employee-feed-title">
-        <div className="hz-dashboard__section-heading">
-          <div>
-            <span className="hz-dashboard__section-kicker">Workplace feed</span>
-            <h2 id="employee-feed-title">Company updates</h2>
-          </div>
-          <Link to="/notifications" className="hz-dashboard__text-link">View inbox <ArrowRight size={15} /></Link>
-        </div>
-        <div className="hz-dashboard__empty-inline">
-          <Inbox size={22} />
-          <div>
-            <strong>Stay connected with your workplace</strong>
-            <small>Vettri announcements and updates will appear here when your organization publishes them.</small>
-          </div>
-        </div>
-      </section>
-
-      <section className="hz-dashboard__explore" aria-labelledby="employee-services-title">
-        <div className="hz-dashboard__section-heading">
-          <div>
-            <span className="hz-dashboard__section-kicker">Employee services</span>
-            <h2 id="employee-services-title">Your workspace</h2>
-          </div>
-        </div>
-        <div className="hz-dashboard__module-grid">
-          {services.map(({ title, description, icon: Icon, to }) => (
-            <Link to={to} className="hz-dashboard__module-card" key={title}>
-              <span className="hz-dashboard__module-icon hz-dashboard__module-icon--blue"><Icon size={19} /></span>
-              <span className="hz-dashboard__module-copy"><strong>{title}</strong><small>{description}</small></span>
-              <ArrowRight size={16} />
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <div className="hz-dashboard__employee-widgets">
         <AttendanceWidget records={attendance} loading={attendanceLoading} />
         <FinanceWidget salary={salary} />
@@ -606,7 +742,7 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
         holidaysError={holidaysError}
       />
 
-      <div className="hz-dashboard__primary-grid">
+      <div className="hz-dash__grid hz-dash__grid--main">
         <section className="hz-dashboard__surface" aria-labelledby="employee-record-title">
           <div className="hz-dashboard__section-heading">
             <div>
@@ -627,36 +763,17 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
           <Link to="/my-profile" className="hz-dashboard__text-link mt-3 d-inline-flex">Open my profile <ArrowRight size={15} /></Link>
         </section>
 
-        <section className="hz-dashboard__surface" aria-labelledby="employee-holiday-title">
+        <section className="hz-dashboard__surface" aria-labelledby="employee-support-title">
           <div className="hz-dashboard__section-heading">
             <div>
-              <span className="hz-dashboard__section-kicker">Plan ahead</span>
-              <h2 id="employee-holiday-title">Upcoming holiday</h2>
+              <h2 id="employee-support-title">Need a hand?</h2>
             </div>
-            <CalendarDays size={20} aria-hidden="true" />
+            <LifeBuoy size={20} aria-hidden="true" />
           </div>
-          <div className={`hz-dashboard__holiday ${nextHoliday ? '' : 'hz-dashboard__holiday--empty'}`}>
-            <span>
-              {nextHoliday
-                ? new Date(`${nextHoliday.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-                : 'No upcoming holidays'}
-            </span>
-            <strong>{nextHoliday?.name || 'Holiday calendar'}</strong>
-            <small>{nextHoliday ? 'Next holiday on the company calendar' : 'Your company calendar will appear here.'}</small>
-            <Link to="/reports">View holiday calendar <ArrowRight size={14} /></Link>
-          </div>
+          <p className="text-secondary-hz mb-3">Reach the right team for questions about pay, leave, or your employee record.</p>
+          <Link to="/support" className="hz-dashboard__text-link">View support info <ArrowRight size={15} /></Link>
         </section>
       </div>
-
-      <section className="hz-dashboard__support-strip" aria-labelledby="employee-support-title">
-        <div>
-          <span className="hz-dashboard__section-kicker">Need a hand?</span>
-          <h2 id="employee-support-title">Support information</h2>
-          <p>Reach the right team for your Vettri HRMS questions.</p>
-        </div>
-        <Link to="/support" className="hz-dashboard__text-link">View support info <ArrowRight size={15} /></Link>
-        <LifeBuoy size={28} aria-hidden="true" />
-      </section>
     </div>
   );
 }

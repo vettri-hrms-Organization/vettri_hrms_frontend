@@ -22,6 +22,8 @@ import { useBreadcrumbLabel } from '../../components/layout/BreadcrumbContext';
 import Tabs from '../../components/ui/Tabs';
 import { useAuth } from '../../hooks/useAuth';
 import ApplyLeaveModal from '../leave/ApplyLeaveModal';
+import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
+import { categoricalColor } from '../../design-system/palette';
 
 const TABS = [
   { key: 'overview', label: 'Profile', icon: ClipboardList },
@@ -522,6 +524,7 @@ function AttendanceTab({ employee }) {
         <EmptyState icon={Clock} title="No punches recorded" description="Attendance records from biometric devices will show up here." />
       )}
       {!isLoading && !isError && records?.length > 0 && (
+        <div className="table-responsive">
         <table className="table mb-0 align-middle hz-table" aria-label="Employee attendance history">
           <thead>
             <tr style={{ fontSize: 'var(--hz-text-xs)', color: 'var(--hz-text-muted)', textTransform: 'uppercase' }}>
@@ -536,8 +539,8 @@ function AttendanceTab({ employee }) {
           <tbody>
             {records.map((r) => (
               <tr key={r.id}>
-                <td className="ps-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{new Date(r.punchTime).toLocaleDateString()}</td>
-                <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{new Date(r.punchTime).toLocaleTimeString()}</td>
+                <td className="ps-4" style={{ fontSize: 'var(--hz-text-sm)' }}>{formatDateIST(r.punchTime)}</td>
+                <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{formatTimeIST(r.punchTime)}</td>
                 <td>
                   <Badge variant={r.punchType === 'IN' ? 'success' : r.punchType === 'OUT' ? 'danger' : 'neutral'}>{r.punchType}</Badge>
                 </td>
@@ -548,6 +551,7 @@ function AttendanceTab({ employee }) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </Card>
     </div>
@@ -694,6 +698,7 @@ function DocumentsTab({ employee, canUploadOwnDocument, canReviewDocuments: canR
         <EmptyState icon={Search} title="No documents found" description={`Nothing matches "${documentSearch}".`} />
       )}
       {!isLoading && !isError && visibleDocuments.length > 0 && (
+        <div className="table-responsive">
         <table className="table mb-0 align-middle hz-table" aria-label="Employee documents">
           <thead>
             <tr style={{ fontSize: 'var(--hz-text-xs)', color: 'var(--hz-text-muted)', textTransform: 'uppercase' }}>
@@ -772,6 +777,7 @@ function DocumentsTab({ employee, canUploadOwnDocument, canReviewDocuments: canR
             })}
           </tbody>
         </table>
+        </div>
       )}
 
       {showAdd && canUploadOwnDocument && <AddDocumentModal employeeId={employee.id} onClose={() => setShowAdd(false)} />}
@@ -962,7 +968,7 @@ function LeaveTab({ employee, onApplyLeave }) {
                 const used = Number(balance.usedDays) || 0;
                 const total = (Number(balance.allocatedDays) || 0) + (Number(balance.carriedForwardDays) || 0);
                 const percentage = total > 0 ? Math.min(100, Math.max(0, (available / total) * 100)) : 0;
-                const accent = LEAVE_TYPE_COLORS[index % LEAVE_TYPE_COLORS.length];
+                const accent = categoricalColor(index);
                 const code = getLeaveCode(balance.leaveTypeName);
 
                 return (
@@ -1019,7 +1025,6 @@ function LeaveTab({ employee, onApplyLeave }) {
   );
 }
 
-const LEAVE_TYPE_COLORS = ['#2563EB', '#F97316', '#10B981', '#FBBF24', '#8B5CF6', '#14B8A6'];
 
 function getLeaveCode(name = '') {
   const words = name.split(/\s+/).filter(Boolean);

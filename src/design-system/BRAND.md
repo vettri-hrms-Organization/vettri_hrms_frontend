@@ -20,21 +20,42 @@ Static exports for places that can't render React: `public/favicon.svg`,
 
 ## Color
 
-Brand colors are defined once in `tokens.css` and reused everywhere:
+Brand colors are defined once in `styles/tokens.css` and reused everywhere.
+Component CSS references the `--hz-*` role tokens, never raw hex.
 
-| Role | Token | Hex |
+| Role | Token | Hex | Use |
+|---|---|---|---|
+| Midnight Navy | `--vettri-navy` | `#10172A` | Active nav item, dashboard hero, brand moments |
+| Deep Indigo | `--hz-primary-800` | `#1B2850` | Second stop of the navy gradient |
+| Signature Blue | `--hz-primary-500` | `#4169E1` | Primary buttons, focus ring, data accents |
+| Strong Blue | `--hz-primary-600` | `#3457C9` | Links and blue text on tinted surfaces |
+| Electric Indigo | `--hz-accent-500` | `#6558F5` | Sparing secondary accent |
+| Soft Blue Tint | `--hz-primary-50` | `#EEF3FF` | Selected/hover tints |
+| Canvas | `--hz-bg-canvas` | `#F6F8FC` | Page background |
+| Surface | `--hz-bg-surface` | `#FFFFFF` | Cards, panels, tables |
+| Ink | `--hz-text-primary` | `#172033` | Body text |
+| Secondary text | `--hz-text-secondary` | `#667085` | Supporting copy (4.97:1) |
+| Border | `--hz-border` | `#E5EAF2` | Hairlines |
+| Golden accent | static mark accent | `#FFB000` | Logo mark only |
+
+Semantic colours come in steps: `-500` is the fill or icon colour, `-700` is
+the text colour on the matching `-50` tint (every pair clears 4.5:1). Warning
+amber `#B7791F` is only 3.6:1 on white, so never use it for body text.
+
+| Meaning | Fill (`-500`) | Text on tint (`-700`) |
 |---|---|---|
-| Primary blue | `--hz-primary-500` | `#2563EB` |
-| Deep navy | `--hz-primary-700` | `#1E40AF` |
-| Accent orange | `--hz-accent-500` | `#F97316` |
-| Golden accent | static mark accent | `#FFB000` |
-| Ink | `--hz-text-primary` | `#172033` |
-| Canvas | `--hz-bg-canvas` | `#F4F7FB` |
+| Success | `#16876A` | `#0E5E4A` |
+| Warning | `#B7791F` | `#8A5A12` |
+| Error | `#D14343` | `#9E2C2C` |
+| Info | `#3478D4` | `#24569C` |
 
-The signature gradient (`--hz-primary-500` → `--hz-primary-700` →
-`--hz-accent-600`) is used sparingly, for high-impact surfaces only: the hero
-section, the login brand panel, and the logo mark itself. Everywhere else
-stays on the quiet neutral palette so the gradient keeps its impact.
+Charts and per-category fills computed in JS use `CATEGORICAL_COLORS` from
+`design-system/palette.js` (each at least 3:1 on white).
+
+The navy gradient (`--hz-gradient-accent`) is reserved for one focal surface
+per screen, such as the dashboard hero. Everywhere else stays on quiet neutral
+surfaces so the brand moment keeps its impact. Status is never conveyed by
+colour alone; badges always carry a text label.
 
 ## Typography
 

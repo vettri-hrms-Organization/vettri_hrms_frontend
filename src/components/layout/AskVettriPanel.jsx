@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
+  CalendarDays,
   ChevronDown,
   LoaderCircle,
   Minus,
@@ -401,7 +402,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
                     {message.action?.type === 'LEAVE_CONFIRMATION' && (
                       <div className="vettri-assistant-leave-confirmation" role="group" aria-label="Confirm leave request">
                         <div className="vettri-assistant-leave-confirmation__heading">
-                          <span aria-hidden="true">🌴</span>
+                          <CalendarDays size={16} aria-hidden="true" />
                           <strong>Leave request</strong>
                         </div>
                         <strong className="vettri-assistant-leave-confirmation__type">{message.action.data?.leaveType}</strong>

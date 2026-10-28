@@ -5,15 +5,15 @@
 // ==========================================================
 
 @use 'bootstrap/scss/bootstrap' with (
-  $primary: #2563eb,
-  $secondary: #526176,
-  $success: #16a34a,
-  $info: #0284c7,
-  $warning: #d97706,
-  $danger: #dc2626,
-  $light: #f6f8fc,
+  $primary: #4169E1,
+  $secondary: #4A5468,
+  $success: #16876A,
+  $info: #3478D4,
+  $warning: #B7791F,
+  $danger: #D14343,
+  $light: #F6F8FC,
   $dark: #172033,
-  $border-color: #e5eaf1,
+  $border-color: #E5EAF2,
   $font-size-base: 0.9375rem,
   $line-height-base: 1.55,
   $headings-font-weight: 600,
@@ -22,24 +22,29 @@
   $border-radius-lg: 0.75rem,
   $border-radius-xl: 1rem,
   $card-border-radius: 0.75rem,
-  $btn-font-weight: 500,
+  $btn-font-weight: 600,
+  $font-family-sans-serif: ("Manrope Variable", "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif),
+  $body-color: #172033,
+  $body-bg: #F6F8FC,
+  $link-color: #3457C9,
+  $min-contrast-ratio: 4.5,
   $btn-padding-y: 0.5rem,
   $btn-padding-x: 1rem,
   $btn-padding-y-sm: 0.3125rem,
   $btn-padding-x-sm: 0.75rem,
   $btn-border-radius: 0.5rem,
-  $btn-focus-box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2),
+  $btn-focus-box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.28),
   $input-padding-y: 0.5rem,
   $input-padding-x: 0.75rem,
-  $input-border-color: #cbd5e1,
-  $input-focus-border-color: #2563eb,
-  $input-focus-box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2),
-  $card-border-color: #e5eaf1,
+  $input-border-color: #CDD5E1,
+  $input-focus-border-color: #4169E1,
+  $input-focus-box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.28),
+  $card-border-color: #E5EAF2,
   $card-spacer-y: 1.25rem,
   $card-spacer-x: 1.25rem,
   $table-cell-padding-y: 0.75rem,
   $table-cell-padding-x: 1rem,
-  $table-border-color: #e5eaf1,
+  $table-border-color: #EDF1F7,
   $spacer: 1rem,
   $spacers: (
     0: 0,
@@ -57,69 +62,64 @@
 );
 
 // ==========================================================
-// Post-Bootstrap polish - small, deliberate upgrades layered on top of
-// the stock component output so buttons/inputs feel premium rather than
-// "default Bootstrap." Kept minimal on purpose.
+// Post-Bootstrap polish. Buttons respond with color, not movement: a
+// lift on hover reads as playful, and moving targets are harder to hit.
+// Press feedback is a slight scale-down, collapsed by reduced-motion.
 // ==========================================================
 
 .btn {
-  transition: transform var(--hz-transition-fast), box-shadow var(--hz-transition-base), background var(--hz-transition-base), filter var(--hz-transition-base);
   font-weight: 600;
   letter-spacing: 0;
+  transition:
+    background-color var(--hz-transition-fast),
+    border-color var(--hz-transition-fast),
+    color var(--hz-transition-fast),
+    box-shadow var(--hz-transition-fast),
+    transform var(--hz-transition-fast);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--hz-focus);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .btn-primary {
-  background: var(--hz-primary-600);
-  border-color: var(--hz-primary-600);
-  box-shadow: var(--hz-shadow-primary);
-}
-.btn-primary:hover,
-.btn-primary:focus {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px -8px rgba(30, 64, 175, 0.38);
-}
-.btn-primary:active {
-  transform: translateY(0);
-  filter: brightness(0.97);
+  --bs-btn-bg: var(--hz-primary-500);
+  --bs-btn-border-color: var(--hz-primary-500);
+  --bs-btn-hover-bg: var(--hz-primary-600);
+  --bs-btn-hover-border-color: var(--hz-primary-600);
+  --bs-btn-active-bg: var(--hz-primary-700);
+  --bs-btn-active-border-color: var(--hz-primary-700);
+  --bs-btn-disabled-bg: var(--hz-primary-500);
+  --bs-btn-disabled-border-color: var(--hz-primary-500);
+  box-shadow: 0 1px 2px rgba(16, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .btn-outline-secondary,
 .btn-light {
   border-color: var(--hz-border);
 }
-.btn-outline-secondary:hover,
-.btn-light:hover {
-  transform: translateY(-1px);
-}
 
 .form-control,
 .form-select {
-  min-height: 42px;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.form-control::placeholder {
-  color: var(--hz-text-muted);
-}
-
-.form-control,
-.form-select {
-  transition: border-color var(--hz-transition-fast), box-shadow var(--hz-transition-fast), background var(--hz-transition-fast);
-}
-.form-control:focus,
-.form-select:focus {
-  background: var(--hz-bg-surface);
-}
-
-.form-control,
-.form-select {
+  min-height: 40px;
+  border-radius: var(--hz-radius-md);
   color: var(--hz-text-primary);
   font-size: var(--hz-text-sm);
-  min-height: 40px;
+  transition: border-color var(--hz-transition-fast), box-shadow var(--hz-transition-fast), background-color var(--hz-transition-fast);
 }
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--hz-bg-surface);
+}
+
 .form-control::placeholder {
   color: var(--hz-text-muted);
-  opacity: 0.8;
+  opacity: 1;
 }

@@ -1249,12 +1249,12 @@ export default function DeviceDetails() {
                                   '50%',
                                 background:
                                   failed
-                                    ? '#dc2626'
+                                    ? 'var(--hz-danger-500)'
                                     : completed
-                                      ? '#16a34a'
+                                      ? 'var(--hz-success-500)'
                                       : active
-                                        ? '#f59e0b'
-                                        : '#d1d5db',
+                                        ? 'var(--hz-warning-500)'
+                                        : 'var(--hz-border)',
                                 display:
                                   'inline-block',
                                 boxShadow:
@@ -1269,11 +1269,11 @@ export default function DeviceDetails() {
                               style={{
                                 color:
                                   failed
-                                    ? '#b91c1c'
+                                    ? 'var(--hz-danger-600)'
                                     : completed
-                                      ? '#166534'
+                                      ? 'var(--hz-success-700)'
                                       : active
-                                        ? '#b45309'
+                                        ? 'var(--hz-warning-700)'
                                         : 'var(--hz-text-secondary)',
                               }}
                             >
@@ -1843,9 +1843,9 @@ export default function DeviceDetails() {
                     className="table-responsive"
                     style={{
                       borderTop:
-                        '1px solid #d9e2ec',
+                        '1px solid var(--hz-border)',
                       borderBottom:
-                        '1px solid #d9e2ec',
+                        '1px solid var(--hz-border)',
                     }}
                   >
 
@@ -1873,9 +1873,9 @@ export default function DeviceDetails() {
                     className="d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2"
                     style={{
                       background:
-                        '#f7f9fc',
+                        'var(--hz-surface-subtle)',
                       borderTop:
-                        '1px solid #d9e2ec',
+                        '1px solid var(--hz-border)',
                       minHeight: 48,
                     }}
                   >
@@ -1886,7 +1886,7 @@ export default function DeviceDetails() {
                     <div
                       style={{
                         fontSize: 12,
-                        color: '#5f6b7a',
+                        color: 'var(--hz-text-secondary)',
                       }}
                     >
 

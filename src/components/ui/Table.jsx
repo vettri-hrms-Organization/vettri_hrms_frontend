@@ -86,7 +86,6 @@ export default function Table({
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   onKeyDown={onRowClick ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onRowClick(row); } } : undefined}
                   tabIndex={onRowClick ? 0 : undefined}
-                  aria-label={onRowClick ? `Open row ${i + 1}` : undefined}
                   aria-selected={selectable ? isSelected : undefined}
                   className={[
                     onRowClick ? 'hz-table-row--clickable' : undefined,

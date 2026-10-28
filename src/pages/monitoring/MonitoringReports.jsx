@@ -21,7 +21,7 @@ import Button from '../../components/ui/Button';
 
 const PAGE_SIZE = 10;
 
-const HEADER_COLOR = '#0B2342';
+const HEADER_COLOR = 'var(--vettri-navy)';
 
 
 /* ============================================================
@@ -507,7 +507,7 @@ export default function MonitoringReports() {
       '#ffffff',
 
     borderColor:
-      '#18385c',
+      'var(--hz-primary-800)',
 
     fontWeight:
       600,
@@ -533,7 +533,7 @@ export default function MonitoringReports() {
     height: 42,
 
     borderColor:
-      '#d9e1e8',
+      'var(--hz-border)',
 
     fontSize:
       12,
@@ -583,7 +583,7 @@ export default function MonitoringReports() {
               height: 38,
               borderRadius: 8,
               backgroundColor:
-                '#EAF0F7',
+                'var(--hz-border)',
               color:
                 HEADER_COLOR,
             }}
@@ -609,7 +609,7 @@ export default function MonitoringReports() {
                 letterSpacing:
                   '0.08em',
                 color:
-                  '#64748B',
+                  'var(--hz-text-secondary)',
               }}
             >
               Monitoring
@@ -696,7 +696,7 @@ export default function MonitoringReports() {
                 transform:
                   'translateY(-50%)',
                 color:
-                  '#64748B',
+                  'var(--hz-text-secondary)',
                 pointerEvents:
                   'none',
                 zIndex: 2,
@@ -715,7 +715,7 @@ export default function MonitoringReports() {
                 height: 42,
                 borderRadius: 8,
                 borderColor:
-                  '#CBD5E1',
+                  'var(--hz-border-strong)',
                 fontSize: 13,
                 boxShadow:
                   'none',
@@ -758,7 +758,7 @@ export default function MonitoringReports() {
                   width: 28,
                   height: 28,
                   color:
-                    '#64748B',
+                    'var(--hz-text-secondary)',
                 }}
                 onClick={
                   clearSearch
@@ -804,7 +804,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -854,7 +854,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -904,7 +904,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -952,7 +952,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -1000,7 +1000,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -1050,7 +1050,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -1100,7 +1100,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -1148,7 +1148,7 @@ export default function MonitoringReports() {
                 fontWeight:
                   600,
                 color:
-                  '#475569',
+                  'var(--hz-gray-600)',
               }}
             >
 
@@ -1216,7 +1216,7 @@ export default function MonitoringReports() {
             "
             style={{
               borderColor:
-                '#E2E8F0 !important',
+                'var(--hz-border) !important',
             }}
           >
 
@@ -1237,7 +1237,7 @@ export default function MonitoringReports() {
                   fontWeight:
                     600,
                   color:
-                    '#475569',
+                    'var(--hz-gray-600)',
                 }}
               >
                 Quick range:
@@ -1396,7 +1396,7 @@ export default function MonitoringReports() {
                 "
                 style={{
                   borderColor:
-                    '#E2E8F0 !important',
+                    'var(--hz-border) !important',
                 }}
               >
 
@@ -1567,7 +1567,7 @@ export default function MonitoringReports() {
               minWidth:
                 1050,
               borderColor:
-                '#d9e1e8',
+                'var(--hz-border)',
             }}
           >
 
@@ -1760,7 +1760,7 @@ export default function MonitoringReports() {
                           size={30}
                           style={{
                             color:
-                              '#DC3545',
+                              'var(--hz-danger-500)',
                           }}
                         />
 
@@ -1840,14 +1840,14 @@ export default function MonitoringReports() {
                           size={30}
                           style={{
                             color:
-                              '#94A3B8',
+                              'var(--hz-gray-400)',
                           }}
                         />
 
                         <strong
                           style={{
                             color:
-                              '#334155',
+                              'var(--hz-gray-700)',
                           }}
                         >
                           No activity in this range
@@ -1923,7 +1923,7 @@ export default function MonitoringReports() {
                               fontWeight:
                                 400,
                               color:
-                                '#64748B',
+                                'var(--hz-text-secondary)',
                               marginTop:
                                 2,
                             }}
@@ -2074,11 +2074,11 @@ export default function MonitoringReports() {
                             "
                             style={{
                               backgroundColor:
-                                '#EEF2F7',
+                                'var(--hz-border)',
                               color:
                                 HEADER_COLOR,
                               border:
-                                '1px solid #CBD5E1',
+                                '1px solid var(--hz-border-strong)',
                               fontSize:
                                 11,
                               fontWeight:
@@ -2132,9 +2132,9 @@ export default function MonitoringReports() {
               "
               style={{
                 borderTop:
-                  '1px solid #d9e1e8',
+                  '1px solid var(--hz-border)',
                 backgroundColor:
-                  '#f8fafc',
+                  'var(--hz-surface-subtle)',
                 minHeight:
                   58,
               }}
@@ -2147,7 +2147,7 @@ export default function MonitoringReports() {
               <div
                 style={{
                   color:
-                    '#64748B',
+                    'var(--hz-text-secondary)',
                   fontSize:
                     12,
                 }}
@@ -2158,7 +2158,7 @@ export default function MonitoringReports() {
                 <strong
                   style={{
                     color:
-                      '#334155',
+                      'var(--hz-gray-700)',
                   }}
                 >
                   {
@@ -2171,7 +2171,7 @@ export default function MonitoringReports() {
                 <strong
                   style={{
                     color:
-                      '#334155',
+                      'var(--hz-gray-700)',
                   }}
                 >
                   {
@@ -2184,7 +2184,7 @@ export default function MonitoringReports() {
                 <strong
                   style={{
                     color:
-                      '#334155',
+                      'var(--hz-gray-700)',
                   }}
                 >
                   {
@@ -2230,13 +2230,13 @@ export default function MonitoringReports() {
                       '#ffffff',
 
                     border:
-                      '1px solid #CBD5E1',
+                      '1px solid var(--hz-border-strong)',
 
                     color:
                       currentPage ===
                       0
-                        ? '#CBD5E1'
-                        : '#334155',
+                        ? 'var(--hz-border-strong)'
+                        : 'var(--hz-gray-700)',
 
                     borderRadius:
                       6,
@@ -2285,7 +2285,7 @@ export default function MonitoringReports() {
                     fontSize:
                       12,
                     color:
-                      '#475569',
+                      'var(--hz-gray-600)',
                   }}
                 >
 
@@ -2338,14 +2338,14 @@ export default function MonitoringReports() {
                       '#ffffff',
 
                     border:
-                      '1px solid #CBD5E1',
+                      '1px solid var(--hz-border-strong)',
 
                     color:
                       currentPage >=
                       totalPages -
                         1
-                        ? '#CBD5E1'
-                        : '#334155',
+                        ? 'var(--hz-border-strong)'
+                        : 'var(--hz-gray-700)',
 
                     borderRadius:
                       6,

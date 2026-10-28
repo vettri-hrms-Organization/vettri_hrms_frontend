@@ -5,6 +5,7 @@ import EmptyState from '../../../components/ui/EmptyState';
 import Skeleton, { SkeletonText } from '../../../components/ui/Skeleton';
 import { formatCurrency } from '../../../utils/formatCurrency';
 import { formatTimeIST, toISTDateInputValue } from '../../../utils/formatDateTime';
+import { categoricalColor } from '../../../design-system/palette';
 
 export function EmployeeMetric({ icon: Icon, label, value, detail, tone }) {
   return <article className={`hz-dashboard__employee-metric hz-dashboard__employee-metric--${tone}`}><span className="hz-dashboard__employee-metric-icon"><Icon size={18} /></span><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></article>;
@@ -41,9 +42,9 @@ export function AttendanceWidget({ records, loading }) {
 }
 
 export function LeaveWidget({ balances, requests, loading, year, holidays = [], holidaysLoading, holidaysError }) {
-  const upcoming = requests.filter((request) => request.startDate >= new Date().toISOString().slice(0, 10)).sort((first, second) => first.startDate.localeCompare(second.startDate))[0];
+  const upcoming = requests.filter((request) => request.startDate >= toISTDateInputValue()).sort((first, second) => first.startDate.localeCompare(second.startDate))[0];
   const upcomingHolidays = holidays
-    .filter((holiday) => typeof holiday.date === 'string' && holiday.date >= new Date().toISOString().slice(0, 10))
+    .filter((holiday) => typeof holiday.date === 'string' && holiday.date >= toISTDateInputValue())
     .sort((first, second) => first.date.localeCompare(second.date));
   const totalAvailable = balances.reduce((total, balance) => total + (Number(balance.remainingDays) || 0), 0);
   const pendingByType = requests.reduce((accumulator, request) => {
@@ -138,7 +139,7 @@ function LeaveCapsule({ balance, index, pendingDays }) {
   const used = Number(balance.usedDays) || 0;
   const total = (Number(balance.allocatedDays) || 0) + (Number(balance.carriedForwardDays) || 0);
   const percentage = total > 0 ? Math.min(100, Math.max(0, (available / total) * 100)) : 0;
-  const accent = LEAVE_TYPE_COLORS[index % LEAVE_TYPE_COLORS.length];
+  const accent = categoricalColor(index);
   const [showTooltip, setShowTooltip] = useState(false);
   const code = getLeaveCode(balance.leaveTypeName);
   const accessibleLabel = `${balance.leaveTypeName}: ${formatLeaveNumber(available)} days available, ${formatLeaveNumber(used)} used, ${formatLeaveNumber(pendingDays)} pending, ${formatLeaveNumber(total)} total.`;
@@ -190,7 +191,6 @@ function LeaveCapsule({ balance, index, pendingDays }) {
   );
 }
 
-const LEAVE_TYPE_COLORS = ['#2563EB', '#F97316', '#10B981', '#FBBF24', '#8B5CF6', '#14B8A6'];
 
 function getLeaveCode(name = '') {
   const words = name.split(/\s+/).filter(Boolean);

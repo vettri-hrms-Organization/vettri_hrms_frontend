@@ -7,13 +7,31 @@ import { visibleNavSections, findNavItemByPath } from './navConfig';
 import { useNavMemory } from './NavMemoryContext';
 import { useAuth } from '../../hooks/useAuth';
 
+const COLLAPSE_KEY = 'vettri_sidebar_collapsed';
+
+function readCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, hasPermission, hasRole } = useAuth();
   const { recordVisit } = useNavMemory();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(readCollapsed);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_KEY, isCollapsed ? '1' : '0');
+    } catch {
+      // Storage unavailable (private mode) - collapse just won't persist.
+    }
+  }, [isCollapsed]);
 
   const sections = useMemo(
     () => visibleNavSections(hasPermission, hasRole),
@@ -53,6 +71,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
             className="vettri-sidebar-handle d-none d-lg-flex"
             onClick={() => setIsCollapsed((value) => !value)}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!isCollapsed}
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <ChevronDown size={12} />
@@ -66,21 +85,18 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
             </button>
           </div>
 
-          <button
-            type="button"
-            className="vettri-workspace-switcher"
-            onClick={() => navigate('/dashboard')}
-            title={workspaceName}
-          >
-            <span className="vettri-workspace-mark">V</span>
+          {/* Identifies the current organisation. Not a switcher: tenants
+              are selected from the topbar (super admins only), so this
+              deliberately has no dropdown affordance. */}
+          <div className="vettri-workspace-switcher" title={workspaceName}>
+            <span className="vettri-workspace-mark" aria-hidden="true">{workspaceName.trim().charAt(0).toUpperCase() || 'V'}</span>
             {!isCollapsed && (
               <span className="vettri-workspace-copy">
                 <strong>{workspaceName}</strong>
-                <small>{user?.fullName || 'Workspace'}</small>
+                <small>Organisation</small>
               </span>
             )}
-            {!isCollapsed && <ChevronDown className="vettri-workspace-chevron" size={14} />}
-          </button>
+          </div>
 
           <nav className="vettri-sidebar-nav" aria-label="Product areas">
             {sections.map((section) => (
