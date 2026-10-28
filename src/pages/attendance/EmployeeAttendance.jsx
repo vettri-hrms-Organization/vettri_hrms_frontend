@@ -10,6 +10,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
+import { useAuth } from '../../hooks/useAuth';
 
 const GOOD_ACCURACY_METERS = 100;
 const MAX_ACCEPTABLE_ACCURACY_METERS = 200;
@@ -202,6 +203,7 @@ function formatDuration(minutes) {
 }
 
 export default function EmployeeAttendance() {
+  const { hasPermission } = useAuth();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState('OFFICE');
   const [historyMonth, setHistoryMonth] = useState(currentMonthInIST);
@@ -311,7 +313,12 @@ export default function EmployeeAttendance() {
 
   const session = today.data;
   const busy = checkIn.isPending || checkOut.isPending;
-  const canWebCheckIn = context.data?.allowedWebCheckIn
+  // Same rule as the backend: self check-in/out needs its own permission,
+  // unless the user holds attendance or directory access.
+  const hasStaffAttendanceAccess = hasPermission('EMPLOYEE_VIEW') || hasPermission('ATTENDANCE_VIEW');
+  const canSelfCheckIn = hasStaffAttendanceAccess || hasPermission('SELF_ATTENDANCE_CHECKIN');
+  const canSelfCheckOut = hasStaffAttendanceAccess || hasPermission('SELF_ATTENDANCE_CHECKOUT');
+  const canWebCheckIn = canSelfCheckIn && context.data?.allowedWebCheckIn
     && (mode !== 'WFH' || context.data.wfhStatus === 'APPROVED');
 
   function locationErrorMessage(code, accuracyMeters) {
@@ -357,7 +364,7 @@ export default function EmployeeAttendance() {
                   {canWebCheckIn && <Button icon={LogIn} onClick={() => checkIn.mutate()} loading={checkIn.isPending} disabled={!!session || busy || context.data.attendanceStatus === 'BIOMETRIC_PUNCHED'}>
                     {checkIn.isPending ? (locationStatus === 'locating' ? 'Getting your location…' : locationStatus === 'improving' ? 'Improving location accuracy…' : 'Verifying location…') : 'Check in'}
                   </Button>}
-                  <Button variant="secondary" icon={LogOut} onClick={() => checkOut.mutate()} loading={checkOut.isPending} disabled={!session || busy}>Check out</Button>
+                  {canSelfCheckOut && <Button variant="secondary" icon={LogOut} onClick={() => checkOut.mutate()} loading={checkOut.isPending} disabled={!session || busy}>Check out</Button>}
                 </div>
                 {!context.data.allowedWebCheckIn && context.data.requiresBiometric && <div className="alert alert-info mb-0" role="status">Biometric attendance required. Please mark attendance using your assigned biometric device.</div>}
               </div>

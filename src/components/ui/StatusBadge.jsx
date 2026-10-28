@@ -25,6 +25,7 @@ const STATUS_VARIANTS = {
 
   // Warning: waiting on someone or in flight
   PENDING: 'warning',
+  INVITED: 'warning',
   PROCESSING: 'warning',
   ON_LEAVE: 'warning',
   PENDING_PAYMENT: 'warning',

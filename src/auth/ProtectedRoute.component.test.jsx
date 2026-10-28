@@ -1,68 +1,64 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import ProtectedRoute from './ProtectedRoute.jsx';
-import { NAV_INDEX, visibleNavSections } from '../components/layout/navConfig.js';
 
-const { authState } = vi.hoisted(() => ({
-  authState: {
-    permissions: [],
-  },
-}));
+const mocks = vi.hoisted(() => ({ auth: null }));
+vi.mock('../hooks/useAuth', () => ({ useAuth: () => mocks.auth }));
 
-vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: {},
+function setAuth(permissions, { employeeId = null, roles = [] } = {}) {
+  mocks.auth = {
+    user: { employeeId, roles, permissions },
     isAuthenticated: true,
     isLoading: false,
-    hasAnyRole: () => false,
-    hasPermission: (permission) => authState.permissions.includes(permission),
-    hasRole: () => false,
-  }),
-}));
+    hasPermission: (code) => permissions.includes(code),
+    hasRole: (role) => roles.includes(role),
+    hasAnyRole: (list) => list.some((role) => roles.includes(role)),
+  };
+}
 
-describe('organization settings permission routing', () => {
-  afterEach(() => {
-    cleanup();
-    authState.permissions = [];
+function renderAt(path) {
+  return render(
+    <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Routes>
+        <Route element={<ProtectedRoute />}>
+          <Route path="*" element={<div>page content</div>} />
+        </Route>
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
+describe('ProtectedRoute', () => {
+  afterEach(() => cleanup());
+
+  it('lets a LEAVE_VIEW holder open /leave even though "Team Leave" needs LEAVE_APPROVE', () => {
+    setAuth(['LEAVE_VIEW', 'EMPLOYEE_VIEW']);
+    renderAt('/leave');
+    expect(screen.getByText('page content')).toBeTruthy();
   });
 
-  it('lets an HR Manager with a location permission reach organization settings', () => {
-    authState.permissions = ['OFFICE_LOCATION_VIEW'];
-    render(
-      <MemoryRouter
-        initialEntries={['/settings/organization']}
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
-        <Routes>
-          <Route element={<ProtectedRoute />}>
-            <Route path="/settings/organization" element={<div>Organization settings content</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText('Organization settings content')).toBeTruthy();
+  it('lets a leave approver without LEAVE_VIEW open /leave', () => {
+    setAuth(['LEAVE_APPROVE']);
+    renderAt('/leave');
+    expect(screen.getByText('page content')).toBeTruthy();
   });
 
-  it('keeps the route and sidebar unavailable without a relevant permission', () => {
-    render(
-      <MemoryRouter
-        initialEntries={['/settings/organization']}
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
-        <Routes>
-          <Route element={<ProtectedRoute />}>
-            <Route path="/settings/organization" element={<div>Organization settings content</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
-    );
-
+  it('denies /leave to a user with neither leave permission', () => {
+    setAuth(['MONITORING_VIEW']);
+    renderAt('/leave');
     expect(screen.getByText('Access Restricted')).toBeTruthy();
-    const navItem = NAV_INDEX.find((item) => item.to === '/settings/organization');
-    const visibleItems = visibleNavSections(() => false).flatMap((section) => section.items);
-    expect(navItem.permissionsAny).toContain('OFFICE_LOCATION_VIEW');
-    expect(visibleItems.some((item) => item.to === '/settings/organization')).toBe(false);
+  });
+
+  it('still denies a route when no matching nav entry grants access', () => {
+    setAuth(['SELF_PROFILE_VIEW']);
+    renderAt('/salary/employees');
+    expect(screen.getByText('Access Restricted')).toBeTruthy();
+  });
+
+  it('allows an employee to open their own profile without EMPLOYEE_VIEW', () => {
+    setAuth(['SELF_PROFILE_VIEW'], { employeeId: 7 });
+    renderAt('/employees/7');
+    expect(screen.getByText('page content')).toBeTruthy();
   });
 });

@@ -41,35 +41,27 @@ export default function ProtectedRoute({ allowedRoles }) {
   const profileId = location.pathname.match(/^\/employees\/([^/]+)$/)?.[1];
   const isOwnProfile = profileId && user?.employeeId && String(user.employeeId) === profileId;
 
-  const matchedItem = [...NAV_INDEX]
-    .sort((first, second) => second.to.length - first.to.length)
-    .find((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`));
-  const requiredPermission = matchedItem?.permission;
-  const requiredPermissionsAny = matchedItem?.permissionsAny;
-  const requiredSectionPermission = matchedItem?.sectionPermission;
-  const requiredRole = matchedItem?.role;
-  const requiredRoles = matchedItem?.roles;
+  // The same path can appear in several nav sections with different gates
+  // (e.g. /leave is "Team Leave" for approvers and "Leave Management" for
+  // LEAVE_VIEW holders). Take every entry with the most specific matching
+  // path and allow the route if ANY of them grants access - the same rule
+  // the sidebar uses to decide whether to show the link at all.
+  const matching = NAV_INDEX.filter((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`));
+  const longest = Math.max(0, ...matching.map((item) => item.to.length));
+  const candidates = matching.filter((item) => item.to.length === longest);
 
-  const hasRequiredEmployeeProfile = requiredRole === 'EMPLOYEE' && !!user?.employeeId;
-  if (requiredRole && !hasRequiredEmployeeProfile && !hasAnyRole([requiredRole])) {
-    return <AccessDenied />;
-  }
+  const itemAllows = (item) => {
+    const hasRequiredEmployeeProfile = item.role === 'EMPLOYEE' && !!user?.employeeId;
+    if (item.role && !hasRequiredEmployeeProfile && !hasAnyRole([item.role])) return false;
+    if (item.roles && !hasAnyRole(item.roles)) return false;
+    if (isOwnProfile) return true;
+    if (item.permission && !hasPermission(item.permission)) return false;
+    if (item.permissionsAny && !item.permissionsAny.some((permission) => hasPermission(permission))) return false;
+    if (item.sectionPermission && !hasPermission(item.sectionPermission)) return false;
+    return true;
+  };
 
-  if (requiredRoles && !hasAnyRole(requiredRoles)) {
-    return <AccessDenied />;
-  }
-
-  if (requiredPermission && !hasPermission(requiredPermission) && !isOwnProfile) {
-    return <AccessDenied />;
-  }
-
-  if (requiredPermissionsAny
-      && !requiredPermissionsAny.some((permission) => hasPermission(permission))
-      && !isOwnProfile) {
-    return <AccessDenied />;
-  }
-
-  if (requiredSectionPermission && !hasPermission(requiredSectionPermission) && !isOwnProfile) {
+  if (candidates.length > 0 && !candidates.some(itemAllows)) {
     return <AccessDenied />;
   }
 

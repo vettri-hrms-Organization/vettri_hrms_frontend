@@ -207,9 +207,15 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // A 403 means "not allowed", not "connection broken", so the connection
+    // state is left alone. Only a refused action (POST/PUT/PATCH/DELETE) is
+    // surfaced as a toast; a refused read is a background permission probe
+    // that the page already handles with its own empty/denied state.
     if (status === 403) {
-      emitApiError({ message: safeMessage, status });
-      setConnectionState(ConnectionState.DISABLED);
+      const method = String(originalRequest?.method || 'get').toLowerCase();
+      if (method !== 'get' && method !== 'head') {
+        emitApiError({ message: safeMessage, status });
+      }
       return Promise.reject(error);
     }
 

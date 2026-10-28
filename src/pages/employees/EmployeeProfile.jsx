@@ -9,6 +9,8 @@ import { canReviewDocuments, canUploadOwnDocuments, getExpiryPresentation } from
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Users, ChevronDown, Fingerprint, Pencil, Check, X, CalendarDays, Clock, FileText, Plus, Trash2, AlertTriangle, Network, ClipboardList, Search, Send, UserX, CheckCircle2, Download } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import StatusBadge from '../../components/ui/StatusBadge';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
 import Dialog from '../../components/ui/Dialog';
@@ -129,7 +131,7 @@ export default function EmployeeProfile() {
                 <Mail size={15} aria-hidden="true" /> Email
               </a>
             )}
-          {!isEmployee && (
+          {hasPermission('EMPLOYEE_MANAGE') && String(user?.employeeId) !== String(employee.id) && (
           <div className="position-relative">
             <Button variant="secondary" size="sm" onClick={() => setStatusMenuOpen((o) => !o)}>
               Change Status <ChevronDown size={14} />
@@ -239,8 +241,15 @@ function ProfileContact({ icon: Icon, label, value }) {
 function OverviewTab({ employee }) {
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const { user, hasPermission } = useAuth();
   const [editingBiometric, setEditingBiometric] = useState(false);
   const [invitationResent, setInvitationResent] = useState(false);
+  const [confirmDisable, setConfirmDisable] = useState(false);
+  // Mirrors the backend rules: resend needs EMPLOYEE_CREATE, account status
+  // needs EMPLOYEE_MANAGE. Nobody may disable their own login from here.
+  const isOwnRecord = !!user?.employeeId && String(user.employeeId) === String(employee.id);
+  const canResendInvitation = hasPermission('EMPLOYEE_CREATE');
+  const canDisableAccount = hasPermission('EMPLOYEE_MANAGE') && !isOwnRecord;
   const [pinValue, setPinValue] = useState(employee.biometricDeviceUserId || '');
   const accountStatus = employee.accountStatus || (employee.linkedUserId ? 'ACTIVE' : 'INVITED');
   const sendInvitation = useMutation({
@@ -252,7 +261,11 @@ function OverviewTab({ employee }) {
   });
   const disableAccount = useMutation({
     mutationFn: () => employeesApi.setAccountStatus(employee.id, 'DISABLED'),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employee', id] }),
+    onSuccess: () => {
+      setConfirmDisable(false);
+      queryClient.invalidateQueries({ queryKey: ['employee', id] });
+    },
+    onError: () => setConfirmDisable(false),
   });
 
   const saveBiometric = useMutation({
@@ -270,13 +283,22 @@ function OverviewTab({ employee }) {
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div><InfoRow icon={Mail} label="Email" value={employee.email} /><InfoRow label="Employee ID" value={employee.employeeCode} /></div>
             <div className="d-flex align-items-center gap-2 flex-wrap">
-              <Badge variant={accountStatus === 'ACTIVE' ? 'success' : accountStatus === 'DISABLED' ? 'danger' : 'warning'} dot>{accountStatus}</Badge>
-              {accountStatus !== 'ACTIVE' && accountStatus !== 'DISABLED' && <Button size="sm" icon={Send} loading={sendInvitation.isPending} onClick={() => sendInvitation.mutate()}>{sendInvitation.isPending ? 'Sending' : 'Resend Invitation'}</Button>}
-              {accountStatus === 'ACTIVE' && <Button size="sm" variant="danger" icon={UserX} loading={disableAccount.isPending} onClick={() => disableAccount.mutate()}>Disable Account</Button>}
+              <StatusBadge status={accountStatus} />
+              {canResendInvitation && accountStatus !== 'ACTIVE' && accountStatus !== 'DISABLED' && <Button size="sm" icon={Send} loading={sendInvitation.isPending} onClick={() => sendInvitation.mutate()}>{sendInvitation.isPending ? 'Sending' : 'Resend Invitation'}</Button>}
+              {canDisableAccount && accountStatus === 'ACTIVE' && <Button size="sm" variant="danger" icon={UserX} loading={disableAccount.isPending} onClick={() => setConfirmDisable(true)}>Disable Account</Button>}
             </div>
           </div>
           {(sendInvitation.isError || disableAccount.isError) && <div className="mt-3 text-danger small">{sendInvitation.error?.response?.data?.message || disableAccount.error?.response?.data?.message || 'Account action failed.'}</div>}
         </Card>
+        <ConfirmDialog
+          open={confirmDisable}
+          onClose={() => setConfirmDisable(false)}
+          onConfirm={() => disableAccount.mutate()}
+          loading={disableAccount.isPending}
+          title={`Disable ${employee.fullName}'s account?`}
+          description="They will be signed out and won't be able to log in until an administrator re-enables the account."
+          confirmLabel="Disable account"
+        />
         <Dialog
           open={invitationResent}
           onClose={() => setInvitationResent(false)}
