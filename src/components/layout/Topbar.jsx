@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles, KeyRound, Download } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
-import { adminApi } from '../../api/endpoints/admin';
+import { supportAccessApi } from '../../api/endpoints/supportAccess';
 import { notificationsApi } from '../../api/endpoints/notifications';
 import Avatar from '../ui/Avatar';
 import { NAV_INDEX } from './navConfig';
@@ -60,11 +60,30 @@ export default function Topbar({ onOpenMobileNav }) {
     mutationFn: notificationsApi.markAllRead,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
+  // Platform staff may only open companies that granted Vettri support access (or demo workspaces).
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
-    queryKey: ['admin-companies-selector'],
-    queryFn: adminApi.companies,
+    queryKey: ['support-access-companies'],
+    queryFn: supportAccessApi.accessibleCompanies,
     enabled: hasRole('SUPER_ADMIN'),
+    refetchInterval: 60_000,
   });
+
+  // A remembered company whose support access ended (or never existed) is dropped, so platform
+  // staff fall back to the platform view instead of a page full of "access not granted" errors.
+  useEffect(() => {
+    if (!hasRole('SUPER_ADMIN') || companiesLoading || !selectedCompanyId) return;
+    if (!companies.some((company) => String(company.companyId) === String(selectedCompanyId))) setSelectedCompanyId(null);
+  }, [companies, companiesLoading, selectedCompanyId, hasRole, setSelectedCompanyId]);
+
+  async function openCompany(companyId) {
+    if (!companyId) { setSelectedCompanyId(null); return; }
+    try {
+      await supportAccessApi.openSession(companyId); // records the visit in the company's audit log
+      setSelectedCompanyId(companyId);
+    } catch {
+      setSelectedCompanyId(null);
+    }
+  }
 
   const quickActions = [
     hasPermission('EMPLOYEE_CREATE') && { label: 'Open employees', description: 'Add or manage people', icon: Users, to: '/employees' },
@@ -205,13 +224,13 @@ export default function Topbar({ onOpenMobileNav }) {
             <select
               className="form-select form-select-sm"
               value={selectedCompanyId || ''}
-              onChange={(event) => setSelectedCompanyId(event.target.value || null)}
+              onChange={(event) => openCompany(event.target.value || null)}
               disabled={companiesLoading}
-              aria-label="Select tenant company"
-              style={{ maxWidth: 190 }}
+              aria-label="Open a company that allowed support access"
+              style={{ maxWidth: 230 }}
             >
-              <option value="">Select company</option>
-              {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
+              <option value="">{companies.length ? 'Platform view (no company)' : 'No company has allowed support'}</option>
+              {companies.map((company) => <option key={company.companyId} value={company.companyId}>{company.name}{company.demo ? ' (demo)' : company.accessLevel === 'FULL' ? ' (full access)' : ' (view only)'}</option>)}
             </select>
           </label>
         )}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Archive, ClipboardList, Download, FileCheck2, Settings2, ShieldCheck, Trash2, UserX } from 'lucide-react';
+import { Archive, ClipboardList, Download, FileCheck2, LifeBuoy, Settings2, ShieldCheck, Trash2, UserX } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -16,6 +16,7 @@ import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { formatDateIST, formatDateTimeIST } from '../../utils/formatDateTime';
 import { privacyApi } from '../../api/endpoints/privacy';
+import SupportAccessCard from './SupportAccessCard';
 
 const STATUS_VARIANT = {
   SUBMITTED: 'warning', IN_PROGRESS: 'info', READY: 'success', COMPLETED: 'success', REJECTED: 'danger',
@@ -35,9 +36,12 @@ export default function PrivacyAdmin() {
     canManage && { key: 'consents', label: 'Monitoring consent', icon: ShieldCheck },
     canManage && { key: 'acceptances', label: 'Legal acceptance', icon: FileCheck2 },
     isCompanyAdmin && { key: 'account', label: 'Export & deletion', icon: Archive },
+    // Only the company's own admins control support access - never platform staff.
+    (isCompanyAdmin || canManage) && !isSuperAdmin && { key: 'support', label: 'Vettri support access', icon: LifeBuoy },
     isSuperAdmin && { key: 'platform', label: 'All deletions', icon: Trash2 },
   ].filter(Boolean);
-  const [tab, setTab] = useState(tabs[0]?.key || 'requests');
+  const requestedTab = new URLSearchParams(window.location.search).get('tab');
+  const [tab, setTab] = useState(tabs.some((item) => item.key === requestedTab) ? requestedTab : tabs[0]?.key || 'requests');
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
@@ -52,6 +56,7 @@ export default function PrivacyAdmin() {
       {tab === 'consents' && canManage && <ConsentRegister />}
       {tab === 'acceptances' && canManage && <AcceptanceRegister />}
       {tab === 'account' && isCompanyAdmin && <AccountTools />}
+      {tab === 'support' && !isSuperAdmin && <SupportAccessCard />}
       {tab === 'platform' && isSuperAdmin && <AllDeletions />}
     </div>
   );

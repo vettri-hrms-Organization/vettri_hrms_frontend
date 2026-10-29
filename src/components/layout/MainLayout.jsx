@@ -4,6 +4,7 @@ import { Building2 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import SubscriptionBanner from '../billing/SubscriptionBanner';
+import SupportAccessBanner from './SupportAccessBanner';
 import Breadcrumbs from './Breadcrumbs';
 import MobileTabBar from './MobileTabBar';
 import { NavMemoryProvider } from './NavMemoryContext';
@@ -35,6 +36,7 @@ export default function MainLayout() {
         <div className="vettri-app-shell__content">
           <Topbar onOpenMobileNav={() => setMobileNavOpen(true)} />
           <SubscriptionBanner />
+          <SupportAccessBanner />
           <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
               <Breadcrumbs />
@@ -74,8 +76,8 @@ function WorkspaceRequired() {
   return (
     <div className="hz-state py-5">
       <div className="hz-state__icon-wrap" aria-hidden="true"><Building2 size={24} /></div>
-      <h1 className="hz-state__title">Choose a workspace to continue</h1>
-      <p className="hz-state__description">Select a company from the workspace switcher in the top bar before opening tenant HR data.</p>
+      <h1 className="hz-state__title">Company data is private</h1>
+      <p className="hz-state__description">Platform staff only see plans, payments and usage. To open a company, its admin must allow Vettri support access; it then appears in the company switcher in the top bar.</p>
       <Link to="/settings/platform" className="btn btn-outline-primary">Open platform administration</Link>
     </div>
   );

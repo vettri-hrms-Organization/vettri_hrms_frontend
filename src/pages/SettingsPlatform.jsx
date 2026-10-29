@@ -10,6 +10,7 @@ import PageHeader from '../components/ui/PageHeader';
 import PlatformBillingPanel from './billing/PlatformBillingPanel';
 import DemoWorkspacesPanel from './platform/DemoWorkspacesPanel';
 import AgentReleasesPanel from './platform/AgentReleasesPanel';
+import PlatformOverviewPanel from './platform/PlatformOverviewPanel';
 
 const plans = ['STARTER', 'BUSINESS', 'ENTERPRISE'];
 const statuses = ['TRIAL', 'TRIALING', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'EXPIRED', 'CANCELLED'];
@@ -35,7 +36,8 @@ export default function SettingsPlatform() {
   if (!hasRole('SUPER_ADMIN')) return <EmptyState icon={ShieldCheck} title="Platform administration unavailable" description="Only platform administrators can manage companies and subscriptions." />;
 
   return <div className="hz-admin-page hz-admin-page--platform hz-settings-page hz-platform-settings d-flex flex-column gap-4">
-    <PageHeader eyebrow="Platform" title="Platform Administration" description="Manage tenant accounts and their subscription limits." />
+    <PageHeader eyebrow="Platform" title="Platform Administration" description="Your customers at a glance: plans, payments, validity and usage. Company HR data stays private." />
+    <PlatformOverviewPanel />
     <Card title={editingCompanyId ? 'Edit company' : 'Add company'} subtitle="Create a tenant before assigning its plan.">
       <form className="row g-3 align-items-end" onSubmit={(event) => { event.preventDefault(); saveCompany.mutate({ ...company, productiveThresholdPercent: Number(company.productiveThresholdPercent), neutralThresholdPercent: Number(company.neutralThresholdPercent) }); }}>
         <div className="col-md-5"><label className="hz-form-label">Company name<input required className="form-control" value={company.name} onChange={(event) => setCompany({ ...company, name: event.target.value })} /></label></div>
