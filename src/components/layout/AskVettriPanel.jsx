@@ -18,6 +18,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { getAssistantWelcome, getDisplayName, vettriMicrocopy } from '../../utils/vettriMicrocopy';
 import { getAskVettriSuggestions } from './askVettriSuggestions';
 
+/** **bold** to <strong> as React elements (no HTML injection); everything else stays plain text. */
+function renderEmphasis(text) {
+  if (typeof text !== 'string' || !text.includes('**')) return text;
+  return text.split('**').map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part));
+}
+
 function formatLeaveDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return value || '';
   const [year, month, day] = value.split('-').map(Number);
@@ -393,7 +399,7 @@ export default function AskVettriPanel({ open, onClose, initialQuery = '' }) {
                       </span>
                       <strong>{message.role === 'user' ? userDisplayName : 'Ask Vettri'}</strong>
                     </div>
-                    <p>{message.content}</p>
+                    <p>{renderEmphasis(message.content)}</p>
                     {message.action?.route && (
                       <button type="button" onClick={() => handleNavigate(message.action.route)}>
                         {message.action.label || 'Open page'} <ArrowRight size={14} />

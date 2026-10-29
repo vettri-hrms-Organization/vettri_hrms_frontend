@@ -182,6 +182,12 @@ export const monitoringApi = {
   // REMOTE COMMANDS
   // ============================================================
 
+  /** The approved action catalog (fixed code inside the agent). */
+  remoteCommandActions: (deviceId) =>
+    axiosClient
+      .get(`/api/devices/${deviceId}/remote-commands/actions`)
+      .then((res) => res.data),
+
   remoteCommands: (deviceId) =>
     axiosClient
       .get(`/api/devices/${deviceId}/remote-commands`)

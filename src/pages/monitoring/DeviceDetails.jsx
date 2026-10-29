@@ -911,7 +911,7 @@ export default function DeviceDetails() {
                   variant="secondary"
                   icon={Terminal}
                 >
-                  Vettri CLI
+                  IT actions
                 </Button>
 
               </Link>

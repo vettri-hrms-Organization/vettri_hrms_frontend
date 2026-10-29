@@ -28,6 +28,33 @@ const HEADER_COLOR = 'var(--vettri-navy)';
    DEFAULT DATES
    ============================================================ */
 
+// HR hint comparing attendance punches with laptop activity (ProductivitySummaryDTO.attendanceCheck).
+const ATTENDANCE_CHECK = {
+  OK: { label: 'Matches', color: 'var(--hz-success-600)', background: 'var(--hz-success-50)' },
+  NO_PUNCH: { label: 'No punch', color: 'var(--hz-warning-600)', background: 'var(--hz-warning-50)', hint: 'Laptop was active but no attendance punch was recorded.' },
+  LOW_ACTIVITY: { label: 'Low activity', color: 'var(--hz-warning-600)', background: 'var(--hz-warning-50)', hint: 'Attended, but the laptop was active for less than 40% of the attended time.' },
+};
+
+function formatClock(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function AttendanceCheck({ row }) {
+  const check = ATTENDANCE_CHECK[row.attendanceCheck];
+  const firstIn = formatClock(row.attendanceFirstIn);
+  const lastOut = formatClock(row.attendanceLastOut);
+  const worked = row.attendanceWorkedMinutes ? `${Math.floor(row.attendanceWorkedMinutes / 60)}h ${String(row.attendanceWorkedMinutes % 60).padStart(2, '0')}m` : null;
+  if (!check && !firstIn) return '—';
+  return (
+    <div className="d-flex flex-column align-items-center gap-1" title={check?.hint}>
+      {check && <span className="badge rounded-pill" style={{ backgroundColor: check.background, color: check.color, fontSize: 11, fontWeight: 600, padding: '5px 9px' }}>{check.label}</span>}
+      {firstIn && <span className="text-secondary-hz" style={{ fontSize: 12 }}>{firstIn}{lastOut ? ` – ${lastOut}` : ''}{worked ? ` · ${worked}` : ''}</span>}
+    </div>
+  );
+}
+
 function defaultDates() {
   const end = new Date();
 
@@ -1652,6 +1679,20 @@ export default function MonitoringReports() {
                   scope="col"
                   className="
                     text-center
+                  "
+                  style={
+                    headerStyle
+                  }
+                  title="Same day's attendance punches compared with laptop activity. A hint for review, not a penalty."
+                >
+                  Attendance
+                </th>
+
+
+                <th
+                  scope="col"
+                  className="
+                    text-center
                     pe-4
                   "
                   style={
@@ -1681,7 +1722,7 @@ export default function MonitoringReports() {
                 <tr>
 
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="
                       text-center
                       py-5
@@ -1731,7 +1772,7 @@ export default function MonitoringReports() {
                   <tr>
 
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="
                         text-center
                         py-5
@@ -1811,7 +1852,7 @@ export default function MonitoringReports() {
                   <tr>
 
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="
                         text-center
                         py-5
@@ -2043,6 +2084,22 @@ export default function MonitoringReports() {
                           row.productivityPercent ??
                           0
                         }%
+
+                      </td>
+
+
+                      {/* ATTENDANCE vs ACTIVITY */}
+
+                      <td
+                        className="
+                          text-center
+                        "
+                        style={
+                          cellStyle
+                        }
+                      >
+
+                        <AttendanceCheck row={row} />
 
                       </td>
 
