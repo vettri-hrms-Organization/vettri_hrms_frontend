@@ -51,6 +51,7 @@ export const vettriMicrocopy = Object.freeze({
     conflict: 'This information is already registered. Please review it and try again.',
     rateLimit: 'Please wait a moment before trying again.',
     request: 'We could not complete your request. Please try again.',
+    outdatedServer: 'This feature needs the latest Vettri update on the server. Please refresh the page, or ask your admin to update Vettri.',
   }),
   permission: Object.freeze({
     generic: "You don't have permission to access this area. Contact your Admin team if you need access.",

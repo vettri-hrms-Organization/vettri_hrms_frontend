@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Copy, Eye, Link2, Mail, Monitor, Plus, ShieldCheck, Search, UserRoundPen, X } from 'lucide-react';
+import { Copy, Eye, FilterX, Link2, Mail, Monitor, Plus, ShieldCheck, Search, SearchX, UserRoundPen, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   monitoringApi,
   getDeviceId,
   getDeviceName,
   getDeviceEmployeeName,
+  getDeviceEmployeeId,
   isDeviceOnline,
   getDeviceLastSeen,
   getDeviceOS,
@@ -24,11 +25,66 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
 
+const STALE_OFFLINE_MS = 7 * 24 * 60 * 60 * 1000;
+
 const STATUS_FILTERS = [
   { value: 'all', label: 'All' },
   { value: 'online', label: 'Online' },
   { value: 'offline', label: 'Offline' },
+  { value: 'offline7', label: 'Offline 7+ days' },
+  { value: 'unassigned', label: 'Unassigned' },
+  { value: 'outdated', label: 'Older agent' },
 ];
+
+function parseAgentVersion(value) {
+  const match = typeof value === 'string' ? value.trim().match(/^v?(\d+(?:\.\d+)*)/i) : null;
+  return match ? match[1].split('.').map(Number) : null;
+}
+
+function compareAgentVersions(a, b) {
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i += 1) {
+    const diff = (a[i] || 0) - (b[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+function toTimestamp(value) {
+  if (!value) return null;
+  // Backend LocalDateTime values are UTC without an offset (see utils/formatDateTime).
+  const normalized = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(value) ? `${value}Z` : value;
+  const time = new Date(normalized).getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
+function isOfflineForWeek(device, now) {
+  if (isDeviceOnline(device)) return false;
+  const lastSeen = toTimestamp(getDeviceLastSeen(device));
+  // A device that has never sent a heartbeat has been silent at least as long.
+  return lastSeen === null || now - lastSeen >= STALE_OFFLINE_MS;
+}
+
+function isUnassigned(device) {
+  return !getDeviceEmployeeId(device) && !getDeviceEmployeeName(device);
+}
+
+function isOlderAgent(device, newestParsed) {
+  if (!newestParsed) return false;
+  const parsed = parseAgentVersion(getDeviceAgentVersion(device));
+  return Boolean(parsed) && compareAgentVersions(parsed, newestParsed) < 0;
+}
+
+function matchesStatusFilter(device, filter, now, newestParsed) {
+  switch (filter) {
+    case 'online': return isDeviceOnline(device);
+    case 'offline': return !isDeviceOnline(device);
+    case 'offline7': return isOfflineForWeek(device, now);
+    case 'unassigned': return isUnassigned(device);
+    case 'outdated': return isOlderAgent(device, newestParsed);
+    default: return true;
+  }
+}
 
 export default function Devices() {
   const [search, setSearch] = useState('');
@@ -125,18 +181,51 @@ export default function Devices() {
     window.URL.revokeObjectURL(url);
   }
 
+  const devices = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+
+  const newestAgent = useMemo(() => {
+    let newest = null;
+    devices.forEach((d) => {
+      const version = getDeviceAgentVersion(d);
+      const parsed = parseAgentVersion(version);
+      if (parsed && (!newest || compareAgentVersions(parsed, newest.parsed) > 0)) newest = { version, parsed };
+    });
+    return newest;
+  }, [devices]);
+  const newestParsed = newestAgent?.parsed || null;
+
+  // Recomputed with every 30s device refetch, which is precise enough for "7+ days".
+  const now = useMemo(() => Date.now(), [devices]);
+
+  const filterCounts = useMemo(() => {
+    const counts = {};
+    STATUS_FILTERS.forEach((f) => {
+      counts[f.value] = devices.filter((d) => matchesStatusFilter(d, f.value, now, newestParsed)).length;
+    });
+    return counts;
+  }, [devices, now, newestParsed]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (data || []).filter((d) => {
-      const online = isDeviceOnline(d);
-      if (statusFilter === 'online' && !online) return false;
-      if (statusFilter === 'offline' && online) return false;
+    return devices.filter((d) => {
+      if (!matchesStatusFilter(d, statusFilter, now, newestParsed)) return false;
       if (!q) return true;
-      const name = getDeviceName(d).toLowerCase();
-      const employee = (getDeviceEmployeeName(d) || '').toLowerCase();
-      return name.includes(q) || employee.includes(q);
+      return [
+        getDeviceName(d),
+        getDeviceEmployeeName(d),
+        d.employeeCode,
+        d.hostname,
+        d.serialNumber,
+        d.hardwareInventory?.serialNumber,
+      ].some((value) => value && String(value).toLowerCase().includes(q));
     });
-  }, [data, search, statusFilter]);
+  }, [devices, search, statusFilter, now, newestParsed]);
+
+  const hasActiveFilters = Boolean(search.trim()) || statusFilter !== 'all';
+  function clearFilters() {
+    setSearch('');
+    setStatusFilter('all');
+  }
 
   const columns = [
     {
@@ -187,7 +276,20 @@ export default function Devices() {
         </div>
       ),
     },
-    { key: 'agentVersion', label: 'Agent Version', render: (d) => getDeviceAgentVersion(d) },
+    {
+      key: 'agentVersion',
+      label: 'Agent Version',
+      render: (d) => (
+        <div className="d-flex flex-column align-items-start gap-1">
+          <span>{getDeviceAgentVersion(d)}</span>
+          {isOlderAgent(d, newestParsed) && (
+            <StatusBadge status="PENDING" variant="warning" title={`Newest agent in your fleet is ${newestAgent?.version}`}>
+              Update pending
+            </StatusBadge>
+          )}
+        </div>
+      ),
+    },
     {
       key: 'actions',
       label: 'Actions',
@@ -285,21 +387,58 @@ export default function Devices() {
           <Search size={16} className="position-absolute" style={{ left: 12, top: 10, color: 'var(--hz-text-muted)' }} />
           <input
             type="search"
-            placeholder="Search by device or employee…"
+            placeholder="Search device, employee or serial…"
+            aria-label="Search devices by name, employee, hostname or serial number"
             className="form-control ps-5"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
-        <select className="form-select" style={{ maxWidth: 180 }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          {STATUS_FILTERS.map((f) => (
-            <option key={f.value} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </select>
       </FilterBar>
+
+      <div className="d-flex flex-wrap gap-2" role="group" aria-label="Quick device filters">
+        {STATUS_FILTERS.map((f) => {
+          const active = statusFilter === f.value;
+          return (
+            <button
+              key={f.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setStatusFilter(f.value)}
+              className="d-inline-flex align-items-center gap-2"
+              title={f.value === 'outdated' && newestAgent ? `Older than ${newestAgent.version}, the newest agent in your fleet` : undefined}
+              style={{
+                minHeight: 34,
+                padding: '6px 12px',
+                borderRadius: 999,
+                border: `1px solid ${active ? 'var(--hz-primary-500)' : 'var(--hz-border)'}`,
+                background: active ? 'var(--hz-primary-50)' : 'var(--hz-bg-surface)',
+                color: active ? 'var(--hz-primary-700)' : 'var(--hz-text-secondary)',
+                fontSize: 'var(--hz-text-sm)',
+                fontWeight: active ? 600 : 500,
+                cursor: 'pointer',
+              }}
+            >
+              {f.label}
+              <span
+                style={{
+                  minWidth: 22,
+                  padding: '0 6px',
+                  borderRadius: 999,
+                  background: active ? 'var(--hz-primary-100)' : 'var(--hz-gray-100)',
+                  color: 'var(--hz-text-primary)',
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textAlign: 'center',
+                }}
+              >
+                {isLoading ? '–' : filterCounts[f.value] ?? 0}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       <Card bodyClassName="p-0">
         <Table
@@ -309,10 +448,12 @@ export default function Devices() {
           isLoading={isLoading}
           isError={isError}
           onRetry={refetch}
-          emptyIcon={Monitor}
-          emptyTitle={search || statusFilter !== 'all' ? vettriMicrocopy.empty.devicesSearchTitle : vettriMicrocopy.empty.devicesTitle}
-          emptyDescription={search || statusFilter !== 'all' ? vettriMicrocopy.empty.devicesSearchDescription : vettriMicrocopy.empty.devicesDescription}
-          emptyAction={canManageDevices && !search && statusFilter === 'all' && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>}
+          emptyIcon={hasActiveFilters ? SearchX : Monitor}
+          emptyTitle={hasActiveFilters ? vettriMicrocopy.empty.devicesSearchTitle : vettriMicrocopy.empty.devicesTitle}
+          emptyDescription={hasActiveFilters ? vettriMicrocopy.empty.devicesSearchDescription : vettriMicrocopy.empty.devicesDescription}
+          emptyAction={hasActiveFilters
+            ? <Button type="button" variant="secondary" icon={FilterX} onClick={clearFilters}>Clear filters</Button>
+            : canManageDevices && <Button icon={Plus} onClick={openConnect}>Connect Device</Button>}
         />
       </Card>
 

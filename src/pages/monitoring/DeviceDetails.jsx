@@ -7,6 +7,7 @@ import {
 import {
   Link,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 
 import {
@@ -22,6 +23,12 @@ import {
   RefreshCw,
   Ban,
   Network,
+  Cpu,
+  HardDrive,
+  LifeBuoy,
+  LayoutDashboard,
+  Wifi,
+  UserRound,
 } from 'lucide-react';
 
 import {
@@ -56,6 +63,17 @@ import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import Dialog from '../../components/ui/Dialog';
 import Button from '../../components/ui/Button';
+import Tabs from '../../components/ui/Tabs';
+
+const DEVICE_TABS = [
+  { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { key: 'hardware', label: 'Hardware', icon: Cpu },
+  { key: 'applications', label: 'Applications', icon: AppWindow },
+  { key: 'remote', label: 'Remote support', icon: LifeBuoy },
+  { key: 'activity', label: 'Activity', icon: Activity },
+];
+const DEVICE_TAB_KEYS = new Set(DEVICE_TABS.map((tab) => tab.key));
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 
 export default function DeviceDetails() {
@@ -136,6 +154,43 @@ export default function DeviceDetails() {
       await queryClient.invalidateQueries({ queryKey: ['monitoring-device', id] });
     },
   });
+
+
+  // ============================================================
+  // TABS (persisted in ?tab= so links and the back button work)
+  // ============================================================
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const activeTab = DEVICE_TAB_KEYS.has(requestedTab) ? requestedTab : 'overview';
+
+  const changeTab = (key) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (key === 'overview') next.delete('tab');
+      else next.set('tab', key);
+      return next;
+    });
+  };
+
+
+  // ============================================================
+  // FLEET (shares the Devices page cache; used only to compare
+  // this device's agent version with the newest one in the fleet)
+  // ============================================================
+
+  const fleetQuery = useQuery({
+    queryKey: ['monitoring-devices'],
+    queryFn: monitoringApi.devices,
+    enabled: Boolean(id),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const health = useMemo(
+    () => buildDeviceHealth(device, Array.isArray(fleetQuery.data) ? fleetQuery.data : null),
+    [device, fleetQuery.data]
+  );
 
 
   // ============================================================
@@ -936,11 +991,56 @@ export default function DeviceDetails() {
 
             </div>
 
+          </Card>
+        )}
+
+
+      {/* ========================================================
+          DEVICE HEALTH
+          ======================================================== */}
+
+      {!deviceLoading &&
+        !deviceError &&
+        device && (
+          <section aria-label="Device health">
+            <div className="row g-3">
+              {health.map((item) => (
+                <div className="col-12 col-sm-6 col-xl-3" key={item.key}>
+                  <HealthCard item={item} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+
+      {/* ========================================================
+          TABS
+          ======================================================== */}
+
+      <Tabs
+        items={DEVICE_TABS}
+        value={activeTab}
+        onChange={changeTab}
+        ariaLabel="Device sections"
+      />
+
+
+      {/* ========================================================
+          OVERVIEW: DEVICE DETAILS
+          ======================================================== */}
+
+      {activeTab === 'overview' &&
+        !deviceLoading &&
+        !deviceError &&
+        device && (
+
+          <Card title="Device details">
 
             {/* DEVICE DETAILS */}
 
             <div
-              className="row g-3 mt-1"
+              className="row g-3"
             >
 
               <div
@@ -1062,12 +1162,30 @@ export default function DeviceDetails() {
 
               </div>
 
+              {[
+                ['Hostname', device.hostname],
+                ['IP address', device.ipAddress],
+                ['Serial number', device.serialNumber || device.hardwareInventory?.serialNumber],
+                ['Department', device.departmentName],
+              ]
+                .filter(([, value]) => value !== null && value !== undefined && value !== '')
+                .map(([label, value]) => (
+                  <div className="col-6 col-md-3" key={label}>
+                    <p className="text-secondary-hz mb-1" style={{ fontSize: 12, fontWeight: 500 }}>
+                      {label}
+                    </p>
+                    <p className="text-break" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600, marginBottom: 0 }}>
+                      {value}
+                    </p>
+                  </div>
+                ))}
+
             </div>
 
           </Card>
         )}
 
-      {!deviceLoading && !deviceError && device && (
+      {activeTab === 'hardware' && !deviceLoading && !deviceError && device && (
         <Card title="Hardware Inventory" subtitle="Specifications reported by the authenticated Vettri Agent. Missing firmware fields are left blank.">
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
             <div className="d-flex align-items-center flex-wrap gap-2">
@@ -1138,6 +1256,7 @@ export default function DeviceDetails() {
             REMOTE SUPPORT
             ====================================================== */}
 
+        {activeTab === 'remote' && (
         <div className="col-12">
 
           <Card
@@ -1588,13 +1707,15 @@ export default function DeviceDetails() {
           </Card>
 
         </div>
+        )}
 
 
         {/* ======================================================
             APPLICATION USAGE SUMMARY
             ====================================================== */}
 
-        <div className="col-12 col-xl-4">
+        {activeTab === 'applications' && (
+        <div className="col-12">
 
           <Card
             hoverable
@@ -1740,13 +1861,15 @@ export default function DeviceDetails() {
           </Card>
 
         </div>
+        )}
 
 
         {/* ======================================================
             RECENT ACTIVITY SESSIONS
             ====================================================== */}
 
-        <div className="col-12 col-xl-8">
+        {activeTab === 'activity' && (
+        <div className="col-12">
 
           <Card
             hoverable
@@ -1999,6 +2122,7 @@ export default function DeviceDetails() {
           </Card>
 
         </div>
+        )}
 
       </div>
 
@@ -2278,7 +2402,7 @@ function AdminHardwareInventory({ inventory }) {
 function formatInventoryBytes(bytes) {
   const value = Number(bytes);
   if (!Number.isFinite(value) || value <= 0) return '—';
-  const units = ['B', 'KB', 'GB', 'TB'];
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let unitIndex = 0;
   let display = value;
   while (display >= 1024 && unitIndex < units.length - 1) {
@@ -2286,4 +2410,166 @@ function formatInventoryBytes(bytes) {
     unitIndex += 1;
   }
   return `${display.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+// ============================================================
+// DEVICE HEALTH
+// ============================================================
+
+const HEALTH_TONES = {
+  success: { label: 'var(--hz-success-700)', background: 'var(--hz-success-50)', accent: 'var(--hz-success-500)' },
+  warning: { label: 'var(--hz-warning-700)', background: 'var(--hz-warning-50)', accent: 'var(--hz-warning-500)' },
+  danger: { label: 'var(--hz-danger-700)', background: 'var(--hz-danger-50)', accent: 'var(--hz-danger-500)' },
+};
+
+function HealthCard({ item }) {
+  const tone = HEALTH_TONES[item.tone] || HEALTH_TONES.warning;
+  const Icon = item.icon;
+  return (
+    <div
+      className="h-100 d-flex flex-column gap-2"
+      data-testid={`device-health-${item.key}`}
+      style={{
+        padding: '12px 14px',
+        border: '1px solid var(--hz-border)',
+        borderLeft: `4px solid ${tone.accent}`,
+        borderRadius: 'var(--hz-radius-md)',
+        background: 'var(--hz-bg-surface)',
+        minWidth: 0,
+      }}
+    >
+      <div className="d-flex align-items-center justify-content-between gap-2">
+        <span className="d-inline-flex align-items-center gap-2 text-secondary-hz" style={{ fontSize: 12, fontWeight: 600 }}>
+          {Icon && (
+            <span
+              aria-hidden="true"
+              className="d-inline-flex align-items-center justify-content-center"
+              style={{ width: 24, height: 24, borderRadius: 6, background: tone.background, color: tone.label }}
+            >
+              <Icon size={14} />
+            </span>
+          )}
+          {item.title}
+        </span>
+        <StatusBadge status={item.status} variant={item.tone} dot>
+          {item.status}
+        </StatusBadge>
+      </div>
+      <div className="text-break" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600, color: 'var(--hz-text-primary)' }}>
+        {item.value}
+      </div>
+      {item.detail && (
+        <div className="text-secondary-hz text-break" style={{ fontSize: 12 }}>
+          {item.detail}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function parseAgentVersion(value) {
+  const match = typeof value === 'string' ? value.trim().match(/^v?(\d+(?:\.\d+)*)/i) : null;
+  return match ? match[1].split('.').map(Number) : null;
+}
+
+function compareAgentVersions(a, b) {
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i += 1) {
+    const diff = (a[i] || 0) - (b[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+function toTimestamp(value) {
+  if (!value) return null;
+  // Backend LocalDateTime values are UTC without an offset (see utils/formatDateTime).
+  const normalized = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(value) ? `${value}Z` : value;
+  const time = new Date(normalized).getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
+function buildDeviceHealth(device, fleet) {
+  if (!device) return [];
+  const online = isDeviceOnline(device);
+  const lastSeen = getDeviceLastSeen(device);
+  const lastSeenAt = toTimestamp(lastSeen);
+  const offlineMs = lastSeenAt === null ? Infinity : Date.now() - lastSeenAt;
+
+  const connection = online
+    ? { tone: 'success', status: 'Online', value: 'Connected', detail: `Last heartbeat ${timeAgoIST(lastSeen)}` }
+    : {
+        tone: offlineMs >= DAY_MS ? 'danger' : 'warning',
+        status: 'Offline',
+        value: lastSeenAt === null ? 'Never connected' : `Offline since ${timeAgoIST(lastSeen)}`,
+        detail: lastSeenAt === null ? 'No heartbeat received yet' : `Last heartbeat ${formatDateTimeIST(lastSeen)}`,
+      };
+
+  // The agent reports disk capacity only (no free space), so this card
+  // reflects the hardware inventory scan instead of a free-space reading.
+  const inventory = device.hardwareInventory;
+  const disks = Array.isArray(inventory?.physicalDisks) ? inventory.physicalDisks : [];
+  const totalDiskBytes = disks.reduce((sum, disk) => sum + (Number(disk?.capacityBytes) || 0), 0);
+  const hardwareSummary = [
+    inventory?.installedMemoryBytes ? `${formatInventoryBytes(inventory.installedMemoryBytes)} RAM` : null,
+    disks.length > 0 ? `${disks.length} disk${disks.length === 1 ? '' : 's'}${totalDiskBytes > 0 ? `, ${formatInventoryBytes(totalDiskBytes)}` : ''}` : null,
+  ].filter(Boolean).join(' · ');
+  const scanStatus = device.inventoryStatus || 'NOT_SCANNED';
+  const lastScan = device.lastInventoryScanAt ? `Last scan ${timeAgoIST(device.lastInventoryScanAt)}` : 'No successful scan yet';
+  const inventoryCard = {
+    COMPLETED: { tone: 'success', status: 'Scanned' },
+    PENDING: { tone: 'warning', status: 'Scan queued' },
+    SCANNING: { tone: 'warning', status: 'Scanning' },
+    FAILED: { tone: 'danger', status: 'Scan failed' },
+    OFFLINE: { tone: 'warning', status: 'Agent offline' },
+  }[scanStatus] || { tone: 'warning', status: 'Not scanned' };
+
+  const version = getDeviceAgentVersion(device);
+  const parsedVersion = parseAgentVersion(version);
+  let newestVersion = null;
+  let newestParsed = null;
+  (fleet || []).forEach((item) => {
+    const candidate = getDeviceAgentVersion(item);
+    const parsed = parseAgentVersion(candidate);
+    if (parsed && (!newestParsed || compareAgentVersions(parsed, newestParsed) > 0)) {
+      newestParsed = parsed;
+      newestVersion = candidate;
+    }
+  });
+  let agent;
+  if (!parsedVersion) {
+    agent = { tone: 'warning', status: 'Unknown', value: version || '—', detail: 'The agent has not reported a version' };
+  } else if (newestParsed && compareAgentVersions(parsedVersion, newestParsed) < 0) {
+    agent = { tone: 'warning', status: 'Update pending', value: version, detail: `Newest in fleet: ${newestVersion}` };
+  } else if (newestParsed) {
+    agent = { tone: 'success', status: 'Up to date', value: version, detail: 'Newest version in your fleet' };
+  } else {
+    agent = { tone: 'success', status: 'Reporting', value: version, detail: 'Fleet comparison unavailable' };
+  }
+
+  const employeeName = getDeviceEmployeeName(device);
+  const employeeId = getDeviceEmployeeId(device);
+  const assigned = Boolean(employeeId || employeeName);
+  const employee = assigned
+    ? {
+        tone: 'success',
+        status: 'Assigned',
+        value: employeeName || `Employee #${employeeId}`,
+        detail: [device.employeeCode, device.departmentName].filter(Boolean).join(' · ') || null,
+      }
+    : { tone: 'warning', status: 'Unassigned', value: 'No employee mapped', detail: 'Map this device from the Devices list' };
+
+  return [
+    { key: 'connection', title: 'Connection', icon: Wifi, ...connection },
+    {
+      key: 'inventory',
+      title: 'Hardware inventory',
+      icon: HardDrive,
+      ...inventoryCard,
+      value: hardwareSummary || (inventory ? 'Specifications reported' : 'No specifications yet'),
+      detail: lastScan,
+    },
+    { key: 'agent', title: 'Agent version', icon: ShieldCheck, ...agent },
+    { key: 'employee', title: 'Assigned employee', icon: UserRound, ...employee },
+  ];
 }

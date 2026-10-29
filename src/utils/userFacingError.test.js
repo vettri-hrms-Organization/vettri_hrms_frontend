@@ -23,6 +23,19 @@ test('network and server errors map to short Vettri messages, not raw technical 
   );
 });
 
+test('server errors name the part of Vettri that failed, without technical detail', () => {
+  assert.equal(
+    userFacingError({ response: { status: 500, data: { message: 'NullPointerException' } }, config: { url: '/api/devices/26/remote-commands/actions', method: 'get' } }),
+    "We couldn't load device information right now. Please try again in a moment."
+  );
+  assert.equal(
+    userFacingError({ response: { status: 503 }, config: { url: '/api/leave-requests/7/approve', method: 'patch' } }),
+    "We couldn't save your leave change right now. Nothing was changed - please try again in a moment."
+  );
+  assert.equal(userFacingError({ response: { status: 405 }, config: { url: '/api/agent/update' } }), vettriMicrocopy.error.outdatedServer);
+  assert.equal(notifyableStatus({ response: { status: 405 } }), true);
+});
+
 test('validation keeps readable user guidance and hides technical or structured server messages', () => {
   assert.equal(
     userFacingError(apiError(422, 'Please select an employee before continuing.')),

@@ -172,8 +172,8 @@ export default function Dashboard() {
         </div>
         <div className="hz-dash__hero-actions">
           {canViewApprovals && pendingCount > 0 && (
-            <Link to="/leave" className="btn btn-light">
-              <ClipboardCheck size={16} aria-hidden="true" /> Review leave
+            <Link to="/approvals" className="btn btn-light">
+              <ClipboardCheck size={16} aria-hidden="true" /> Review approvals
             </Link>
           )}
           {hasPermission('EMPLOYEE_CREATE') && (
@@ -536,6 +536,19 @@ function formatLeaveRange(start, end) {
   return `${formatShortDate(start)} – ${formatShortDate(end)}`;
 }
 
+/** "In at 9:31 AM · 3h 12m so far" for the Home "Today" card, from the day's web/WFH/tray session. */
+function todayAttendanceDetail(session, hasCheckedIn, hasCheckedOut) {
+  const checkIn = session?.checkInTime ? new Date(session.checkInTime) : null;
+  if (!checkIn || Number.isNaN(checkIn.getTime())) {
+    return hasCheckedIn ? (hasCheckedOut ? 'Attendance complete' : 'Have a productive day') : 'Tap to check in';
+  }
+  const end = session.checkOutTime ? new Date(session.checkOutTime) : new Date();
+  const minutes = Math.max(0, Math.round((end.getTime() - checkIn.getTime()) / 60000));
+  const worked = `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+  const inAt = checkIn.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+  return session.checkOutTime ? `In at ${inAt} · ${worked} worked` : `In at ${inAt} · ${worked} so far`;
+}
+
 /** Next occurrence of a date of birth, e.g. "Today", "Tomorrow", "14 Nov". */
 function formatBirthday(dateOfBirth) {
   if (!dateOfBirth) return '';
@@ -656,12 +669,12 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
         </div>
 
         <div className="hz-dashboard__metric-grid">
-          <article className="hz-dashboard__metric">
+          <Link to="/my-attendance" className="hz-dashboard__metric text-decoration-none" style={{ color: 'inherit' }} aria-label="Today's attendance - open My Attendance">
             <div className="hz-dashboard__metric-icon" style={{ color: 'var(--hz-primary-600)' }}><Clock3 size={19} /></div>
             <span>Today</span>
             <strong>{attendanceLoading ? '...' : hasCheckedOut ? 'Complete' : hasCheckedIn ? 'Checked in' : 'Not recorded'}</strong>
-            <small>{hasCheckedIn ? (hasCheckedOut ? 'Attendance complete' : 'Have a productive day') : 'Your attendance status'}</small>
-          </article>
+            <small>{todayAttendanceDetail(session, hasCheckedIn, hasCheckedOut)}</small>
+          </Link>
           <article className="hz-dashboard__metric">
             <div className="hz-dashboard__metric-icon" style={{ color: 'var(--hz-success-500)' }}><CalendarOff size={19} /></div>
             <span>Leave balance</span>

@@ -31,6 +31,7 @@ import {
   AlarmClock,
   Timer,
   Megaphone,
+  ClipboardCheck,
 } from 'lucide-react';
 
 /**
@@ -58,7 +59,11 @@ export const NAV_SECTIONS = [
     permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
-    items: [{ to: '/dashboard', icon: LayoutDashboard, label: 'Home', end: true, permission: 'SELF_PROFILE_VIEW' }],
+    items: [
+      { to: '/dashboard', icon: LayoutDashboard, label: 'Home', end: true, permission: 'SELF_PROFILE_VIEW' },
+      // One inbox for every request waiting on this person (leave, WFH, corrections, overtime, expenses...).
+      { to: '/approvals', icon: ClipboardCheck, label: 'Approvals', permissionsAny: ['LEAVE_APPROVE', 'LEAVE_MANAGE', 'ATTENDANCE_MANAGE', 'OVERTIME_APPROVE', 'EXPENSE_APPROVE', 'EXPENSE_MANAGE'] },
+    ],
   },
   {
     id: 'employee-me',

@@ -16,6 +16,36 @@ function requestPath(error) {
   return error?.config?.url?.split('?')[0] || '';
 }
 
+// Which part of Vettri a request belongs to, so a server error can say what failed
+// ("We couldn't load attendance…") instead of a vague "could not complete your request".
+const AREAS = [
+  [['/api/devices', '/api/monitoring', '/api/agent-tokens', '/api/device-enrollments', '/api/admin/devices'], 'device information'],
+  [['/api/software'], 'software'],
+  [['/api/attendance', '/api/worksession'], 'attendance'],
+  [['/api/leave', '/api/comp-off', '/api/holidays'], 'leave'],
+  [['/api/salary', '/api/payroll', '/api/tax-declarations', '/api/settlements'], 'payroll'],
+  [['/api/expenses'], 'expenses'],
+  [['/api/employees'], 'employee records'],
+  [['/api/recruitment', '/api/candidates', '/api/interviews', '/api/requirements'], 'recruitment'],
+  [['/api/performance'], 'performance reviews'],
+  [['/api/notifications'], 'notifications'],
+  [['/api/reports', '/api/executive'], 'reports'],
+  [['/api/announcements'], 'announcements'],
+  [['/api/documents'], 'documents'],
+];
+
+function areaOf(error) {
+  let path = requestPath(error);
+  const schemeEnd = path.indexOf('://');
+  if (schemeEnd >= 0) path = path.slice(path.indexOf('/', schemeEnd + 3) >>> 0);
+  const match = AREAS.find(([prefixes]) => prefixes.some((prefix) => path.startsWith(prefix)));
+  return match ? match[1] : null;
+}
+
+function isRead(error) {
+  return !error?.config?.method || String(error.config.method).toLowerCase() === 'get';
+}
+
 function rawMessage(error) {
   return String(error?.response?.data?.message || '').trim();
 }
@@ -64,6 +94,11 @@ export function userFacingError(error) {
     return vettriMicrocopy.permission.generic;
   }
 
+  if (status === 405) {
+    // The app asked for something this server version does not have yet.
+    return vettriMicrocopy.error.outdatedServer;
+  }
+
   if (status === 404) {
     return vettriMicrocopy.error.notFound;
   }
@@ -83,7 +118,11 @@ export function userFacingError(error) {
   }
 
   if (status >= 500) {
-    return vettriMicrocopy.error.generic;
+    const area = areaOf(error);
+    if (!area) return vettriMicrocopy.error.generic;
+    return isRead(error)
+      ? `We couldn't load ${area} right now. Please try again in a moment.`
+      : `We couldn't save your ${area} change right now. Nothing was changed - please try again in a moment.`;
   }
 
   return isBusinessSafe(message) ? message : vettriMicrocopy.error.request;
@@ -91,5 +130,5 @@ export function userFacingError(error) {
 
 export function notifyableStatus(error) {
   const status = error?.response?.status;
-  return !error?.response || [401, 402, 403, 404, 409, 429].includes(status) || status >= 500;
+  return !error?.response || [401, 402, 403, 404, 405, 409, 429].includes(status) || status >= 500;
 }

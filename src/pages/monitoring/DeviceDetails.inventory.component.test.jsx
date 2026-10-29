@@ -8,6 +8,7 @@ import DeviceDetails from './DeviceDetails.jsx';
 const { monitoringApi } = vi.hoisted(() => ({
   monitoringApi: {
     deviceById: vi.fn(),
+    devices: vi.fn(),
     sessionsByDevice: vi.fn(),
     remoteSupportJobs: vi.fn(),
     requestDeviceInventoryScan: vi.fn(),
@@ -41,6 +42,7 @@ describe('device details hardware inventory scan', () => {
     monitoringApi.deviceById.mockImplementation(async () => device);
     monitoringApi.sessionsByDevice.mockResolvedValue([]);
     monitoringApi.remoteSupportJobs.mockResolvedValue([]);
+    monitoringApi.devices.mockResolvedValue([]);
   });
 
   afterEach(() => cleanup());
@@ -65,6 +67,7 @@ describe('device details hardware inventory scan', () => {
       </MemoryRouter>,
     );
 
+    await user.click(await screen.findByRole('tab', { name: /Hardware/ }));
     const scanButton = await screen.findByRole('button', { name: 'Scan Specifications' });
     await user.click(scanButton);
 

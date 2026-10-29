@@ -8,7 +8,7 @@ import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
-import { SkeletonText } from '../../components/ui/Skeleton';
+import { Skeleton, SkeletonText } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { exportToCsv } from '../../utils/exportToCsv';
@@ -17,6 +17,7 @@ import NewPayrollRunModal from './components/NewPayrollRunModal';
 import StatutoryExportsCard from './components/StatutoryExportsCard';
 import PageHeader from '../../components/ui/PageHeader';
 import StatCard from '../../components/ui/StatCard';
+import { PAYROLL_STEPS, PayrollChecklist, PayrollStepper, currentStepIndex, usePayrollChecklist } from './components/PayrollRunGuide';
 
 export default function PayrollProcessing() {
   const queryClient = useQueryClient();
@@ -29,7 +30,7 @@ export default function PayrollProcessing() {
   // The bank file carries full account numbers, so it is SALARY_MANAGE only (enforced server-side too).
   const canManage = hasPermission('SALARY_MANAGE');
 
-  const { data: runs = [], isLoading: loadingRuns } = useQuery({ queryKey: ['payroll-runs'], queryFn: payrollApi.listRuns });
+  const { data: runs = [], isLoading: loadingRuns, isError: runsError, refetch: refetchRuns } = useQuery({ queryKey: ['payroll-runs'], queryFn: payrollApi.listRuns });
 
   const activeRunId = selectedRunId ?? runs[0]?.id ?? null;
 
@@ -97,6 +98,12 @@ export default function PayrollProcessing() {
     pending: counts.PENDING,
   };
 
+  const checks = usePayrollChecklist({ run, items, onHoldCount: counts.ON_HOLD, hasPermission });
+  const processBlocked = !preflight.hasEmployees || preflight.onHold > 0;
+  const stepIndex = run ? currentStepIndex(run.status) : 0;
+  // In DRAFT the user is reviewing; the action they're heading for is Process.
+  const nextStep = PAYROLL_STEPS[Math.min(stepIndex + (run?.status === 'DRAFT' ? 1 : 0), PAYROLL_STEPS.length - 1)];
+
   function requestConfirmation(action) {
     if (action === 'process' && (!preflight.hasEmployees || preflight.onHold > 0)) {
       toast.error('Resolve payroll holds and ensure employees are included before processing.');
@@ -161,12 +168,17 @@ export default function PayrollProcessing() {
                 <SkeletonText lines={4} />
               </div>
             )}
-            {!loadingRuns && runs.length === 0 && (
+            {!loadingRuns && runsError && (
+              <div className="p-3">
+                <ErrorState description="Couldn't load payroll runs." onRetry={refetchRuns} />
+              </div>
+            )}
+            {!loadingRuns && !runsError && runs.length === 0 && (
               <div className="p-3">
                 <EmptyState icon={Receipt} title="No payroll runs yet" description="Start your first run for the current period." />
               </div>
             )}
-            {!loadingRuns &&
+            {!loadingRuns && !runsError &&
               runs.map((r) => (
                 <button
                   key={r.id}
@@ -189,10 +201,25 @@ export default function PayrollProcessing() {
         </div>
 
         <div className="col-12 col-lg-9">
-          {!activeRunId && (
+          {!activeRunId && loadingRuns && (
             <Card>
-              <EmptyState icon={PlayCircle} title="No run selected" description="Create a payroll run or select one from the list to get started." />
+              <SkeletonText lines={3} />
             </Card>
+          )}
+          {!activeRunId && !loadingRuns && (
+            <div className="d-flex flex-column gap-3">
+              <Card title="Run progress" subtitle="Next: Select month - open a run for the pay period">
+                <PayrollStepper status={null} />
+              </Card>
+              <Card>
+                <EmptyState
+                  icon={PlayCircle}
+                  title="No run selected"
+                  description="Create a payroll run or select one from the list to get started. Every employee with an active salary structure is included automatically."
+                  action={<Button icon={PlusCircle} onClick={() => setShowNewRun(true)}>New Payroll Run</Button>}
+                />
+              </Card>
+            </div>
           )}
 
           {activeRunId && isError && <ErrorState description="Couldn't load this payroll run." onRetry={refetch} />}
@@ -200,7 +227,13 @@ export default function PayrollProcessing() {
           {activeRunId && !isError && (
             <div className="d-flex flex-column gap-3">
               <Card>
-                <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                {loadingDetail && !run && (
+                  <div aria-label="Loading payroll run">
+                    <Skeleton height={20} width="40%" />
+                    <div className="mt-2"><SkeletonText lines={2} /></div>
+                  </div>
+                )}
+                {run && <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                   <div>
                     <div className="d-flex align-items-center gap-2 mb-1">
                       <h3 style={{ fontSize: 'var(--hz-text-lg)', fontWeight: 700, margin: 0 }}>{run?.periodLabel}</h3>
@@ -210,7 +243,7 @@ export default function PayrollProcessing() {
                       {counts.PENDING} pending &middot; {counts.ON_HOLD} on hold &middot; {counts.PROCESSED} processed &middot; {counts.PAID} paid
                     </p>
                   </div>
-                  <div className="d-flex gap-2">
+                  <div className="d-flex flex-wrap gap-2">
                     <button className="btn btn-outline-secondary d-inline-flex align-items-center gap-2" onClick={handleExport} disabled={items.length === 0}>
                       <Download size={16} /> Export
                     </button>
@@ -225,22 +258,12 @@ export default function PayrollProcessing() {
                       </button>
                     )}
                     {run?.status === 'DRAFT' && (
-                      <>
-                        <Button variant="secondary" icon={XCircle} onClick={() => requestConfirmation('cancel')} loading={cancelMutation.isPending}>
-                          Cancel Run
-                        </Button>
-                        <Button icon={PlayCircle} onClick={() => requestConfirmation('process')} loading={processMutation.isPending}>
-                          Process Payroll
-                        </Button>
-                      </>
-                    )}
-                    {run?.status === 'PROCESSED' && (
-                      <Button icon={Wallet} onClick={() => requestConfirmation('paid')} loading={markPaidMutation.isPending}>
-                        Mark as Paid
+                      <Button variant="secondary" icon={XCircle} onClick={() => requestConfirmation('cancel')} loading={cancelMutation.isPending}>
+                        Cancel Run
                       </Button>
                     )}
                   </div>
-                </div>
+                </div>}
 
                 {run && (
                   <div className="row g-3 mt-1">
@@ -251,16 +274,51 @@ export default function PayrollProcessing() {
                 )}
               </Card>
 
-              {run?.status === 'DRAFT' && <Card className="hz-payroll-preflight" title="Preflight checks" subtitle="Review before processing this payroll run">
-                <div className="hz-payroll-preflight__checks">
-                  <span className={preflight.hasEmployees ? 'is-ready' : 'is-blocked'}>{preflight.hasEmployees ? 'Ready' : 'Blocked'} · Employees included</span>
-                  <span className={preflight.onHold === 0 ? 'is-ready' : 'is-blocked'}>{preflight.onHold === 0 ? 'Ready' : `${preflight.onHold} blocked`} · Holds resolved</span>
-                  <span className={preflight.pending >= 0 ? 'is-ready' : 'is-blocked'}>{preflight.pending} pending items reviewed</span>
-                </div>
-              </Card>}
+              {run && (
+                <Card
+                  title="Run progress"
+                  subtitle={run.status === 'PAID' ? 'This run is complete' : `Next: ${nextStep.label} - ${nextStep.hint.toLowerCase()}`}
+                >
+                  <PayrollStepper status={run.status} />
+                  <div className="d-flex flex-wrap align-items-center justify-content-between mt-3" style={{ gap: 'var(--hz-space-3)' }}>
+                    <p className="mb-0" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)', flex: '1 1 260px' }}>
+                      {run.status === 'DRAFT' && (processBlocked
+                        ? (!preflight.hasEmployees
+                          ? 'Processing is blocked: no employees are included in this run.'
+                          : `Processing is blocked: release the ${preflight.onHold} employee${preflight.onHold === 1 ? '' : 's'} on hold first.`)
+                        : `${preflight.pending} employee${preflight.pending === 1 ? '' : 's'} ready to process. Review the checklist and the table below, then process.`)}
+                      {run.status === 'PROCESSED' && `Totals are locked. Pay employees, then record the payment for ${counts.PROCESSED} processed employee${counts.PROCESSED === 1 ? '' : 's'}.`}
+                      {run.status === 'PAID' && `Payment recorded. Download each payslip from the employee table below${canManage ? ', or export the bank transfer and statutory files.' : '.'}`}
+                      {run.status === 'CANCELLED' && 'This run was cancelled.'}
+                    </p>
+                    {run.status === 'DRAFT' && (
+                      <Button icon={PlayCircle} onClick={() => requestConfirmation('process')} loading={processMutation.isPending} disabled={processBlocked}>
+                        Process Payroll
+                      </Button>
+                    )}
+                    {run.status === 'PROCESSED' && (
+                      <Button icon={Wallet} onClick={() => requestConfirmation('paid')} loading={markPaidMutation.isPending}>
+                        Mark as Paid
+                      </Button>
+                    )}
+                    {run.status === 'PAID' && (
+                      <a href="#payroll-run-employees" className="btn btn-primary d-inline-flex align-items-center gap-2">
+                        <FileText size={16} aria-hidden="true" /> Go to payslips
+                      </a>
+                    )}
+                  </div>
+                </Card>
+              )}
+
+              {run?.status === 'DRAFT' && (
+                <Card className="hz-payroll-preflight" title="Before you run" subtitle={`Checks for ${run.periodLabel}`}>
+                  <PayrollChecklist checks={checks} />
+                </Card>
+              )}
 
               {canManage && run && items.length > 0 && <StatutoryExportsCard runId={activeRunId} run={run} />}
 
+              <div id="payroll-run-employees" />
               <Card bodyClassName="p-0" title="Employees in this Run">
                 {loadingDetail && (
                   <div className="p-3">
@@ -380,8 +438,12 @@ export default function PayrollProcessing() {
           if (action === 'paid') markPaidMutation.mutate();
           if (action === 'cancel') cancelMutation.mutate();
         }}
-        title={confirmAction === 'process' ? 'Process this payroll run?' : confirmAction === 'paid' ? 'Mark payroll as paid?' : 'Cancel this payroll run?'}
-        description={confirmAction === 'process' ? 'This will finalize the reviewed payroll items.' : confirmAction === 'paid' ? 'This will record payment for every processed item in the run.' : 'This will cancel the draft run and remove it from active payroll work.'}
+        title={confirmAction === 'process' ? `Process payroll for ${run?.periodLabel || 'this run'}?` : confirmAction === 'paid' ? `Mark ${run?.periodLabel || 'this'} payroll as paid?` : 'Cancel this payroll run?'}
+        description={confirmAction === 'process'
+          ? `${counts.PENDING} employee${counts.PENDING === 1 ? '' : 's'} will be finalised and totals locked in. After processing, the run can no longer be edited, held or cancelled.`
+          : confirmAction === 'paid'
+            ? `This records today as the payment date for ${counts.PROCESSED} processed employee${counts.PROCESSED === 1 ? '' : 's'} (${formatCurrency(run?.totalNet)} net) and notifies them.`
+            : 'This will cancel the draft run and remove it from active payroll work.'}
         confirmLabel={confirmAction === 'process' ? 'Process payroll' : confirmAction === 'paid' ? 'Mark as paid' : 'Cancel run'}
         variant={confirmAction === 'cancel' ? 'danger' : 'primary'}
         loading={processMutation.isPending || markPaidMutation.isPending || cancelMutation.isPending}

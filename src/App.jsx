@@ -9,6 +9,7 @@ const ActivateAccount = lazy(() => import('./pages/ActivateAccount'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Approvals = lazy(() => import('./pages/approvals/Approvals'));
 const EmployeeList = lazy(() => import('./pages/employees/EmployeeList'));
 const EmployeeProfile = lazy(() => import('./pages/employees/EmployeeProfile'));
 const EmployeeImport = lazy(() => import('./pages/employees/EmployeeImport'));
@@ -102,6 +103,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="approvals" element={<Approvals />} />
           <Route path="welcome" element={<Welcome />} />
           <Route path="employees" element={<EmployeeList />} />
           <Route path="employees/import" element={<EmployeeImport />} />
