@@ -1,0 +1,140 @@
+/*
+ * Clarity layer - visual hierarchy for every page.
+ *
+ * Earlier layers left page titles, card titles, tabs, table headers and table rows at nearly the
+ * same size, weight and colour, so screens read like one block of text. This layer gives each
+ * level its own look: page title > card title > tab / table header label > body text. Loaded
+ * last (after aurora.css) so it applies app-wide; colours come from tokens so dark mode follows.
+ */
+
+:root {
+  --hz-clarity-head-bg: #EEF2FC;
+  --hz-clarity-head-text: #3B4566;
+  --hz-clarity-head-border: #D9E1F5;
+  --hz-clarity-row-alt: #FAFBFE;
+  --hz-clarity-row-hover: #F1F5FF;
+  --hz-clarity-tab-text: #5B6478;
+  --hz-clarity-tab-active: #3457C9;
+}
+
+[data-theme='dark'] {
+  --hz-clarity-head-bg: #1A2547;
+  --hz-clarity-head-text: #C9D2E8;
+  --hz-clarity-head-border: #2A3760;
+  --hz-clarity-row-alt: #141C31;
+  --hz-clarity-row-hover: #1C2645;
+  --hz-clarity-tab-text: #A5AFC4;
+  --hz-clarity-tab-active: #8FA8FF;
+}
+
+/* ---- Page header: the one clear title of the page ---- */
+.hz-page-header__eyebrow {
+  color: var(--hz-clarity-tab-active) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+}
+
+.hz-page-header__title {
+  font-size: clamp(26px, 2.4vw, 32px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+  color: var(--hz-text-primary) !important;
+}
+
+.hz-page-header__description {
+  color: var(--hz-text-secondary) !important;
+  font-size: 15px !important;
+}
+
+/* ---- Cards: a titled section, separated from its content ---- */
+.hz-card__header {
+  padding-bottom: 14px !important;
+  margin-bottom: 4px !important;
+  border-bottom: 1px solid var(--hz-divider, var(--hz-border)) !important;
+}
+
+.hz-card__title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--hz-text-primary) !important;
+  letter-spacing: -0.01em !important;
+}
+
+.hz-card__subtitle {
+  font-size: 13px !important;
+  color: var(--hz-text-secondary) !important;
+}
+
+/* ---- Tabs: the selected tab is unmistakable ---- */
+.hz-tabs {
+  background: var(--hz-surface-muted) !important;
+  border: 1px solid var(--hz-border) !important;
+}
+
+.hz-tab {
+  color: var(--hz-clarity-tab-text) !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+.hz-tab:hover:not(.hz-tab--active) {
+  color: var(--hz-text-primary) !important;
+  background: var(--hz-bg-surface-hover, rgba(65, 105, 225, 0.06)) !important;
+}
+
+.hz-tab--active {
+  background: var(--hz-bg-surface) !important;
+  color: var(--hz-clarity-tab-active) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 2px rgba(16, 23, 42, 0.10), 0 4px 10px -4px rgba(52, 87, 201, 0.35), inset 0 -2px 0 var(--hz-clarity-tab-active) !important;
+}
+
+.hz-tab:focus-visible {
+  outline: 2px solid var(--hz-clarity-tab-active) !important;
+  outline-offset: 2px;
+}
+
+/* ---- Tables: header row reads as labels, rows read as data ---- */
+.hz-main-content .table:not(.table-sm) > thead > tr > th,
+.hz-table thead th {
+  background: var(--hz-clarity-head-bg) !important;
+  color: var(--hz-clarity-head-text) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.07em !important;
+  text-transform: uppercase !important;
+  border-bottom: 2px solid var(--hz-clarity-head-border) !important;
+}
+
+.hz-main-content .table:not(.table-sm) > thead > tr > th:first-child,
+.hz-table thead th:first-child { border-top-left-radius: 10px; }
+
+.hz-main-content .table:not(.table-sm) > thead > tr > th:last-child,
+.hz-table thead th:last-child { border-top-right-radius: 10px; }
+
+.hz-main-content .table:not(.table-sm) > tbody > tr:nth-child(even) > td,
+.hz-table tbody tr:nth-child(even) td {
+  background: var(--hz-clarity-row-alt) !important;
+}
+
+.hz-main-content .table > tbody > tr:hover > td,
+.hz-table tbody tr:hover td {
+  background: var(--hz-clarity-row-hover) !important;
+}
+
+.hz-main-content .table:not(.table-sm) > tbody > tr > td,
+.hz-table tbody td {
+  font-size: 14px !important;
+}
+
+/* The first column usually names the row (person, device, item): give it weight. */
+.hz-table tbody td:first-child { font-weight: 600; }
+
+/* ---- Forms: labels stand apart from inputs and help text ---- */
+.hz-main-content .form-label {
+  font-weight: 600 !important;
+  color: var(--hz-text-primary) !important;
+}

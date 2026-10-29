@@ -11,7 +11,8 @@
  *
  * Bump VERSION whenever this file's caching rules change.
  */
-const VERSION = 'v1';
+// v2: never cache an HTML page answered for a missing /assets bundle (old builds after a deploy).
+const VERSION = 'v2';
 const SHELL_CACHE = `vettri-shell-${VERSION}`;
 const ASSET_CACHE = `vettri-assets-${VERSION}`;
 const STATIC_CACHE = `vettri-static-${VERSION}`;
@@ -93,7 +94,8 @@ async function cacheFirst(request, cacheName) {
   const cached = await cache.match(request);
   if (cached) return cached;
   const response = await fetch(request);
-  if (okToStore(response)) {
+  const isHtml = (response.headers.get('Content-Type') || '').includes('text/html');
+  if (okToStore(response) && !isHtml) {
     cache.put(request, response.clone()).then(() => trimCache(cacheName, MAX_ASSET_ENTRIES));
   }
   return response;

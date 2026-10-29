@@ -16,6 +16,8 @@ import './design-system/styles/vettri-ui.css';
 import './design-system/styles/mobile.css';
 // Marketing-site brand layer (gradients, aurora, glass) - keep last so it wins.
 import './design-system/styles/aurora.css';
+// Visual hierarchy for every page (titles, tabs, table headers). Loaded last on purpose.
+import './design-system/styles/clarity.css';
 
 import { queryClient } from './api/queryClient';
 import { AuthProvider } from './auth/AuthContext';
@@ -31,11 +33,38 @@ if (import.meta.env.PROD) {
   registerServiceWorker();
 }
 
+// After a deploy, a tab still running the previous build asks for page bundles whose
+// hashed names no longer exist. Reload once to pick up the new build instead of
+// showing an error; the timestamp guard stops a reload loop if the server is broken.
+const CHUNK_RELOAD_KEY = 'vettri-chunk-reload-at';
+const isChunkLoadError = (error) => /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Expected a JavaScript-or-Wasm module script/i
+  .test(String(error?.message || error || ''));
+
+function reloadForNewBuild() {
+  try {
+    const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0);
+    if (Date.now() - last < 30_000) return false;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+  } catch {
+    // storage blocked: still try one reload
+  }
+  window.location.reload();
+  return true;
+}
+
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadForNewBuild()) event.preventDefault();
+});
+
 class AppErrorBoundary extends React.Component {
   state = { hasError: false };
 
   static getDerivedStateFromError() {
     return { hasError: true };
+  }
+
+  componentDidCatch(error) {
+    if (isChunkLoadError(error)) reloadForNewBuild();
   }
 
   render() {
