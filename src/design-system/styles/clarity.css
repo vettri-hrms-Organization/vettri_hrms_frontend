@@ -138,3 +138,88 @@
   font-weight: 600 !important;
   color: var(--hz-text-primary) !important;
 }
+
+/* ======================================================================
+ * Brand colour sections - the landing page's aurora (blue #4169E1, indigo #6366F1,
+ * violet #8B5CF6, cyan #06B6D4) so each part of a page reads as its own band:
+ * page header -> tab bar -> card header -> table header -> rows.
+ * ====================================================================== */
+
+:root {
+  --hz-aurora-header:
+    radial-gradient(520px 260px at 0% 0%, rgba(99, 102, 241, 0.22), transparent 70%),
+    radial-gradient(460px 240px at 100% 10%, rgba(6, 182, 212, 0.20), transparent 70%),
+    radial-gradient(420px 220px at 55% 120%, rgba(236, 72, 153, 0.10), transparent 70%),
+    linear-gradient(120deg, #F3F5FF 0%, #F8F4FF 50%, #EFFAFE 100%);
+  --hz-aurora-band: linear-gradient(90deg, #EEF3FF 0%, #F3EEFF 50%, #E9FBFE 100%);
+  --hz-aurora-card-head: linear-gradient(90deg, rgba(65, 105, 225, 0.07) 0%, rgba(139, 92, 246, 0.06) 55%, rgba(6, 182, 212, 0.06) 100%);
+  --hz-aurora-table-head: linear-gradient(90deg, #E6EDFF 0%, #EEE8FF 55%, #E2F6FC 100%);
+  --hz-aurora-border: #E1E6FA;
+}
+
+[data-theme='dark'] {
+  --hz-aurora-header:
+    radial-gradient(520px 260px at 0% 0%, rgba(99, 102, 241, 0.28), transparent 70%),
+    radial-gradient(460px 240px at 100% 10%, rgba(6, 182, 212, 0.18), transparent 70%),
+    linear-gradient(120deg, #141B33 0%, #19173A 50%, #10202E 100%);
+  --hz-aurora-band: linear-gradient(90deg, #18213F 0%, #1E1A40 50%, #142636 100%);
+  --hz-aurora-card-head: linear-gradient(90deg, rgba(99, 102, 241, 0.14) 0%, rgba(139, 92, 246, 0.10) 55%, rgba(6, 182, 212, 0.10) 100%);
+  --hz-aurora-table-head: linear-gradient(90deg, #1B2550 0%, #221D4D 55%, #15293A 100%);
+  --hz-aurora-border: #2A3560;
+}
+
+/* Page header: a soft aurora panel, so the page title area is its own section. */
+.hz-page-header {
+  position: relative;
+  padding: 22px 26px !important;
+  border: 1px solid var(--hz-aurora-border) !important;
+  border-radius: 20px !important;
+  background: var(--hz-aurora-header) !important;
+  box-shadow: 0 10px 30px -18px rgba(65, 105, 225, 0.45);
+}
+
+/* Title keeps strong dark text; the brand gradient lives in a short accent under it. */
+.hz-page-header__title::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 99px;
+  background: var(--vettri-gradient-brand, linear-gradient(110deg, #4169E1, #6366F1 35%, #8B5CF6 65%, #06B6D4));
+}
+
+/* Tab bar: tinted band with the brand gradient, white selected tab on top. */
+.hz-tabs {
+  background: var(--hz-aurora-band) !important;
+  border-color: var(--hz-aurora-border) !important;
+}
+
+/* Card header: faint brand tint so "title + description" separates from the card content. */
+.hz-card__header {
+  background: var(--hz-aurora-card-head) !important;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  border-bottom-color: var(--hz-aurora-border) !important;
+  margin-bottom: 0 !important;
+}
+
+.hz-card {
+  border-color: var(--hz-aurora-border) !important;
+}
+
+/* Table header: stronger brand gradient band than the card header above it. */
+.hz-main-content .table:not(.table-sm) > thead > tr > th,
+.hz-table thead th {
+  background: var(--hz-aurora-table-head) !important;
+  border-bottom-color: var(--hz-aurora-border) !important;
+}
+
+/* The selected tab carries the brand gradient as its underline. */
+.hz-tab--active {
+  background-image: linear-gradient(var(--hz-bg-surface), var(--hz-bg-surface)), var(--vettri-gradient-brand, linear-gradient(110deg, #4169E1, #8B5CF6, #06B6D4)) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  border-bottom: 2px solid transparent !important;
+  box-shadow: 0 1px 2px rgba(16, 23, 42, 0.10), 0 4px 10px -4px rgba(65, 105, 225, 0.35) !important;
+}
