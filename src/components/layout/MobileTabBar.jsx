@@ -8,9 +8,11 @@ import { useAuth } from '../../hooks/useAuth';
  * Desktop and tablet layouts are untouched.
  */
 export default function MobileTabBar({ onOpenMore, moreOpen = false }) {
-  const { hasPermission } = useAuth();
+  const { hasPermission, hasRole, selectedCompanyId } = useAuth();
   const location = useLocation();
   if (!hasPermission('SELF_PROFILE_VIEW')) return null;
+  // Platform staff outside a company have no employee pages (attendance, leave, pay) to jump to.
+  if (hasRole('SUPER_ADMIN') && !selectedCompanyId) return null;
 
   const tabs = [
     { to: '/dashboard', label: 'Home', icon: Home, end: true },

@@ -227,7 +227,7 @@ export default function Topbar({ onOpenMobileNav }) {
               onChange={(event) => openCompany(event.target.value || null)}
               disabled={companiesLoading}
               aria-label="Open a company that allowed support access"
-              style={{ maxWidth: 230 }}
+              style={{ maxWidth: 260, color: 'var(--hz-text-primary)', backgroundColor: 'var(--hz-bg-surface)', borderColor: 'var(--hz-border)', fontWeight: 600 }}
             >
               <option value="">{companies.length ? 'Platform view (no company)' : 'No company has allowed support'}</option>
               {companies.map((company) => <option key={company.companyId} value={company.companyId}>{company.name}{company.demo ? ' (demo)' : company.accessLevel === 'FULL' ? ' (full access)' : ' (view only)'}</option>)}

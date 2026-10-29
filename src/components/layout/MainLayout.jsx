@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -10,13 +10,16 @@ import MobileTabBar from './MobileTabBar';
 import { NavMemoryProvider } from './NavMemoryContext';
 import { BreadcrumbProvider } from './BreadcrumbContext';
 import { useAuth } from '../../hooks/useAuth';
-import { NAV_SECTIONS } from './navConfig';
+import { NAV_SECTIONS, PLATFORM_ONLY_PATHS } from './navConfig';
 
 export default function MainLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const location = useLocation();
   const { user, selectedCompanyId, hasRole, hasPermission } = useAuth();
-  const needsWorkspace = user?.roles?.includes('SUPER_ADMIN') && !selectedCompanyId && location.pathname !== '/settings/platform';
+  const platformOnly = user?.roles?.includes('SUPER_ADMIN') && !selectedCompanyId;
+  const needsWorkspace = platformOnly && !PLATFORM_ONLY_PATHS.includes(location.pathname);
+  // Platform staff land on their own home (customers & billing), not an empty company dashboard.
+  const sendToPlatform = platformOnly && ['/', '/dashboard'].includes(location.pathname);
 
   // Below the lg breakpoint the sidebar is an overlay drawer, not part of
   // the flex layout (see hz-sidebar-mobile-* in components.css) - close it
@@ -40,7 +43,7 @@ export default function MainLayout() {
           <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
               <Breadcrumbs />
-              {needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
+              {sendToPlatform ? <Navigate to="/settings/platform" replace /> : needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) && !platformOnly ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
             </BreadcrumbProvider>
           </main>
         </div>

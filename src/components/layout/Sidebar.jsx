@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronsLeft, LogOut, Plus, Settings2, ShieldCheck, UserCircle, X } from 'lucide-react';
 import Logo from '../brand/Logo';
 import Avatar from '../ui/Avatar';
-import { visibleNavSections, findNavItemByPath } from './navConfig';
+import { visibleNavSections, findNavItemByPath, PLATFORM_NAV_SECTIONS } from './navConfig';
 import { useNavMemory } from './NavMemoryContext';
 import { useAuth } from '../../hooks/useAuth';
 import { formatRole } from '../../utils/formatRole';
@@ -41,14 +41,16 @@ function itemIsActive(item, location) {
 export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, hasPermission, hasRole } = useAuth();
+  const { user, logout, hasPermission, hasRole, selectedCompanyId } = useAuth();
+  // Platform staff outside a company get the platform menu only (no employee/HR menus).
+  const platformOnly = hasRole('SUPER_ADMIN') && !selectedCompanyId;
   const { recordVisit } = useNavMemory();
   const [isCollapsed, setIsCollapsed] = useState(() => readStored(COLLAPSE_KEY, false) === true);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const sections = useMemo(
-    () => visibleNavSections(hasPermission, hasRole),
-    [hasPermission, hasRole]
+    () => (platformOnly ? PLATFORM_NAV_SECTIONS : visibleNavSections(hasPermission, hasRole)),
+    [hasPermission, hasRole, platformOnly]
   );
 
   // Admins land on organisation-wide tools, so their personal "My Workspace"
@@ -182,7 +184,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
             })}
           </nav>
 
-          {hasPermission('EMPLOYEE_CREATE') && (
+          {hasPermission('EMPLOYEE_CREATE') && !platformOnly && (
             <button type="button" className="vettri-quick-add" onClick={() => { navigate('/employees'); onCloseMobile?.(); }} title="Add employee">
               <Plus size={15} aria-hidden="true" />
               {!isCollapsed && <span>Add employee</span>}

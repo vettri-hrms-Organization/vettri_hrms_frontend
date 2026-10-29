@@ -292,6 +292,29 @@ export const NAV_SECTIONS = [
   },
 ];
 
+/**
+ * What platform staff (SUPER_ADMIN) see while not inside a company: only platform tools.
+ * Company menus (employees, leave, payroll...) appear only after a company grants support access.
+ */
+export const PLATFORM_NAV_SECTIONS = [
+  {
+    id: 'platform',
+    label: 'Platform',
+    description: 'Customers, plans, payments and agent updates',
+    collapsible: false,
+    badge: null,
+    items: [
+      { to: '/settings/platform', icon: Presentation, label: 'Customers & billing', end: true },
+      { to: '/notifications', icon: Bell, label: 'Notifications' },
+      { to: '/support', icon: LifeBuoy, label: 'Support information' },
+      { to: '/account/security', icon: KeyRound, label: 'Change password' },
+    ],
+  },
+];
+
+/** Pages platform staff can open without being inside a company. */
+export const PLATFORM_ONLY_PATHS = ['/settings/platform', '/notifications', '/support', '/account/security'];
+
 /** Flat list of every navigable page, each tagged with its section label -
  *  what the search index and favorites picker actually iterate over. */
 export const NAV_INDEX = [
