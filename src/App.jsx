@@ -20,6 +20,8 @@ const AttendancePresence = lazy(() => import('./pages/attendance/AttendancePrese
 const RosterGrid = lazy(() => import('./pages/attendance/RosterGrid'));
 const LateEarly = lazy(() => import('./pages/attendance/LateEarly'));
 const OvertimeApprovals = lazy(() => import('./pages/attendance/OvertimeApprovals'));
+const MyTimesheet = lazy(() => import('./pages/timesheets/MyTimesheet'));
+const TimesheetsAdmin = lazy(() => import('./pages/timesheets/TimesheetsAdmin'));
 const SettingsShifts = lazy(() => import('./pages/SettingsShifts'));
 const LeaveRequests = lazy(() => import('./pages/leave/LeaveRequests'));
 const JobOpenings = lazy(() => import('./pages/recruitment/JobOpenings'));
@@ -115,6 +117,8 @@ export default function App() {
           <Route path="attendance/roster" element={<RosterGrid />} />
           <Route path="attendance/late-early" element={<LateEarly />} />
           <Route path="attendance/overtime" element={<OvertimeApprovals />} />
+          <Route path="my-timesheet" element={<MyTimesheet />} />
+          <Route path="timesheets" element={<TimesheetsAdmin />} />
           <Route path="settings/shifts" element={<SettingsShifts />} />
           <Route path="my-attendance" element={<EmployeeAttendance />} />
           <Route path="leave" element={<LeaveRequests />} />

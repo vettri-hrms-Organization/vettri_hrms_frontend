@@ -16,6 +16,8 @@ import { SkeletonText } from '../../components/ui/Skeleton';
 import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
 import { useAuth } from '../../hooks/useAuth';
 import MyShiftOvertime from './MyShiftOvertime';
+import { timesheetsApi } from '../../api/endpoints/timesheets';
+import LogWorkDialog from '../timesheets/LogWorkDialog';
 
 const GOOD_ACCURACY_METERS = 100;
 const MAX_ACCEPTABLE_ACCURACY_METERS = 200;
@@ -219,6 +221,9 @@ export default function EmployeeAttendance() {
   const [regularizationCheckOut, setRegularizationCheckOut] = useState('');
   const [regularizationReason, setRegularizationReason] = useState('');
   const [message, setMessage] = useState(null);
+  // After check-out, offer the quick timesheet form when the company turned that on.
+  const [logWork, setLogWork] = useState(false);
+  const timesheetSettings = useQuery({ queryKey: ['timesheet-settings'], queryFn: timesheetsApi.settings, staleTime: 10 * 60 * 1000, retry: false });
   const [locationStatus, setLocationStatus] = useState('idle');
   const [selfieOpen, setSelfieOpen] = useState(false);
   // Last confirmed selfie, reused by "Try again" after a location error so the employee isn't asked twice.
@@ -307,6 +312,7 @@ export default function EmployeeAttendance() {
     },
     onSuccess: () => {
       setMessage({ type: 'success', text: 'You are checked out.' });
+      if (timesheetSettings.data?.enabled && timesheetSettings.data?.promptOnCheckout) setLogWork(true);
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
@@ -395,6 +401,7 @@ export default function EmployeeAttendance() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
+      {logWork && <LogWorkDialog onClose={() => setLogWork(false)} />}
       <Dialog
         open={selfieOpen}
         onClose={() => { if (!checkIn.isPending) setSelfieOpen(false); }}

@@ -7,6 +7,7 @@ import { attendanceApi } from '../../api/endpoints/attendance';
 import { overtimeApi } from '../../api/endpoints/shifts';
 import { expensesApi } from '../../api/endpoints/expenses';
 import { profileApi } from '../../api/endpoints/profile';
+import { formatHours, timesheetsApi } from '../../api/endpoints/timesheets';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -230,6 +231,31 @@ function buildSources(hasPermission) {
       approve: (item, note) => encashmentApi.approve(item.id, note),
       reject: (item, note) => encashmentApi.reject(item.id, note),
       invalidate: [['leave-encashment-approvals'], ['leave-encashments'], ['leave-balance']],
+    },
+    {
+      key: 'timesheet',
+      label: 'Timesheets',
+      variant: 'info',
+      enabled: hasPermission('TIMESHEET_APPROVE'),
+      fetch: () => timesheetsApi.approvals(),
+      toItems: (rows) => rows.map((r) => ({
+        id: r.weekId,
+        employeeId: r.employeeId,
+        employeeName: r.employeeName,
+        subtitle: r.departmentName,
+        title: 'Timesheet',
+        details: joinDetails(
+          `Week of ${formatDay(r.weekStart)}`,
+          `${formatHours(r.totalMinutes)} logged${r.targetMinutes && r.totalMinutes < r.targetMinutes ? ` (target ${formatHours(r.targetMinutes)})` : ''}`,
+          r.billableMinutes ? `${formatHours(r.billableMinutes)} billable` : null,
+        ),
+        reason: r.projectSummary,
+        submittedAt: r.submittedAt,
+      })),
+      approve: (item, note) => timesheetsApi.approve(item.id, note),
+      reject: (item, note) => timesheetsApi.reject(item.id, note),
+      rejectNoteRequired: true,
+      invalidate: [['timesheet-team']],
     },
     {
       key: 'profile',

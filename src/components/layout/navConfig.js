@@ -62,7 +62,7 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/dashboard', icon: LayoutDashboard, label: 'Home', end: true, permission: 'SELF_PROFILE_VIEW' },
       // One inbox for every request waiting on this person (leave, WFH, corrections, overtime, expenses...).
-      { to: '/approvals', icon: ClipboardCheck, label: 'Approvals', permissionsAny: ['LEAVE_APPROVE', 'LEAVE_MANAGE', 'ATTENDANCE_MANAGE', 'OVERTIME_APPROVE', 'EXPENSE_APPROVE', 'EXPENSE_MANAGE', 'EMPLOYEE_MANAGE'] },
+      { to: '/approvals', icon: ClipboardCheck, label: 'Approvals', permissionsAny: ['LEAVE_APPROVE', 'LEAVE_MANAGE', 'ATTENDANCE_MANAGE', 'OVERTIME_APPROVE', 'EXPENSE_APPROVE', 'EXPENSE_MANAGE', 'EMPLOYEE_MANAGE', 'TIMESHEET_APPROVE'] },
     ],
   },
   {
@@ -76,6 +76,7 @@ export const NAV_SECTIONS = [
       { to: '/my-profile', icon: UserRound, label: 'My Profile', end: true, permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-profile?tab=job', icon: Briefcase, label: 'My Job', permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-attendance', icon: Clock, label: 'My Attendance', permission: 'SELF_ATTENDANCE_VIEW' },
+      { to: '/my-timesheet', icon: ClipboardList, label: 'My Timesheet', permission: 'SELF_ATTENDANCE_VIEW' },
       { to: '/my-holidays', icon: CalendarRange, label: 'Holidays', permission: 'SELF_LEAVE_VIEW' },
       { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave', permission: 'SELF_LEAVE_VIEW' },
       { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents', permission: 'SELF_DOCUMENT_VIEW' },
@@ -168,6 +169,7 @@ export const NAV_SECTIONS = [
       { to: '/attendance/roster', icon: CalendarRange, label: 'Roster', permission: 'ATTENDANCE_VIEW' },
       { to: '/attendance/late-early', icon: AlarmClock, label: 'Late & Early', permission: 'ATTENDANCE_VIEW' },
       { to: '/attendance/overtime', icon: Timer, label: 'Overtime Approvals', permission: 'OVERTIME_APPROVE' },
+      { to: '/timesheets', icon: ClipboardList, label: 'Timesheets', permissionsAny: ['TIMESHEET_APPROVE', 'TIMESHEET_MANAGE'] },
     ],
   },
   {
