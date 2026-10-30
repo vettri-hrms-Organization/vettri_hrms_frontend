@@ -345,7 +345,7 @@ export default function SettingsAudit() {
                 className="d-flex align-items-center justify-content-between px-4 py-3"
                 style={{
                   borderTop: '1px solid var(--hz-border)',
-                  backgroundColor: '#fff',
+                  backgroundColor: 'var(--hz-bg-surface)',
                 }}
               >
 

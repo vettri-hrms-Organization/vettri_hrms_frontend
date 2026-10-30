@@ -113,6 +113,22 @@
      must clear 4.5:1 itself. --hz-gray-400 (2.6:1) is for borders and
      disabled icons only, never text. */
   --hz-text-muted: #687286; /* 4.9:1 on white, 4.5:1 on canvas */
+
+  /* Aliases and extra steps that pages reference. Before these existed, var() fell back to a
+     hard-coded light colour, so those spots stayed white in dark mode. */
+  --hz-surface: var(--hz-bg-surface);
+  --hz-surface-2: var(--hz-success-50);
+  --hz-text: var(--hz-text-primary);
+  --hz-bg-subtle: var(--hz-gray-50);
+  --hz-soft-blue: var(--hz-primary-50);
+  --hz-accent-50: #EEEBFF;
+  --hz-accent-700: #4636C9;
+  --hz-gray-950: #0B1020;
+  --hz-danger-100: #F8DCDC;
+  --hz-danger-200: #F1BDBD;
+  --hz-danger-800: #7F2323;
+  --hz-warning-200: #F3DCA8;
+  --hz-warning-800: #6E470D;
   --hz-text-on-primary: #ffffff;
   --hz-surface-subtle: #F8FAFD;
   --hz-surface-muted: var(--vettri-surface-secondary);
@@ -230,6 +246,25 @@
   --hz-danger-700: #F39B9B;
   --hz-info-50: #13253F;
   --hz-info-700: #8DBBF2;
+  --hz-accent-50: #221E4A;
+  --hz-accent-700: #B9B0FF;
+  --hz-danger-100: #45191D;
+  --hz-danger-200: #6B2A30;
+  --hz-danger-800: #F7B4B4;
+  --hz-warning-200: #5A4318;
+  --hz-warning-800: #F5D08E;
+  --hz-gray-950: #070B16;
+
+  /* Neutral scale flips so "light grey fill" and "dark grey text" keep their meaning on navy.
+     300/400 stay: they're used for borders, disabled icons and the always-navy sidebar. */
+  --hz-gray-50: #151E34;
+  --hz-gray-100: #18213A;
+  --hz-gray-200: #222C47;
+  --hz-gray-500: #8B96AD;
+  --hz-gray-600: #A5AFC4;
+  --hz-gray-700: #C3CBDC;
+  --hz-gray-800: #DCE2EE;
+  --hz-gray-900: #EEF1F8;
 
   --hz-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --hz-shadow-md: 0 4px 12px -3px rgba(0, 0, 0, 0.45), 0 2px 4px -2px rgba(0, 0, 0, 0.3);

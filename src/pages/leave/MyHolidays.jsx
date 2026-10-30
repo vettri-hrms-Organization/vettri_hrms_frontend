@@ -39,8 +39,8 @@ function DateTile({ date, tone = 'upcoming', size = 64 }) {
   const palette = {
     upcoming: { head: 'var(--hz-primary-500)', body: 'var(--hz-primary-50)', text: 'var(--hz-primary-800, #1B2850)' },
     today: { head: 'var(--hz-warning-500, #E09A1A)', body: 'var(--hz-warning-50)', text: 'var(--hz-warning-600)' },
-    optional: { head: 'var(--hz-brand-indigo-500, #6558F5)', body: '#EEEBFF', text: '#4636C9' },
-    past: { head: 'var(--hz-gray-300, #cbd2dc)', body: 'var(--hz-gray-100, #f2f4f7)', text: 'var(--hz-text-muted)' },
+    optional: { head: 'var(--hz-brand-indigo-500, #6558F5)', body: 'var(--hz-accent-50)', text: 'var(--hz-accent-700)' },
+    past: { head: 'var(--hz-gray-400)', body: 'var(--hz-gray-100)', text: 'var(--hz-text-muted)' },
   }[tone];
   return (
     <div aria-hidden="true" style={{ width: size, flexShrink: 0, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 12px rgba(16,23,42,0.08)', textAlign: 'center', background: palette.body }}>
@@ -54,12 +54,12 @@ function DateTile({ date, tone = 'upcoming', size = 64 }) {
 
 function StatTile({ icon: Icon, label, value, detail, color, children }) {
   return (
-    <div className="h-100 d-flex flex-column gap-2 p-3" style={{ background: 'var(--hz-surface, #fff)', border: '1px solid var(--hz-border)', borderRadius: 16 }}>
+    <div className="h-100 d-flex flex-column gap-2 p-3" style={{ background: 'var(--hz-bg-surface)', border: '1px solid var(--hz-border)', borderRadius: 16, boxShadow: 'var(--hz-shadow-sm)' }}>
       <div className="d-flex align-items-center gap-2" style={{ color: 'var(--hz-text-muted)', fontSize: 13, fontWeight: 600 }}>
         <span className="d-inline-flex align-items-center justify-content-center" style={{ width: 30, height: 30, borderRadius: 9, background: `${color}1A`, color }}><Icon size={16} aria-hidden="true" /></span>
         {label}
       </div>
-      <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1, color: 'var(--hz-text-primary)' }}>{value}</div>
       {detail && <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{detail}</div>}
       {children}
     </div>
@@ -153,6 +153,7 @@ export default function MyHolidays() {
   const weekendBreaks = counted.filter((h) => nextToWeekend(h.date)).length;
   const maxOptional = data?.maxOptionalHolidays || 0;
   const picked = data?.optionalPicked || 0;
+  const pickable = optional.filter((h) => h.canPick).length;
 
   const byMonth = MONTHS.map((month, index) => ({ month, holidays: mandatory.filter((h) => toDate(h.date).getMonth() === index) }))
     .filter((group) => group.holidays.length > 0);
@@ -200,7 +201,7 @@ export default function MyHolidays() {
                 <CalendarHeart size={40} aria-hidden="true" />
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>{year < thisYear ? `Holidays in ${year}` : 'No more holidays this year'}</div>
-                  <div style={{ fontSize: 14, opacity: 0.85 }}>{year < thisYear ? 'This year has passed.' : 'Pick an optional holiday below, or check next year.'}</div>
+                  <div style={{ fontSize: 14, opacity: 0.85 }}>{year < thisYear ? 'This year has passed.' : pickable > 0 ? `You can still pick ${pickable === 1 ? 'an optional holiday' : `from ${pickable} optional holidays`} below.` : `Switch to ${year + 1} above to see next year's holidays once they're published.`}</div>
                 </div>
               </div>
             )}
@@ -212,8 +213,8 @@ export default function MyHolidays() {
             <div className="col-6 col-lg-3"><StatTile icon={Clock} label="Still to come" value={upcoming.length} detail={upcoming.length ? `next ${countdown(daysUntil(upcoming[0].date)).toLowerCase()}` : 'none left'} color="#12735A" /></div>
             <div className="col-6 col-lg-3"><StatTile icon={Sun} label="Next to a weekend" value={weekendBreaks} detail="Monday or Friday holidays" color="#9A6519" /></div>
             <div className="col-6 col-lg-3">
-              <StatTile icon={CheckCircle2} label="Optional chosen" value={`${picked} / ${maxOptional}`} detail={maxOptional ? `${Math.max(0, maxOptional - picked)} left to pick` : 'none offered'} color="#6558F5">
-                {maxOptional > 0 && (
+              <StatTile icon={CheckCircle2} label="Optional chosen" value={optional.length === 0 ? '—' : `${picked} / ${maxOptional}`} detail={!maxOptional || optional.length === 0 ? 'None offered this year' : `${Math.max(0, maxOptional - picked)} left to pick`} color="#6558F5">
+                {maxOptional > 0 && optional.length > 0 && (
                   <div role="progressbar" aria-label="Optional holidays picked" aria-valuenow={picked} aria-valuemin={0} aria-valuemax={maxOptional} style={{ height: 6, borderRadius: 99, background: 'var(--hz-gray-100, #f2f4f7)', overflow: 'hidden' }}>
                     <div style={{ width: `${Math.min(100, (picked / maxOptional) * 100)}%`, height: '100%', background: '#6558F5' }} />
                   </div>
@@ -224,7 +225,7 @@ export default function MyHolidays() {
 
           <Card
             title="Holidays"
-            subtitle={`${mandatory.length} holiday(s) in ${year}`}
+            subtitle={`${mandatory.length} ${mandatory.length === 1 ? 'holiday' : 'holidays'} in ${year}`}
             actions={(
               <div className="btn-group" role="group" aria-label="Holiday view">
                 <button type="button" className={`btn btn-sm ${view === 'list' ? 'btn-primary' : 'btn-outline-secondary'}`} aria-pressed={view === 'list'} onClick={() => setView('list')}>List</button>
@@ -232,7 +233,7 @@ export default function MyHolidays() {
               </div>
             )}
           >
-            {mandatory.length === 0 && view === 'list' && <EmptyState icon={CalendarDays} title="No holidays" description="No holidays are set up for your location this year." />}
+            {mandatory.length === 0 && view === 'list' && <EmptyState icon={CalendarDays} title="No holidays" description={`No holidays are set up for your location in ${year} yet.`} />}
             {view === 'calendar' && <YearCalendar year={year} holidays={rows} />}
             {view === 'list' && byMonth.map(({ month, holidays }) => (
               <div key={month} className="mb-3">
@@ -262,15 +263,15 @@ export default function MyHolidays() {
 
           <Card
             title="Optional holidays"
-            subtitle={`You can pick ${data.maxOptionalHolidays} per year - ${data.optionalPicked} picked. Pick or drop before the date.`}
+            subtitle={optional.length === 0 ? 'Extra holidays you can choose to take, when your company offers them.' : `Choose up to ${maxOptional} a year · ${picked} picked. You can change your choice until the day itself.`}
           >
-            {optional.length === 0 && <EmptyState icon={CalendarDays} title="No optional holidays" description="Your company hasn't listed optional holidays for this year." />}
+            {optional.length === 0 && <EmptyState icon={CalendarDays} title="No optional holidays" description={`Your company hasn't listed optional holidays for ${year}.`} />}
             <div className="row g-3">
               {optional.map((h) => {
                 const past = daysUntil(h.date) < 0;
                 return (
                   <div key={h.id} className="col-12 col-md-6 col-xl-4">
-                    <div className="h-100 d-flex align-items-center gap-3 p-3" style={{ borderRadius: 16, border: `1.5px ${h.picked ? 'solid' : 'dashed'} ${h.picked ? 'var(--hz-brand-indigo-500, #6558F5)' : 'var(--hz-border-strong, #d0d5dd)'}`, background: h.picked ? '#F4F2FF' : 'transparent', opacity: past ? 0.6 : 1 }}>
+                    <div className="h-100 d-flex align-items-center gap-3 p-3" style={{ borderRadius: 16, border: `1.5px ${h.picked ? 'solid' : 'dashed'} ${h.picked ? 'var(--hz-brand-indigo-500, #6558F5)' : 'var(--hz-border-strong, #d0d5dd)'}`, background: h.picked ? 'var(--hz-accent-50)' : 'transparent', opacity: past ? 0.6 : 1 }}>
                       <DateTile date={h.date} tone={past ? 'past' : 'optional'} size={56} />
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontWeight: 700 }}>

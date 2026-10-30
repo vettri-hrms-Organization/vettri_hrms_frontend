@@ -18,6 +18,7 @@ import './design-system/styles/mobile.css';
 import './design-system/styles/aurora.css';
 // Visual hierarchy for every page (titles, tabs, table headers). Loaded last on purpose.
 import './design-system/styles/clarity.css';
+import './design-system/styles/dark-mode.css';
 
 import { queryClient } from './api/queryClient';
 import { AuthProvider } from './auth/AuthContext';

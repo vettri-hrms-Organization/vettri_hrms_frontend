@@ -1,0 +1,142 @@
+/*
+ * Dark-mode coverage. Many component rules hard-code light surfaces (#fff, #f8fafc ...) or dark
+ * text (#26364a ...) and had no dark counterpart, so in dark mode they showed as white blocks or
+ * near-invisible text. This layer maps every one of them onto the theme tokens. Imported last.
+ * When adding a rule with a literal light background or dark text colour, add its pair here.
+ */
+
+/* Page background behind the app (overscroll, short pages). */
+:root[data-theme='dark'] { background: var(--hz-bg-canvas); }
+
+/* ---- Raised surfaces ---- */
+[data-theme='dark'] .hz-dashboard__quick-actions-list a,
+[data-theme='dark'] .hz-attendance-widget__week i,
+[data-theme='dark'] .hz-dashboard__access-tile--stacked,
+[data-theme='dark'] .hz-dashboard__feed-tabs,
+[data-theme='dark'] .hz-dashboard__feed-composer,
+[data-theme='dark'] .hz-dashboard__feed-empty,
+[data-theme='dark'] .hz-welcome-summary__item,
+[data-theme='dark'] .hz-dashboard__outline-action,
+[data-theme='dark'] .hz-dialog__footer,
+[data-theme='dark'] .hz-reports-workspace .hz-reports__filters,
+[data-theme='dark'] .hz-notifications-page .hz-self-service-list,
+[data-theme='dark'] .hz-table__filter-menu,
+[data-theme='dark'] .hz-table__filter-menu-header,
+[data-theme='dark'] .hz-table__filter-search,
+[data-theme='dark'] .hz-table__filter-select,
+[data-theme='dark'] .hz-table__filter-date,
+[data-theme='dark'] .hz-table__filter-clear,
+[data-theme='dark'] .hz-table__no-filter-results button,
+[data-theme='dark'] .hz-module-page--employees .hz-table tbody td,
+[data-theme='dark'] .hz-device-details-page .hz-table tbody td,
+[data-theme='dark'] .hz-session-page-btn,
+[data-theme='dark'] .hz-rail-profile__menu,
+[data-theme='dark'] .vettri-assistant-message--assistant,
+[data-theme='dark'] .vettri-assistant-panel__typing,
+[data-theme='dark'] .vettri-assistant-panel__latest,
+[data-theme='dark'] .vettri-assistant-panel__footer,
+[data-theme='dark'] .vettri-assistant-panel__composer-box,
+[data-theme='dark'] .vettri-assistant-leave-confirmation__actions button + button,
+[data-theme='dark'] .vettri-assistant-leave-confirmation__editor input,
+[data-theme='dark'] .vettri-assistant-leave-confirmation__editor textarea {
+  background: var(--hz-bg-surface) !important;
+  color: var(--hz-text-primary) !important;
+}
+
+/* ---- Recessed / subtle panels ---- */
+[data-theme='dark'] .hz-profile .hz-profile-summary,
+[data-theme='dark'] .hz-profile .hz-table thead th,
+[data-theme='dark'] .hz-dashboard__support-strip,
+[data-theme='dark'] .hz-support-empty,
+[data-theme='dark'] .hz-support-meta__item,
+[data-theme='dark'] .hz-mandatory-documents,
+[data-theme='dark'] .hz-dashboard__primary-grid > .hz-dashboard__surface:last-child,
+[data-theme='dark'] .hz-enrollment__token,
+[data-theme='dark'] .hz-software-center .hz-stat-chip,
+[data-theme='dark'] .hz-table__filter-summary,
+[data-theme='dark'] .hz-table__filter-footer,
+[data-theme='dark'] .hz-device-details-page .hz-table tbody tr:nth-child(even) td,
+[data-theme='dark'] .vettri-assistant-message,
+[data-theme='dark'] .hz-topbar .hz-search-input,
+[data-theme='dark'] .hz-dashboard__composition-bar {
+  background: var(--hz-surface-subtle) !important;
+}
+
+/* ---- Hover ---- */
+[data-theme='dark'] .hz-table tbody tr:hover td,
+[data-theme='dark'] .hz-main-content .table > tbody > tr:hover > td,
+[data-theme='dark'] .hz-topbar .hz-icon-btn:hover,
+[data-theme='dark'] .hz-notifications-page .hz-notification-row:hover,
+[data-theme='dark'] .hz-table__filter-close:hover,
+[data-theme='dark'] .hz-table__filter-option:hover,
+[data-theme='dark'] .hz-table__filter-clear:hover,
+[data-theme='dark'] .hz-module-page--employees .hz-table tbody tr:hover td,
+[data-theme='dark'] .hz-device-details-page .hz-table tbody tr:hover td,
+[data-theme='dark'] .hz-session-page-btn:hover:not(:disabled),
+[data-theme='dark'] .vettri-workspace-switcher:hover {
+  background: var(--hz-bg-surface-hover) !important;
+}
+
+/* ---- Selected / unread ---- */
+[data-theme='dark'] .hz-notifications-page .hz-notification-row.is-unread,
+[data-theme='dark'] .hz-module-page--employees .hz-table tbody tr.hz-table-row--selected td,
+[data-theme='dark'] .vettri-assistant-message--user,
+[data-theme='dark'] .vettri-assistant-message__avatar--user {
+  background: var(--hz-primary-50) !important;
+}
+
+/* ---- Tinted icon chips and badges: same hue, dark tint ---- */
+[data-theme='dark'] .hz-dashboard__metric:nth-child(2) .hz-dashboard__metric-icon,
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__module-card:nth-child(4n + 2) .hz-dashboard__module-icon,
+[data-theme='dark'] .hz-mandatory-document--uploaded { background: var(--hz-success-50) !important; }
+[data-theme='dark'] .hz-dashboard__metric:nth-child(3) .hz-dashboard__metric-icon,
+[data-theme='dark'] .hz-dashboard__module-icon--orange,
+[data-theme='dark'] .hz-dashboard__count-badge,
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__count-badge,
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__module-card:nth-child(4n + 3) .hz-dashboard__module-icon,
+[data-theme='dark'] .hz-mandatory-document--pending { background: var(--hz-warning-50) !important; }
+[data-theme='dark'] .hz-mandatory-document--missing { background: var(--hz-danger-50) !important; }
+[data-theme='dark'] .hz-dashboard__metric:nth-child(4) .hz-dashboard__metric-icon,
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__module-card:nth-child(4n + 1) .hz-dashboard__module-icon { background: var(--hz-info-50) !important; }
+[data-theme='dark'] .hz-dashboard__module-icon--violet,
+[data-theme='dark'] .hz-stat-card--info .hz-stat-card__icon { background: var(--hz-accent-50) !important; color: var(--hz-accent-700) !important; }
+[data-theme='dark'] .hz-mandatory-document--uploaded,
+[data-theme='dark'] .hz-mandatory-document--uploaded small { color: var(--hz-success-700) !important; }
+
+[data-theme='dark'] .hz-avatar--tone-1 { background: #0F2A24 !important; color: #6FD3B3 !important; }
+[data-theme='dark'] .hz-avatar--tone-2 { background: #221E4A !important; color: #B9B0FF !important; }
+[data-theme='dark'] .hz-avatar--tone-3 { background: #2E2210 !important; color: #F0C175 !important; }
+[data-theme='dark'] .hz-avatar--tone-4 { background: #13253F !important; color: #8DBBF2 !important; }
+[data-theme='dark'] .hz-avatar--tone-5 { background: #3A1828 !important; color: #F2A7C3 !important; }
+
+[data-theme='dark'] .hz-dash__hero-actions .btn-light {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #DCE3FF !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* ---- Hard-coded dark text ---- */
+[data-theme='dark'] .hz-panel__heading,
+[data-theme='dark'] .hz-quick-access__meta strong,
+[data-theme='dark'] .hz-leave-status__text strong,
+[data-theme='dark'] .hz-birthdays-card__header,
+[data-theme='dark'] .hz-topbar .hz-current-workspace,
+[data-theme='dark'] .hz-dashboard__section-heading h2,
+[data-theme='dark'] .hz-table__filter-menu-title,
+[data-theme='dark'] .hz-table__filter-close:hover,
+[data-theme='dark'] .hz-table__filter-search,
+[data-theme='dark'] .hz-table__filter-select,
+[data-theme='dark'] .hz-table__filter-date,
+[data-theme='dark'] .hz-device-details-page .hz-table tbody td,
+[data-theme='dark'] .hz-session-page-btn {
+  color: var(--hz-text-primary) !important;
+}
+[data-theme='dark'] .hz-table__filter-option span { color: var(--hz-text-secondary) !important; }
+
+/* Form controls inside cards follow the theme (the native select popup stays OS-styled). */
+[data-theme='dark'] .form-select,
+[data-theme='dark'] .form-control {
+  background-color: var(--hz-bg-surface);
+  color: var(--hz-text-primary);
+  border-color: var(--hz-border-strong);
+}

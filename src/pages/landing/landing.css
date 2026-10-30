@@ -342,7 +342,7 @@
 
 /* ---------- Footer ---------- */
 .hz-landing-footer {
-  background: var(--hz-gray-900);
+  background: #10172A;
   color: var(--hz-gray-400);
 }
 .hz-landing-footer a {
@@ -355,7 +355,7 @@
   color: #fff;
 }
 .hz-landing-footer h6 {
-  color: var(--hz-gray-200);
+  color: #E5EAF2;
   font-size: var(--hz-text-sm);
   font-weight: 600;
   margin-bottom: 14px;

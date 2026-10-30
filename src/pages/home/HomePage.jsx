@@ -366,7 +366,7 @@ function Contact() {
 
 function Footer() {
   return (
-    <footer style={{ background: 'var(--hz-gray-900)' }}>
+    <footer style={{ background: '#10172A' }}>
       <div className="container py-5">
         <div className="row gy-4">
           <div className="col-12 col-md-4">

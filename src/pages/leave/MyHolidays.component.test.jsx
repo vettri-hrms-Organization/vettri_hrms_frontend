@@ -51,7 +51,7 @@ describe('MyHolidays', () => {
     renderPage();
     expect(await screen.findByText('Pongal')).toBeTruthy();
     expect(screen.getByText('Holidays for Chennai')).toBeTruthy();
-    expect(screen.getByText(/You can pick 2 per year - 0 picked/)).toBeTruthy();
+    expect(screen.getByText(/Choose up to 2 a year · 0 picked/)).toBeTruthy();
 
     await userEvent.click(screen.getByRole('button', { name: 'Pick Karva Chauth' }));
 

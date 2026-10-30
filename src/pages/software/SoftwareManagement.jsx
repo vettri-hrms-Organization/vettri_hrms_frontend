@@ -2330,7 +2330,7 @@ export default function SoftwareManagement() {
                         safeDeploymentPage ===
                         page
                           ? 'var(--vettri-navy)'
-                          : '#ffffff',
+                          : 'var(--hz-bg-surface)',
 
                       color:
                         safeDeploymentPage ===
