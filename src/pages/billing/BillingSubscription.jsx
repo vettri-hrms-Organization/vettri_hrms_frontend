@@ -5,6 +5,7 @@ import { CreditCard, FileText, Receipt, Save, Wallet } from 'lucide-react';
 import { billingApi } from '../../api/endpoints/billing';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -37,6 +38,7 @@ const emptyProfile = { legalName: '', gstin: '', billingAddress: '', stateCode: 
 export default function BillingSubscription() {
   const { hasAnyRole, hasRole } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const canView = hasAnyRole(['COMPANY_ADMIN', 'HR_ADMIN', 'SUPER_ADMIN']);
   const isOwner = hasRole('COMPANY_ADMIN');
@@ -59,7 +61,7 @@ export default function BillingSubscription() {
     queryClient.invalidateQueries({ queryKey: ['billing-subscription'] });
     queryClient.invalidateQueries({ queryKey: ['billing-status'] });
   };
-  const onError = (error) => toast.error(error.userMessage || error.message || 'Something went wrong.');
+  const onError = (error) => toast.error(error.userMessage || error.message || 'We could not update your subscription. Please try again, or write to customersupport@vettrihrms.in.');
   const changePlan = useMutation({ mutationFn: billingApi.changePlan, onSuccess: (res) => { toast.success(res.message); refresh(); }, onError });
   const cancel = useMutation({ mutationFn: billingApi.cancelSubscription, onSuccess: (res) => { toast.success(res.message); refresh(); }, onError });
   const resume = useMutation({ mutationFn: billingApi.resumeSubscription, onSuccess: (res) => { toast.success(res.message); refresh(); }, onError });
@@ -67,7 +69,7 @@ export default function BillingSubscription() {
     mutationFn: billingApi.startAutoDebit,
     onSuccess: (res) => {
       if (res.shortUrl) window.open(res.shortUrl, '_blank', 'noopener');
-      toast.success('Authorise the auto-debit mandate in the Razorpay window.');
+      toast.info('Complete the auto-debit authorisation in the Razorpay window that just opened.');
       refresh();
     },
     onError,
@@ -118,7 +120,7 @@ export default function BillingSubscription() {
               <div className="d-flex gap-2 flex-wrap mt-3">
                 {data.cancelAtPeriodEnd
                   ? <Button variant="secondary" size="sm" onClick={() => resume.mutate()} loading={resume.isPending}>Keep my subscription</Button>
-                  : ['ACTIVE', 'TRIALING'].includes(data.status) && <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Cancel at the end of the current period? The workspace becomes read-only after that date.')) cancel.mutate(); }} loading={cancel.isPending}>Cancel subscription</Button>}
+                  : ['ACTIVE', 'TRIALING'].includes(data.status) && <Button variant="ghost" size="sm" onClick={async () => { if (await confirm({ title: 'Cancel your subscription?', description: 'Your plan stays active until the end of the current billing period. After that date the workspace becomes read-only until you subscribe again.', confirmLabel: 'Cancel subscription', cancelLabel: 'Keep subscription' })) cancel.mutate(); }} loading={cancel.isPending}>Cancel subscription</Button>}
                 {data.autoDebitAvailable && data.status === 'ACTIVE' && (data.autoDebitActive
                   ? <Button variant="ghost" size="sm" onClick={() => stopAutoDebit.mutate()} loading={stopAutoDebit.isPending}>Turn off auto-debit</Button>
                   : <Button variant="secondary" size="sm" icon={CreditCard} onClick={() => autoDebit.mutate()} loading={autoDebit.isPending}>Set up auto-debit</Button>)}

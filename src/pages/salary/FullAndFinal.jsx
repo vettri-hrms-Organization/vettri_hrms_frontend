@@ -12,6 +12,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Tabs from '../../components/ui/Tabs';
 import { useToast } from '../../components/ui/Toast';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 
 const TABS = [
   { key: 'settlements', label: 'Settlements' },
@@ -26,6 +27,13 @@ const MANUAL_CODES = {
 function errorMessage(err, fallback) {
   return err?.response?.data?.message || fallback;
 }
+
+const SETTLEMENT_DONE = {
+  DRAFT: 'Settlement moved back to draft for editing.',
+  REVIEWED: 'Settlement marked as reviewed and ready for approval.',
+  APPROVED: 'Settlement approved. Record the payment once it is made.',
+  PAID: 'Settlement marked as paid.',
+};
 
 /** Full & Final settlement for exiting employees: DRAFT -> REVIEWED -> APPROVED -> PAID, statement PDF. */
 export default function FullAndFinal() {
@@ -141,6 +149,7 @@ function CreateDialog({ onClose, onCreated }) {
 }
 
 function SettlementDialog({ id, canManage, onClose }) {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [error, setError] = useState(null);
@@ -191,8 +200,8 @@ function SettlementDialog({ id, canManage, onClose }) {
       if (kind === 'approve') return settlementApi.approve(id);
       return settlementApi.markPaid(id, { paymentReference: payment.paymentReference, paymentDate: payment.paymentDate || null });
     },
-    onSuccess: (u) => { refresh(u); toast.success(`Settlement ${u.status.toLowerCase()}`); },
-    onError: (err) => setError(errorMessage(err, 'Action failed')),
+    onSuccess: (u) => { refresh(u); toast.success(SETTLEMENT_DONE[u.status] || 'Settlement updated.'); },
+    onError: (err) => setError(errorMessage(err, 'Could not update the settlement. Please try again.')),
   });
   const cancel = useMutation({
     mutationFn: () => settlementApi.cancel(id),
@@ -215,7 +224,7 @@ function SettlementDialog({ id, canManage, onClose }) {
           <div className="d-flex gap-2">
             <Button variant="secondary" icon={FileDown} onClick={() => settlementApi.downloadStatement(id, `full-and-final-${s.employeeCode || id}.pdf`)}>Statement PDF</Button>
             {canManage && (draft || s.status === 'REVIEWED') && (
-              <Button variant="ghost" icon={Trash2} onClick={() => { if (window.confirm('Cancel this settlement?')) cancel.mutate(); }}>Cancel settlement</Button>
+              <Button variant="ghost" icon={Trash2} onClick={async () => { if (await confirm({ title: 'Cancel this settlement?', description: 'The draft full and final settlement will be cancelled. You can start a new one for this employee later.', confirmLabel: 'Cancel settlement', cancelLabel: 'Keep it' })) cancel.mutate(); }}>Cancel settlement</Button>
             )}
           </div>
           {canManage && (

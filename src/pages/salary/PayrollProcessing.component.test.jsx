@@ -7,7 +7,7 @@ import PayrollProcessing from './PayrollProcessing.jsx';
 
 const mocks = vi.hoisted(() => ({
   auth: null,
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() },
   payrollApi: { listRuns: vi.fn(), getRun: vi.fn(), process: vi.fn(), markPaid: vi.fn(), cancel: vi.fn(), setItemHold: vi.fn(), createRun: vi.fn(), downloadPayslipPdf: vi.fn(), downloadBankTransferCsv: vi.fn() },
   employeeSalaryApi: { list: vi.fn() },
   leaveRequestsApi: { list: vi.fn() },

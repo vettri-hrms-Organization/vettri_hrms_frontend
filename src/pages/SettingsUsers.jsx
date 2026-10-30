@@ -757,7 +757,8 @@ function RolesPanel() {
         onClose={() => setDeletingRole(null)}
         onConfirm={() => deleteRole.mutate(deletingRole.id)}
         title={`Delete "${displayRole(deletingRole)}"?`}
-        description="Users currently holding only this role will lose the permissions it grants. This can't be undone."
+        description="Users currently holding only this role will lose the permissions it grants."
+        irreversible
         confirmLabel="Delete Role"
         loading={deleteRole.isPending}
       />

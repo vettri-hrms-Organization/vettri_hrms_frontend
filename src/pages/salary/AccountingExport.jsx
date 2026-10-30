@@ -51,8 +51,8 @@ export default function AccountingExport() {
       setError(null);
       await accountingApi.download(runId, format, names[format]);
     } catch (err) {
-      setError(err?.response?.status === 400 ? 'This run cannot be exported yet - process it first.' : 'Export failed');
-      toast.error('Export failed');
+      setError(err?.response?.status === 400 ? 'This run cannot be exported yet - process it first.' : 'Could not export this payroll run. Please try again.');
+      toast.error('Could not export this payroll run. Please try again.');
     }
   }
 

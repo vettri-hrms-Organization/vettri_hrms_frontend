@@ -15,6 +15,7 @@ import { SkeletonText } from '../components/ui/Skeleton';
 import PageHeader from '../components/ui/PageHeader';
 import Tabs from '../components/ui/Tabs';
 import { useToast } from '../components/ui/Toast';
+import { useConfirm } from '../components/ui/ConfirmDialog';
 import { apiError, formatDay, formatMinutes, istToday } from './attendance/shiftUtils';
 
 const TABS = [
@@ -47,6 +48,7 @@ export default function SettingsShifts() {
 }
 
 function ShiftsPanel() {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [editing, setEditing] = useState(null); // null | { id?, ...form }
@@ -121,7 +123,7 @@ function ShiftsPanel() {
                         type="button"
                         className="btn btn-sm btn-light border-0"
                         style={{ color: 'var(--hz-danger-600)' }}
-                        onClick={() => { if (window.confirm(`Delete shift "${shift.name}"?`)) remove.mutate(shift.id); }}
+                        onClick={async () => { if (await confirm({ title: `Delete shift "${shift.name}"?`, description: 'Employees and rosters using this shift will need a different shift assigned.', confirmLabel: 'Delete shift', irreversible: true })) remove.mutate(shift.id); }}
                         aria-label={`Delete ${shift.name}`}
                       >
                         <Trash2 size={14} />

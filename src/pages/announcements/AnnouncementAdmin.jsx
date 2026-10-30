@@ -106,7 +106,7 @@ export default function AnnouncementAdmin() {
   const chooseFile = (chosen) => {
     if (!chosen) { setFile(null); return; }
     if (!/\.(pdf|jpe?g|png)$/i.test(chosen.name) || chosen.size > 10 * 1024 * 1024) {
-      toast.error('Attachments must be PDF, JPG or PNG up to 10 MB.');
+      toast.warning('Attachments must be PDF, JPG or PNG files up to 10 MB.');
       return;
     }
     setFile(chosen);
@@ -257,7 +257,7 @@ export default function AnnouncementAdmin() {
 
       {tracking && <AcknowledgementTracker announcement={tracking} onClose={() => setTracking(null)} />}
 
-      <ConfirmDialog open={!!deleting} onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting.id)} loading={remove.isPending} title="Delete announcement?" description={deleting ? `"${deleting.title}" will be removed from everyone's feed.` : ''} confirmLabel="Delete" />
+      <ConfirmDialog open={!!deleting} onClose={() => setDeleting(null)} onConfirm={() => remove.mutate(deleting.id)} loading={remove.isPending} title="Delete announcement?" description={deleting ? `"${deleting.title}" will be removed from everyone's feed.` : ''} confirmLabel="Delete" irreversible />
     </div>
   );
 }

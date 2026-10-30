@@ -227,6 +227,7 @@ function TemplatesPanel() {
         title="Delete template?"
         description="Letters already issued from it are kept."
         confirmLabel="Delete"
+        irreversible
         loading={remove.isPending}
         onConfirm={() => remove.mutate()}
         onClose={() => setConfirmDelete(false)}

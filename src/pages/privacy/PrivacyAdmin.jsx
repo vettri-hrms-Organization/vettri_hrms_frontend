@@ -147,6 +147,7 @@ function RequestQueue() {
         loading={erase.isPending}
         title="Anonymise this employee?"
         confirmLabel="Anonymise permanently"
+        irreversible
         description={eligibility.isLoading ? 'Checking eligibility...'
           : eligibility.data && !eligibility.data.eligible ? eligibility.data.reason
             : 'Name, email, phone, PAN, bank details and address are replaced with placeholders, uploaded documents are deleted and the login is disabled. Payroll and statutory records are kept as required by law. This cannot be undone.'}

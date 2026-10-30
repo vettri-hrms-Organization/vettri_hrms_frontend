@@ -137,9 +137,9 @@ export default function MyHolidays() {
     queryClient.setQueryData(['my-holidays', year], result);
     toast.success(message);
   };
-  const onFail = (err) => toast.error(err.response?.data?.message || 'Something went wrong');
-  const pick = useMutation({ mutationFn: holidayCalendarApi.pick, onSuccess: onDone('Optional holiday picked'), onError: onFail });
-  const unpick = useMutation({ mutationFn: holidayCalendarApi.unpick, onSuccess: onDone('Optional holiday dropped'), onError: onFail });
+  const onFail = (err) => toast.error(err.response?.data?.message || 'Could not update your optional holiday. Please try again.');
+  const pick = useMutation({ mutationFn: holidayCalendarApi.pick, onSuccess: onDone('Optional holiday added to your calendar'), onError: onFail });
+  const unpick = useMutation({ mutationFn: holidayCalendarApi.unpick, onSuccess: onDone('Optional holiday removed from your calendar'), onError: onFail });
 
   if (isError) return <ErrorState description="Couldn't load your holidays." onRetry={refetch} />;
 

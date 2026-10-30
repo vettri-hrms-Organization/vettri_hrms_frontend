@@ -217,6 +217,7 @@ function TemplatesPanel() {
         title="Delete template?"
         description={deleting ? `"${deleting.name}" will no longer be available. Running checklists are not affected.` : ''}
         confirmLabel="Delete"
+        irreversible
         loading={remove.isPending}
         onConfirm={() => remove.mutate(deleting.id)}
         onClose={() => setDeleting(null)}

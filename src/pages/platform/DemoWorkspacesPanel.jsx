@@ -103,6 +103,7 @@ export default function DemoWorkspacesPanel() {
         title="Reset demo company?"
         description={confirmReset ? `All data in "${confirmReset.name}" is wiped and freshly seeded. Old demo logins stop working and a new admin password is generated.` : ''}
         confirmLabel="Reset and re-seed"
+        irreversible
       />
     </Card>
   );

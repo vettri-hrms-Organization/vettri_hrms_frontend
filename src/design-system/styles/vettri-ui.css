@@ -1904,7 +1904,6 @@ textarea.form-control { min-height: 96px !important; padding-top: 10px; }
   border: 1px solid var(--hz-border) !important;
   border-radius: 14px !important;
   background: var(--hz-bg-surface) !important;
-  box-shadow: 0 16px 40px -12px rgba(10, 15, 30, 0.3) !important;
   animation: vui-toast-in 260ms var(--vettri-ease) both;
 }
 

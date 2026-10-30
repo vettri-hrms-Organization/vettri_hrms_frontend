@@ -57,7 +57,7 @@ export default function PayrollProcessing() {
     mutationFn: () => payrollApi.process(activeRunId),
     onSuccess: () => {
       invalidateAll();
-      toast.success('Payroll processed successfully');
+      toast.success('Payroll processed. Review the totals, then mark the run as paid.');
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Could not process this run'),
   });
@@ -106,7 +106,7 @@ export default function PayrollProcessing() {
 
   function requestConfirmation(action) {
     if (action === 'process' && (!preflight.hasEmployees || preflight.onHold > 0)) {
-      toast.error('Resolve payroll holds and ensure employees are included before processing.');
+      toast.warning('Resolve the payroll holds and make sure employees are included before processing.');
       return;
     }
     setConfirmAction(action);

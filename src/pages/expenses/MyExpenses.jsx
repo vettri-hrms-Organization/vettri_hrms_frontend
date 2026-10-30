@@ -134,6 +134,7 @@ export default function MyExpenses() {
         title="Delete draft claim?"
         description={deleting ? `"${deleting.title}" and its lines will be removed.` : ''}
         confirmLabel="Delete draft"
+        irreversible
       />
     </div>
   );

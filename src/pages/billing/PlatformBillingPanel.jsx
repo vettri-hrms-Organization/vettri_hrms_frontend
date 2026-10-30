@@ -26,7 +26,7 @@ export default function PlatformBillingPanel() {
     queryClient.invalidateQueries({ queryKey: ['platform-billing'] });
     queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] });
   };
-  const onError = (error) => toast.error(error.userMessage || error.message || 'Action failed.');
+  const onError = (error) => toast.error(error.userMessage || error.message || 'That change could not be applied. Please try again.');
   const extend = useMutation({ mutationFn: ({ id, days, reason }) => platformBillingApi.extend(id, { days, reason }), onSuccess: done('Subscription extended.'), onError });
   const suspend = useMutation({ mutationFn: ({ id, reason }) => platformBillingApi.suspend(id, { reason }), onSuccess: done('Subscription suspended.'), onError });
   const reactivate = useMutation({ mutationFn: ({ id, reason }) => platformBillingApi.reactivate(id, { reason }), onSuccess: done('Subscription reactivated.'), onError });

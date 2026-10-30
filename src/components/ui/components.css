@@ -213,10 +213,52 @@
   gap: var(--hz-space-4);
 }
 
+.hz-dialog__discard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--hz-warning-500);
+  background: var(--hz-warning-50);
+  color: var(--hz-text-primary);
+  font-size: var(--hz-text-sm);
+}
+.hz-dialog__discard > svg { color: var(--hz-warning-500); flex-shrink: 0; }
+.hz-dialog__discard-text { flex: 1; min-width: 180px; }
+.hz-dialog__discard-actions { display: inline-flex; gap: 8px; margin-left: auto; }
+[data-theme='dark'] .hz-dialog__discard { background: rgba(183, 121, 31, 0.14); }
+
 .hz-confirm-dialog__body {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.hz-confirm-dialog__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  color: var(--hz-primary-600);
+  background: var(--hz-primary-50);
+}
+.hz-confirm-dialog__body--danger .hz-confirm-dialog__icon { color: var(--hz-danger-600); background: var(--hz-danger-50, #FEF3F2); }
+[data-theme='dark'] .hz-confirm-dialog__icon { background: rgba(255, 255, 255, 0.06); }
+.hz-confirm-dialog__text {
   margin: 0;
   color: var(--hz-text-secondary);
   font-size: var(--hz-text-sm);
+  line-height: 1.55;
+  padding-top: 2px;
+}
+.hz-confirm-dialog__note {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--hz-danger-600);
 }
 
 .hz-card__header + .hz-card__body {
@@ -1533,22 +1575,64 @@
 }
 
 .hz-toast {
+  --hz-toast-accent: var(--hz-info-600);
+  --hz-toast-tint: var(--hz-info-50, #EFF6FF);
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: flex-start;
-  gap: var(--hz-space-2);
+  gap: 12px;
   background: var(--hz-bg-surface);
   border: 1px solid var(--hz-border);
-  border-radius: var(--hz-radius-md);
-  box-shadow: var(--hz-shadow-lg);
-  padding: var(--hz-space-3) var(--hz-space-3);
-  animation: hz-toast-in 220ms var(--hz-ease-spring);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -14px rgba(10, 15, 30, 0.32), 0 2px 6px rgba(10, 15, 30, 0.06);
+  padding: 14px 12px 16px 18px;
+  animation: hz-toast-in 240ms var(--hz-ease-spring);
 }
+/* Coloured edge so the outcome is readable at a glance. */
+.hz-toast::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--hz-toast-accent);
+}
+.hz-toast--success { --hz-toast-accent: var(--hz-success-600); --hz-toast-tint: var(--hz-success-50, #ECFDF3); }
+.hz-toast--error { --hz-toast-accent: var(--hz-danger-600); --hz-toast-tint: var(--hz-danger-50, #FEF3F2); }
+.hz-toast--warning { --hz-toast-accent: var(--hz-warning-600, #DC6803); --hz-toast-tint: var(--hz-warning-50, #FFFAEB); }
 
-.hz-toast__message {
+.hz-toast__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: var(--hz-toast-accent);
+  background: var(--hz-toast-tint);
+}
+[data-theme='dark'] .hz-toast__icon { background: color-mix(in srgb, var(--hz-toast-accent) 18%, transparent); }
+
+.hz-toast__content {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 1px;
+}
+.hz-toast__title {
   font-size: var(--hz-text-sm);
+  font-weight: 700;
   color: var(--hz-text-primary);
-  line-height: 1.4;
+  line-height: 1.35;
+}
+.hz-toast__message {
+  font-size: 13px;
+  color: var(--hz-text-secondary);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .hz-toast__close {
@@ -1557,12 +1641,37 @@
   color: var(--hz-text-muted);
   flex-shrink: 0;
   line-height: 1;
-  padding: 2px;
+  padding: 4px;
   border-radius: var(--hz-radius-sm);
 }
 .hz-toast__close:hover {
   background: var(--hz-gray-100);
   color: var(--hz-text-primary);
+}
+
+/* Time left before the toast closes; pauses while hovered. */
+.hz-toast__progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--hz-toast-accent);
+  opacity: 0.35;
+  transform-origin: left center;
+  animation: hz-toast-progress linear forwards;
+}
+@keyframes hz-toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+@media (max-width: 575.98px) {
+  .hz-toast-stack { top: auto; bottom: calc(var(--hz-space-4) + 64px); left: 1rem; right: 1rem; width: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hz-toast, .hz-toast__progress { animation: none; }
 }
 
 @keyframes hz-toast-in {

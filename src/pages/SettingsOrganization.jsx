@@ -620,7 +620,7 @@ function OfficeLocationsPanel({ canCreate, canUpdate, canDeactivate }) {
     const longitude = Number(form.longitude);
     const radius = Number(form.allowedRadiusMeters);
     if (!form.name.trim() || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180 || !Number.isInteger(radius) || radius < 10 || radius > 5000) {
-      toast.error('Enter an office name, valid map location, and a radius between 10 and 5,000 meters.');
+      toast.warning('Enter an office name, pick a location on the map, and set a radius between 10 and 5,000 metres.');
       return;
     }
     save.mutate({ id: editingLocation?.id, payload: { ...form, name: form.name.trim(), latitude, longitude, allowedRadiusMeters: radius } });

@@ -11,6 +11,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
 import { addDays, apiError, formatDay, istToday, shortDayLabel, weekStart } from './shiftUtils';
 
@@ -28,6 +29,7 @@ export default function RosterGrid() {
   const { hasPermission } = useAuth();
   const canEdit = hasPermission('ATTENDANCE_MANAGE');
   const toast = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const [from, setFrom] = useState(() => weekStart(istToday()));
   const [days, setDays] = useState(7);
@@ -70,8 +72,8 @@ export default function RosterGrid() {
     onError: (error) => toast.error(apiError(error, 'Week could not be copied.')),
   });
 
-  const move = (delta) => {
-    if (pending && !window.confirm('Discard unsaved roster changes?')) return;
+  const move = async (delta) => {
+    if (pending && !(await confirm({ title: 'Discard roster changes?', description: 'You have shift changes that are not saved yet. Moving to another week will discard them.', confirmLabel: 'Discard changes' }))) return;
     setChanges({});
     setFrom((current) => addDays(current, delta));
   };

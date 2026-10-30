@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 const SIZE_WIDTH = { sm: 420, md: 560, lg: 680, xl: 860 };
 
@@ -27,6 +27,17 @@ export default function Dialog({ open, onClose, title, description, size = 'md',
   const dialogRef = useRef(null);
   const lastFocusedRef = useRef(null);
   const titleId = useId();
+  // Closing with unsaved edits asks inside the dialog instead of a browser prompt.
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  const requestCloseRef = useRef(null);
+  const discardShowingRef = useRef(false);
+  discardShowingRef.current = confirmingDiscard;
+  requestCloseRef.current = () => {
+    if (hasUnsavedChanges) setConfirmingDiscard(true);
+    else onClose();
+  };
+
+  useEffect(() => { if (!open) setConfirmingDiscard(false); }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -42,14 +53,13 @@ export default function Dialog({ open, onClose, title, description, size = 'md',
     if (body) body.scrollTop = 0;
     dialogRef.current?.focus();
 
-    function requestClose() {
-      if (hasUnsavedChanges && !window.confirm('Discard your unsaved changes?')) return;
-      onClose();
-    }
-
     function handleKeyDown(e) {
+      // Only the top-most dialog reacts, so Escape on a confirmation doesn't also close the dialog under it.
+      const dialogs = document.querySelectorAll('.hz-dialog');
+      if (dialogs.length && dialogs[dialogs.length - 1] !== dialogRef.current) return;
       if (e.key === 'Escape') {
-        requestClose();
+        if (discardShowingRef.current) setConfirmingDiscard(false);
+        else requestCloseRef.current();
         return;
       }
       if (e.key === 'Tab' && dialogRef.current) {
@@ -75,16 +85,14 @@ export default function Dialog({ open, onClose, title, description, size = 'md',
       document.body.style.overflow = previousOverflow;
       lastFocusedRef.current?.focus?.();
     };
-  }, [open, onClose, hasUnsavedChanges]);
+  }, [open]);
 
   if (!open) return null;
 
   return createPortal(
     <div
       className="hz-dialog-backdrop position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-      onClick={() => {
-        if (!hasUnsavedChanges || window.confirm('Discard your unsaved changes?')) onClose();
-      }}
+      onClick={() => requestCloseRef.current()}
     >
       <div
         ref={dialogRef}
@@ -106,13 +114,24 @@ export default function Dialog({ open, onClose, title, description, size = 'md',
               )}
               {description && <p className="hz-dialog__description">{description}</p>}
             </div>
-            <button type="button" onClick={() => { if (!hasUnsavedChanges || window.confirm('Discard your unsaved changes?')) onClose(); }} className="hz-dialog__close" aria-label="Close dialog">
+            <button type="button" onClick={() => requestCloseRef.current()} className="hz-dialog__close" aria-label="Close dialog">
               <X size={18} />
             </button>
           </div>
         )}
 
         <div className="hz-dialog__body overflow-auto">{children}</div>
+
+        {confirmingDiscard && (
+          <div className="hz-dialog__discard" role="alertdialog" aria-label="Discard unsaved changes">
+            <AlertTriangle size={18} aria-hidden="true" />
+            <span className="hz-dialog__discard-text"><strong>Discard your changes?</strong> What you entered here hasn&apos;t been saved.</span>
+            <span className="hz-dialog__discard-actions">
+              <button type="button" className="btn btn-sm btn-light" onClick={() => setConfirmingDiscard(false)}>Keep editing</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => { setConfirmingDiscard(false); onClose(); }}>Discard</button>
+            </span>
+          </div>
+        )}
 
         {footer && <div className="hz-dialog__footer d-flex align-items-center justify-content-end gap-2">{footer}</div>}
       </div>

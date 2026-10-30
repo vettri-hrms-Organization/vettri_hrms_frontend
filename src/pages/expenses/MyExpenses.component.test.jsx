@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MyExpenses from './MyExpenses.jsx';
 
 const mocks = vi.hoisted(() => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() },
   expensesApi: {
     myClaims: vi.fn(),
     settings: vi.fn(),

@@ -29,7 +29,7 @@ async function copyText(text, toast) {
     await navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard.');
   } catch {
-    toast.info('Copy failed - select the text and copy it manually.');
+    toast.warning('Could not copy automatically. Select the text and copy it manually.');
   }
 }
 

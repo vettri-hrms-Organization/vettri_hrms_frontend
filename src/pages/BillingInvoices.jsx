@@ -49,7 +49,7 @@ export default function BillingInvoices() {
   const email = useMutation({
     mutationFn: (id) => billingApi.emailInvoice(id),
     onSuccess: () => {
-      toast.success('Invoice emailed successfully.');
+      toast.success('Invoice sent by email.');
       queryClient.invalidateQueries({ queryKey: ['billing-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['billing-invoice'] });
     },

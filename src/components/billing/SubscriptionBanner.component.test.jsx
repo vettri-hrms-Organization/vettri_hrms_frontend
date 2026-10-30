@@ -14,7 +14,7 @@ vi.mock('../../api/endpoints/billing', () => ({
   loadRazorpay: vi.fn(),
 }));
 vi.mock('../../hooks/useAuth', () => ({ useAuth: () => mocks.auth }));
-vi.mock('../ui/Toast', () => ({ useToast: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }) }));
+vi.mock('../ui/Toast', () => ({ useToast: () => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() }) }));
 
 function renderBanner() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

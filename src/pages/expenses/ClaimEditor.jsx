@@ -115,7 +115,7 @@ export default function ClaimEditor({ claim, onClose }) {
 
   const chooseFile = (line, file) => {
     const problem = receiptFileError(file);
-    if (problem) { toast.error(problem); return; }
+    if (problem) { toast.warning(problem); return; }
     updateLine(line.key, { pendingFile: file });
   };
 

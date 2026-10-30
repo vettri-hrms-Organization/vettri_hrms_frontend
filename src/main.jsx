@@ -22,6 +22,7 @@ import './design-system/styles/clarity.css';
 import { queryClient } from './api/queryClient';
 import { AuthProvider } from './auth/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
+import { ConfirmProvider } from './components/ui/ConfirmDialog';
 import { ThemeProvider } from './contexts/ThemeContext';
 import App from './App.jsx';
 import PwaUpdatePrompt from './pwa/PwaUpdatePrompt';
@@ -91,8 +92,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <AuthProvider>
             <ThemeProvider>
               <ToastProvider>
-                <App />
-                <PwaUpdatePrompt />
+                <ConfirmProvider>
+                  <App />
+                  <PwaUpdatePrompt />
+                </ConfirmProvider>
               </ToastProvider>
             </ThemeProvider>
           </AuthProvider>

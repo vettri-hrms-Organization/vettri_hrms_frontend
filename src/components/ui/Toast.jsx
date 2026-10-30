@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { isPublicAuthRoute } from '../../auth/authRoutes';
 import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
@@ -10,15 +10,77 @@ import { vettriMicrocopy } from '../../utils/vettriMicrocopy';
  * etc.), so it's introduced here rather than pulling in a new dependency.
  * Follows the same "introduced alongside the first module that needs it"
  * pattern BaseEntity's javadoc describes on the backend.
+ *
+ * Each toast shows a short heading for its variant above the message, a
+ * countdown bar that pauses while hovered, and errors stay longer so they
+ * can be read. Identical messages already on screen are refreshed instead
+ * of stacking, and at most MAX_VISIBLE toasts are shown.
  */
 const ToastContext = createContext(null);
 
-const ICONS = { success: CheckCircle2, error: XCircle, info: Info };
-const VARIANT_COLOR = {
-  success: 'var(--hz-success-600)',
-  error: 'var(--hz-danger-600)',
-  info: 'var(--hz-info-600)',
+const MAX_VISIBLE = 4;
+const VARIANTS = {
+  success: { icon: CheckCircle2, title: 'Done', duration: 4000 },
+  error: { icon: XCircle, title: "That didn't work", duration: 7000 },
+  warning: { icon: AlertTriangle, title: 'Please check', duration: 6000 },
+  info: { icon: Info, title: 'Good to know', duration: 5000 },
 };
+
+/** Sentence-case the message and end it with punctuation, so every toast reads the same way. */
+export function polishToastMessage(message) {
+  if (typeof message !== 'string') return message;
+  const text = message.trim();
+  if (!text) return text;
+  const capitalised = text.charAt(0).toUpperCase() + text.slice(1);
+  return /[.!?)…:]$/.test(capitalised) ? capitalised : `${capitalised}.`;
+}
+
+function ToastItem({ toast, onDismiss }) {
+  const config = VARIANTS[toast.variant] || VARIANTS.info;
+  const Icon = config.icon;
+  const [paused, setPaused] = useState(false);
+  const remaining = useRef(toast.duration);
+  const startedAt = useRef(Date.now());
+
+  // A repeated message restarts the countdown.
+  useEffect(() => { remaining.current = toast.duration; }, [toast.version, toast.duration]);
+
+  useEffect(() => {
+    if (toast.duration <= 0 || paused) return undefined;
+    startedAt.current = Date.now();
+    const timer = setTimeout(() => onDismiss(toast.id), remaining.current);
+    return () => {
+      clearTimeout(timer);
+      remaining.current -= Date.now() - startedAt.current;
+    };
+  }, [toast.id, toast.duration, toast.version, paused, onDismiss]);
+
+  return (
+    <div
+      className={`hz-toast hz-toast--${toast.variant}`}
+      role={toast.variant === 'error' ? 'alert' : 'status'}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <span className="hz-toast__icon" aria-hidden="true"><Icon size={18} /></span>
+      <div className="hz-toast__content">
+        <strong className="hz-toast__title">{toast.title || config.title}</strong>
+        <span className="hz-toast__message">{toast.message}</span>
+      </div>
+      <button type="button" className="hz-toast__close" onClick={() => onDismiss(toast.id)} aria-label="Dismiss">
+        <X size={14} />
+      </button>
+      {toast.duration > 0 && (
+        <span
+          key={toast.version}
+          className="hz-toast__progress"
+          style={{ animationDuration: `${toast.duration}ms`, animationPlayState: paused ? 'paused' : 'running' }}
+          aria-hidden="true"
+        />
+      )}
+    </div>
+  );
+}
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
@@ -29,14 +91,20 @@ export function ToastProvider({ children }) {
   }, []);
 
   const push = useCallback(
-    (message, variant = 'success', duration = 4000, kind = 'generic') => {
-      const id = Date.now() + Math.random();
-      setToasts((prev) => [...prev, { id, message, variant, kind }]);
-      if (duration > 0) {
-        setTimeout(() => dismiss(id), duration);
-      }
+    (rawMessage, variant = 'success', duration, kind = 'generic', title) => {
+      const message = polishToastMessage(rawMessage);
+      if (!message) return;
+      const ttl = duration ?? (VARIANTS[variant] || VARIANTS.info).duration;
+      setToasts((prev) => {
+        const existing = prev.find((t) => t.message === message && t.variant === variant);
+        if (existing) {
+          return prev.map((t) => (t === existing ? { ...t, version: t.version + 1 } : t));
+        }
+        const next = [...prev, { id: Date.now() + Math.random(), message, variant, kind, title, duration: ttl, version: 0 }];
+        return next.slice(-MAX_VISIBLE);
+      });
     },
-    [dismiss]
+    []
   );
 
   useEffect(() => {
@@ -48,12 +116,12 @@ export function ToastProvider({ children }) {
   useEffect(() => {
     function handleApiError(event) {
       const message = event.detail?.message;
-      if (message) push(message, 'error', 6000);
+      if (message) push(message, 'error');
     }
 
     function handleSessionExpired(event) {
       const message = event.detail?.message;
-      if (message && !isPublicAuthRoute(location.pathname)) push(message, 'error', 6000, 'session-expired');
+      if (message && !isPublicAuthRoute(location.pathname)) push(message, 'error', 8000, 'session-expired', 'Session ended');
     }
 
     window.addEventListener('vettri:api-error', handleApiError);
@@ -67,7 +135,8 @@ export function ToastProvider({ children }) {
   const api = useMemo(
     () => ({
       success: (message = vettriMicrocopy.success.saved) => push(message, 'success'),
-      error: (message) => push(message, 'error'),
+      error: (message = vettriMicrocopy.error.generic) => push(message, 'error'),
+      warning: (message) => push(message, 'warning'),
       info: (message) => push(message, 'info'),
     }),
     [push]
@@ -76,19 +145,8 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="hz-toast-stack">
-        {toasts.map((t) => {
-          const Icon = ICONS[t.variant] || Info;
-          return (
-            <div key={t.id} className="hz-toast" role="status">
-              <Icon size={18} style={{ color: VARIANT_COLOR[t.variant], flexShrink: 0 }} />
-              <span className="hz-toast__message">{t.message}</span>
-              <button type="button" className="hz-toast__close" onClick={() => dismiss(t.id)} aria-label="Dismiss">
-                <X size={14} />
-              </button>
-            </div>
-          );
-        })}
+      <div className="hz-toast-stack" aria-live="polite">
+        {toasts.map((t) => <ToastItem key={t.id} toast={t} onDismiss={dismiss} />)}
       </div>
     </ToastContext.Provider>
   );
