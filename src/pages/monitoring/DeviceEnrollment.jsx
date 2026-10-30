@@ -266,7 +266,7 @@ export default function DeviceEnrollment() {
                   </a>
                   <div>
                     <h2 className="h6">Step 2: Install the Agent</h2>
-                    <p className="mb-0">Run <strong>HaodaOneAgentSetup.exe</strong> on this Windows computer and enter the one-time token above when prompted.</p>
+                    <p className="mb-0">Run <strong>VettriAgentSetup.exe</strong> on this Windows computer (right-click → Run as administrator) and paste the one-time token above when prompted.</p>
                   </div>
                   <div>
                     <h2 className="h6">Step 3: Connect the device</h2>
