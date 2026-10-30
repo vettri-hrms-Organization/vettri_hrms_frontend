@@ -40,11 +40,11 @@ function DateTile({ date, tone = 'upcoming', size = 64 }) {
     upcoming: { head: 'var(--hz-primary-500)', body: 'var(--hz-primary-50)', text: 'var(--hz-primary-800, #1B2850)' },
     today: { head: 'var(--hz-warning-500, #E09A1A)', body: 'var(--hz-warning-50)', text: 'var(--hz-warning-600)' },
     optional: { head: 'var(--hz-brand-indigo-500, #6558F5)', body: 'var(--hz-accent-50)', text: 'var(--hz-accent-700)' },
-    past: { head: 'var(--hz-gray-400)', body: 'var(--hz-gray-100)', text: 'var(--hz-text-muted)' },
+    past: { head: 'var(--hz-gray-200)', headText: 'var(--hz-text-secondary)', body: 'var(--hz-gray-50)', text: 'var(--hz-text-secondary)' },
   }[tone];
   return (
-    <div aria-hidden="true" style={{ width: size, flexShrink: 0, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 12px rgba(16,23,42,0.08)', textAlign: 'center', background: palette.body }}>
-      <div style={{ background: palette.head, color: '#fff', fontSize: size * 0.17, fontWeight: 700, letterSpacing: 1, padding: '3px 0' }}>
+    <div aria-hidden="true" style={{ width: size, flexShrink: 0, borderRadius: 14, overflow: 'hidden', boxShadow: tone === 'past' ? 'none' : '0 4px 12px rgba(16,23,42,0.08)', border: tone === 'past' ? '1px solid var(--hz-border)' : 'none', textAlign: 'center', background: palette.body }}>
+      <div style={{ background: palette.head, color: palette.headText || '#fff', fontSize: size * 0.17, fontWeight: 700, letterSpacing: 1, padding: '3px 0' }}>
         {MONTHS[day.getMonth()].slice(0, 3).toUpperCase()}
       </div>
       <div style={{ fontSize: size * 0.42, fontWeight: 800, lineHeight: 1.15, color: palette.text, padding: '2px 0 4px' }}>{day.getDate()}</div>
@@ -243,13 +243,14 @@ export default function MyHolidays() {
                     const days = daysUntil(h.date);
                     const past = days < 0;
                     return (
-                      <div key={h.id} className="d-flex align-items-center gap-3 p-2 pe-3" style={{ borderRadius: 14, border: '1px solid var(--hz-border)', opacity: past ? 0.6 : 1, background: days === 0 ? 'var(--hz-warning-50)' : 'transparent' }}>
+                      <div key={h.id} className="d-flex align-items-center gap-3 p-2 pe-3" style={{ borderRadius: 14, border: '1px solid var(--hz-border)', background: days === 0 ? 'var(--hz-warning-50)' : past ? 'var(--hz-gray-50)' : 'var(--hz-bg-surface)' }}>
                         <DateTile date={h.date} tone={past ? 'past' : days === 0 ? 'today' : 'upcoming'} size={56} />
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontWeight: 700 }}>{h.name}</div>
-                          <div style={{ fontSize: 13, color: 'var(--hz-text-muted)' }}>{weekday(h.date)} · {past ? 'Passed' : countdown(days)}</div>
+                          <div style={{ fontWeight: 700, color: past ? 'var(--hz-text-secondary)' : 'var(--hz-text-primary)' }}>{h.name}</div>
+                          <div style={{ fontSize: 13, color: 'var(--hz-text-muted)' }}>{weekday(h.date)} · {countdown(days)}</div>
                         </div>
                         <div className="d-flex flex-wrap gap-1 justify-content-end">
+                          {past && <Badge variant="neutral"><CheckCircle2 size={12} aria-hidden="true" className="me-1" />Passed</Badge>}
                           {!past && nextToWeekend(h.date) && <Badge variant="warning">Next to weekend</Badge>}
                           {h.locationNames?.length > 0 && <Badge variant="neutral">{h.locationNames.join(', ')}</Badge>}
                         </div>
@@ -271,13 +272,13 @@ export default function MyHolidays() {
                 const past = daysUntil(h.date) < 0;
                 return (
                   <div key={h.id} className="col-12 col-md-6 col-xl-4">
-                    <div className="h-100 d-flex align-items-center gap-3 p-3" style={{ borderRadius: 16, border: `1.5px ${h.picked ? 'solid' : 'dashed'} ${h.picked ? 'var(--hz-brand-indigo-500, #6558F5)' : 'var(--hz-border-strong, #d0d5dd)'}`, background: h.picked ? 'var(--hz-accent-50)' : 'transparent', opacity: past ? 0.6 : 1 }}>
+                    <div className="h-100 d-flex align-items-center gap-3 p-3" style={{ borderRadius: 16, border: `1.5px ${h.picked ? 'solid' : 'dashed'} ${h.picked ? 'var(--hz-brand-indigo-500, #6558F5)' : 'var(--hz-border-strong, #d0d5dd)'}`, background: h.picked ? 'var(--hz-accent-50)' : past ? 'var(--hz-gray-50)' : 'transparent' }}>
                       <DateTile date={h.date} tone={past ? 'past' : 'optional'} size={56} />
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontWeight: 700 }}>
                           {h.name} {h.picked && <Badge variant="success">Picked</Badge>}
                         </div>
-                        <div style={{ fontSize: 13, color: 'var(--hz-text-muted)' }}>{weekday(h.date)} · {past ? 'Passed' : countdown(daysUntil(h.date))}</div>
+                        <div style={{ fontSize: 13, color: 'var(--hz-text-muted)' }}>{weekday(h.date)} · {past ? `Passed · ${countdown(daysUntil(h.date))}` : countdown(daysUntil(h.date))}</div>
                       </div>
                       {h.canPick && (
                         <Button size="sm" disabled={busy} onClick={() => pick.mutate(h.id)} aria-label={`Pick ${h.name}`}>Pick</Button>

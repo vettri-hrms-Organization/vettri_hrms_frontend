@@ -140,3 +140,60 @@
   color: var(--hz-text-primary);
   border-color: var(--hz-border-strong);
 }
+
+/* ---- Light gradients (white-to-tint panels) ---- */
+/* Empty / error states - used on every "nothing here yet" screen. */
+[data-theme='dark'] .hz-state {
+  background: linear-gradient(180deg, var(--hz-bg-surface), var(--hz-surface-subtle)) !important;
+  border-color: var(--hz-border-strong) !important;
+}
+[data-theme='dark'] .hz-state--error {
+  background: linear-gradient(180deg, var(--hz-bg-surface), var(--hz-danger-50)) !important;
+  border-color: rgba(243, 155, 155, 0.3) !important;
+}
+[data-theme='dark'] .hz-state__icon-wrap {
+  background: var(--hz-primary-50) !important;
+  border-color: var(--hz-border) !important;
+  color: var(--hz-primary-600) !important;
+}
+[data-theme='dark'] .hz-state--error .hz-state__icon-wrap { background: var(--hz-danger-50) !important; color: var(--hz-danger-700) !important; }
+
+[data-theme='dark'] .hz-dialog__header,
+[data-theme='dark'] .hz-enrollment__intro,
+[data-theme='dark'] .vettri-assistant-leave-confirmation,
+[data-theme='dark'] .hz-dashboard-reference__welcome,
+[data-theme='dark'] .hz-dashboard__hero,
+[data-theme='dark'] .hz-welcome-hero,
+[data-theme='dark'] .hz-support-hero,
+[data-theme='dark'] .hz-employee-workspace .hz-profile-identity-panel,
+[data-theme='dark'] .hz-dashboard--employee .hz-dashboard__company-card,
+[data-theme='dark'] .hz-dashboard--employee .hz-dashboard__company-card:nth-child(2),
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__secondary-grid > .hz-dashboard__surface:nth-child(1),
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__secondary-grid > .hz-dashboard__surface:nth-child(2),
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__secondary-grid > .hz-dashboard__surface:nth-child(3) {
+  background: linear-gradient(145deg, var(--hz-bg-surface) 0%, var(--hz-surface-subtle) 100%) !important;
+}
+
+/* Admin dashboard metric cards and panels keep a hint of their hue. */
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__metric-grid > .hz-stat-card:nth-child(1) { background: linear-gradient(145deg, var(--hz-bg-surface) 0%, var(--hz-info-50) 100%) !important; }
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__metric-grid > .hz-stat-card:nth-child(2) { background: linear-gradient(145deg, var(--hz-bg-surface) 0%, var(--hz-success-50) 100%) !important; }
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__metric-grid > .hz-stat-card:nth-child(3) { background: linear-gradient(145deg, var(--hz-bg-surface) 0%, var(--hz-warning-50) 100%) !important; }
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__metric-grid > .hz-stat-card:nth-child(4) { background: linear-gradient(145deg, var(--hz-bg-surface) 0%, var(--hz-danger-50) 100%) !important; }
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__primary-grid > .hz-dashboard__surface:first-child { background: linear-gradient(135deg, var(--hz-warning-50) 0%, var(--hz-bg-surface) 70%) !important; }
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__primary-grid > .hz-dashboard__surface:last-child,
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__insights,
+[data-theme='dark'] .hz-dashboard--admin .hz-dashboard__support-strip { background: linear-gradient(135deg, var(--hz-accent-50) 0%, var(--hz-bg-surface) 70%) !important; }
+
+/* Page headers that set their own light gradient follow the aurora header like every other page. */
+[data-theme='dark'] .hz-software-center > .hz-page-header,
+[data-theme='dark'] .hz-module-page--employees > .hz-page-header,
+[data-theme='dark'] .hz-module-page--attendance > .hz-page-header,
+[data-theme='dark'] .hz-module-page--leave > .hz-page-header,
+[data-theme='dark'] .hz-reports-workspace > .hz-page-header,
+[data-theme='dark'] .hz-notifications-page > .hz-page-header {
+  background: var(--hz-aurora-header) !important;
+  border-color: var(--hz-aurora-border) !important;
+}
+
+[data-theme='dark'] .hz-job-card__icon,
+[data-theme='dark'] .hz-career-card__icon { background: var(--hz-accent-50) !important; }
