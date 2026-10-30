@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
+import { BankChangeDialog } from './SelfServiceProfile';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 
 /**
@@ -66,7 +67,7 @@ export function BankStatutoryFields({ form, set }) {
 }
 
 /** Profile card; the Edit button only shows for EMPLOYEE_MANAGE holders who can see the full values. */
-export function BankStatutoryCard({ employee, canEdit, InfoRow }) {
+export function BankStatutoryCard({ employee, canEdit, canRequestChange = false, InfoRow }) {
   const [editing, setEditing] = useState(false);
   const account = employee.statutoryVisible ? employee.bankAccountNumber : employee.bankAccountNumberMasked;
   return (
@@ -77,6 +78,10 @@ export function BankStatutoryCard({ employee, canEdit, InfoRow }) {
         canEdit && employee.statutoryVisible ? (
           <Button size="sm" variant="secondary" icon={Pencil} onClick={() => setEditing(true)}>
             Edit
+          </Button>
+        ) : canRequestChange ? (
+          <Button size="sm" variant="secondary" icon={Pencil} onClick={() => setEditing('request')}>
+            Request change
           </Button>
         ) : null
       }
@@ -91,7 +96,8 @@ export function BankStatutoryCard({ employee, canEdit, InfoRow }) {
           <InfoRow label="ESI Number" value={employee.esiNumber} />
         </>
       )}
-      {editing && <BankStatutoryDialog employee={employee} onClose={() => setEditing(false)} />}
+      {editing === true && <BankStatutoryDialog employee={employee} onClose={() => setEditing(false)} />}
+      {editing === 'request' && <BankChangeDialog employee={employee} onClose={() => setEditing(false)} />}
     </Card>
   );
 }

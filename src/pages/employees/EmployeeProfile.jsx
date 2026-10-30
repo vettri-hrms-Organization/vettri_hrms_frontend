@@ -21,6 +21,7 @@ import { SkeletonText } from '../../components/ui/Skeleton';
 import { statusMeta, STATUS_META, SELECTABLE_STATUSES, EMPLOYMENT_TYPE_LABEL } from './statusMeta';
 import ExitStatusDialog, { isExitStatus } from './ExitStatusDialog';
 import { BankStatutoryCard } from './BankStatutoryFields';
+import { PhotoControls, ProfileSections } from './SelfServiceProfile';
 import { leaveStatusMeta } from '../leave/leaveStatusMeta';
 import { useBreadcrumbLabel } from '../../components/layout/BreadcrumbContext';
 import Tabs from '../../components/ui/Tabs';
@@ -152,6 +153,7 @@ export default function EmployeeProfile() {
           </div>
 
           <div className="hz-profile-hero__actions">
+            {(String(user?.employeeId) === String(employee.id) || hasPermission('EMPLOYEE_MANAGE')) && <PhotoControls employee={employee} />}
             {employee.email && (
               <a href={`mailto:${employee.email}`} className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2">
                 <Mail size={15} aria-hidden="true" /> Email
@@ -350,13 +352,6 @@ function OverviewTab({ employee }) {
         </Dialog>
       </div>
       <div className="col-12 col-lg-6">
-        <Card title="Contact">
-          <InfoRow icon={Mail} label="Email" value={employee.email} />
-          <InfoRow icon={Phone} label="Phone" value={employee.phone} />
-          <InfoRow icon={MapPin} label="Address" value={employee.address} />
-        </Card>
-      </div>
-      <div className="col-12 col-lg-6">
         <Card title="Employment">
           <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
           <InfoRow icon={Briefcase} label="Employment Type" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType} />
@@ -364,20 +359,10 @@ function OverviewTab({ employee }) {
         </Card>
       </div>
       <div className="col-12 col-lg-6">
-        <Card title="Personal">
-          <InfoRow icon={Calendar} label="Date of Birth" value={employee.dateOfBirth ? new Date(employee.dateOfBirth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
-          <InfoRow label="Gender" value={employee.gender} />
-        </Card>
+        {/* HR edits colleagues' bank details directly; everyone (HR included) requests changes to their own. */}
+        <BankStatutoryCard employee={employee} canEdit={hasPermission('EMPLOYEE_MANAGE') && !isOwnRecord} canRequestChange={isOwnRecord} InfoRow={InfoRow} />
       </div>
-      <div className="col-12 col-lg-6">
-        <Card title="Emergency Contact">
-          <InfoRow label="Name" value={employee.emergencyContactName} />
-          <InfoRow icon={Phone} label="Phone" value={employee.emergencyContactPhone} />
-        </Card>
-      </div>
-      <div className="col-12 col-lg-6">
-        <BankStatutoryCard employee={employee} canEdit={hasPermission('EMPLOYEE_MANAGE')} InfoRow={InfoRow} />
-      </div>
+      <ProfileSections employee={employee} isOwnRecord={isOwnRecord} canManage={hasPermission('EMPLOYEE_MANAGE')} />
       <div className="col-12">
         <CustomFieldsCard employeeId={employee.id} />
       </div>

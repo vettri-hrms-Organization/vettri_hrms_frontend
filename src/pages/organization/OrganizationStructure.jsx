@@ -9,6 +9,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import PageHeader from '../../components/ui/PageHeader';
 import { useAuth } from '../../hooks/useAuth';
+import { photoUrl } from '../../components/ui/Avatar';
 
 const ALL = 'all';
 
@@ -56,7 +57,7 @@ function EmployeeRow({ employee, canViewProfile }) {
       <div className="d-flex align-items-center gap-3 min-w-0">
         {employee.profilePhotoUrl ? (
           <img
-            src={employee.profilePhotoUrl}
+            src={photoUrl(employee.profilePhotoUrl)}
             alt=""
             className="rounded-circle flex-shrink-0"
             width="38"

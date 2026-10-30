@@ -6,6 +6,7 @@ import { compOffApi, encashmentApi, leaveRequestsApi } from '../../api/endpoints
 import { attendanceApi } from '../../api/endpoints/attendance';
 import { overtimeApi } from '../../api/endpoints/shifts';
 import { expensesApi } from '../../api/endpoints/expenses';
+import { profileApi } from '../../api/endpoints/profile';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -28,6 +29,8 @@ const OVERTIME_LOOKBACK_DAYS = 365;
 const fmtNumber = (n) => (Number.isFinite(Number(n)) ? Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0');
 const plural = (n, word) => `${fmtNumber(n)} ${word}${Number(n) === 1 ? '' : 's'}`;
 const errorMessage = (error, fallback) => error?.response?.data?.message || fallback;
+/** Account numbers show only their last 4 digits in the list; the full value is on the profile. */
+const showValue = (field, value) => (!value ? 'blank' : field === 'bankAccountNumber' && value.length > 4 ? `••••${value.slice(-4)}` : value);
 
 /** A source the caller may not reach (401/403) is just an empty queue, never a broken page. */
 async function forbiddenAsEmpty(request) {
@@ -227,6 +230,27 @@ function buildSources(hasPermission) {
       approve: (item, note) => encashmentApi.approve(item.id, note),
       reject: (item, note) => encashmentApi.reject(item.id, note),
       invalidate: [['leave-encashment-approvals'], ['leave-encashments'], ['leave-balance']],
+    },
+    {
+      key: 'profile',
+      label: 'Profile changes',
+      variant: 'neutral',
+      enabled: hasPermission('EMPLOYEE_MANAGE'),
+      fetch: () => profileApi.pendingChanges(),
+      toItems: (rows) => rows.map((r) => ({
+        id: r.id,
+        employeeId: r.employeeId,
+        employeeName: r.employeeName,
+        subtitle: r.employeeCode,
+        title: r.section === 'BANK' ? 'Bank details change' : 'Personal details change',
+        details: r.changes.map((c) => `${c.label}: ${showValue(c.field, c.from)} → ${showValue(c.field, c.to)}`).join(' · '),
+        reason: r.reason,
+        submittedAt: r.requestedAt,
+      })),
+      approve: (item, note) => profileApi.approveChange(item.id, note),
+      reject: (item, note) => profileApi.rejectChange(item.id, note),
+      rejectNoteRequired: true,
+      invalidate: [['profile'], ['employee']],
     },
   ];
 }

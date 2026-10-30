@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../../api/axiosClient';
+
 function getInitials(name = '') {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 0 || !parts[0]) return '?';
@@ -16,12 +18,17 @@ function getTone(name = '') {
 
 const SIZES = { sm: 28, md: 36, lg: 48, xl: 64 };
 
+/** Uploaded profile photos are stored as API paths (/api/profile-photos/...); other values are full URLs. */
+export function photoUrl(src) {
+  return typeof src === 'string' && src.startsWith('/api/') ? `${API_BASE_URL.replace(/\/$/, '')}${src}` : src;
+}
+
 export default function Avatar({ name, size = 'md', src }) {
   const px = SIZES[size] || SIZES.md;
   const style = { width: px, height: px, fontSize: px * 0.38 };
 
   if (src) {
-    return <img src={src} alt={name} className="hz-avatar" style={{ ...style, objectFit: 'cover' }} />;
+    return <img src={photoUrl(src)} alt={name} className="hz-avatar" style={{ ...style, objectFit: 'cover' }} />;
   }
 
   const tone = getTone(name || '');
