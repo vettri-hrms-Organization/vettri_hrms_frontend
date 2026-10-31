@@ -15,6 +15,8 @@ import Tabs from '../../components/ui/Tabs';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
 import { useConfirm } from '../../components/ui/ConfirmDialog';
+import SignaturePad, { useMySignature } from './SignaturePad';
+import './esign.css';
 
 const STATUS = { PENDING: ['Waiting for signature', 'warning'], SIGNED: ['Signed', 'success'], DECLINED: ['Declined', 'danger'], CANCELLED: ['Cancelled', 'neutral'] };
 
@@ -27,7 +29,14 @@ export default function Signatures() {
     <div className="hz-module-page d-flex flex-column gap-4">
       <PageHeader eyebrow="Documents" title="E-signatures" description="Read and sign documents online, with a tamper-evident audit trail" />
       {isHr && <Tabs items={[{ key: 'mine', label: 'To sign' }, { key: 'sent', label: 'Sent for signature' }]} value={tab} onChange={setTab} />}
-      {tab === 'mine' ? <Mine /> : <Sent />}
+      {tab === 'mine' ? (
+        <>
+          <Card title="My signature" subtitle="Saved once and added to every document you sign">
+            <SignaturePad />
+          </Card>
+          <Mine />
+        </>
+      ) : <Sent />}
     </div>
   );
 }
@@ -81,6 +90,7 @@ function SignDialog({ request, onView, onClose }) {
   const [declining, setDeclining] = useState(false);
   const [reason, setReason] = useState('');
   const [opened, setOpened] = useState(false);
+  const { saved: hasSignature } = useMySignature();
   const done = (msg) => { queryClient.invalidateQueries({ queryKey: ['esign-mine'] }); toast.success(msg); onClose(); };
   const sign = useMutation({ mutationFn: () => esignApi.sign(request.id, { fullName: name, consent }), onSuccess: () => done('Signed. A signed copy with the certificate is saved.'), onError: (e) => toast.error(errorText(e, 'Could not sign.')) });
   const decline = useMutation({ mutationFn: () => esignApi.decline(request.id, reason), onSuccess: () => done('Declined. HR has been told.'), onError: (e) => toast.error(errorText(e, 'Could not decline.')) });
@@ -94,9 +104,13 @@ function SignDialog({ request, onView, onClose }) {
   }
   return (
     <Dialog open onClose={onClose} title={`Sign · ${request.title}`}
-      footer={<><Button variant="secondary" onClick={() => setDeclining(true)}>Decline</Button><Button icon={FileSignature} disabled={!opened || !consent || !name.trim()} loading={sign.isPending} onClick={() => sign.mutate()}>Sign</Button></>}>
+      footer={<><Button variant="secondary" onClick={() => setDeclining(true)}>Decline</Button><Button icon={FileSignature} disabled={!opened || !consent || !name.trim() || !hasSignature} loading={sign.isPending} onClick={() => sign.mutate()}>Sign</Button></>}>
       <Button variant="secondary" size="sm" onClick={() => { onView(); setOpened(true); }}>{opened ? 'Open the document again' : 'Open the document to read it'}</Button>
       {!opened && <p className="mt-2 mb-0" style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>Please read the document before you sign.</p>}
+      <div className="mt-3">
+        <div className="form-label" style={{ fontSize: 13, fontWeight: 600 }}>Your signature</div>
+        <SignaturePad compact />
+      </div>
       <div className="mt-3">
         <FormField label="Type your full name to sign" value={name} onChange={setName} placeholder={user?.fullName || 'Your full name'} hint="Must match the name on your employee profile" maxLength={150} />
         <label className="form-check d-flex gap-2 align-items-start mt-2" style={{ fontSize: 13 }}>

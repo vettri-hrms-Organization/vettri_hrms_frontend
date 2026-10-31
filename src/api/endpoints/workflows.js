@@ -42,6 +42,15 @@ export const esignApi = {
   sign: (id, body) => axiosClient.post(`/api/esign/${id}/sign`, body).then(data),
   decline: (id, reason) => axiosClient.post(`/api/esign/${id}/decline`, { reason }).then(data),
   cancel: (id) => axiosClient.post(`/api/esign/${id}/cancel`).then(data),
+  mySignatureInfo: () => axiosClient.get('/api/esign/my-signature/info').then(data),
+  mySignature: () => axiosClient.get('/api/esign/my-signature', { responseType: 'blob' }).then(data),
+  saveMySignature: (fileOrBlob, source) => {
+    const form = new FormData();
+    form.append('file', fileOrBlob, fileOrBlob.name || 'signature.png');
+    form.append('source', source);
+    return axiosClient.put('/api/esign/my-signature', form).then(data);
+  },
+  deleteMySignature: () => axiosClient.delete('/api/esign/my-signature').then(data),
 };
 
 /** Travel requests and advances (see TravelController). */

@@ -1,0 +1,24 @@
+/* Saved signature preview and the draw pad. White ground in both themes: ink is dark, like paper. */
+.esign-sig-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
+  max-width: 100%;
+  min-height: 72px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid var(--hz-border);
+  border-radius: var(--hz-radius-md, 10px);
+}
+.esign-sig-preview img { max-height: 80px; max-width: 320px; width: auto; }
+.esign-sig-canvas {
+  width: 100%;
+  max-width: 520px;
+  height: 160px;
+  background: #ffffff;
+  border: 1px dashed var(--hz-border-strong, var(--hz-border));
+  border-radius: var(--hz-radius-md, 10px);
+  touch-action: none;
+  cursor: crosshair;
+}
