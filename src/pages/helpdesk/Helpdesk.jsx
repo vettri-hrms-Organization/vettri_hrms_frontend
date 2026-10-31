@@ -33,7 +33,7 @@ export default function Helpdesk() {
       <PageHeader eyebrow="Support" title="HR helpdesk" description="Ask HR anything - payroll, leave, documents, policies - and track the answer"
         actions={<Button icon={Plus} onClick={() => setRaising(true)}>Raise a ticket</Button>} />
       <Tabs items={items} value={tab} onChange={setTab} />
-      {tab === 'mine' && <MyTickets onOpen={setOpen} />}
+      {tab === 'mine' && <MyTickets onOpen={setOpen} onRaise={() => setRaising(true)} />}
       {tab === 'queue' && <Queue isHr={isHr} onOpen={setOpen} />}
       {tab === 'categories' && <Categories />}
       {raising && <RaiseDialog onClose={() => setRaising(false)} onRaised={(t) => { setRaising(false); setOpen(t.id); }} />}
@@ -69,12 +69,12 @@ function TicketList({ rows, onOpen, agent = false }) {
   );
 }
 
-function MyTickets({ onOpen }) {
+function MyTickets({ onOpen, onRaise }) {
   const { data, isLoading } = useQuery({ queryKey: ['helpdesk-mine'], queryFn: helpdeskApi.mine });
   return (
     <Card title="My tickets">
       {isLoading ? <SkeletonText lines={3} /> : !(data || []).length
-        ? <EmptyState icon={Headset} title="No tickets" description="Raise a ticket and HR will get back to you here." />
+        ? <EmptyState icon={Headset} title="No tickets" description="Raise a ticket and HR will get back to you here." action={<Button icon={Plus} onClick={onRaise}>Raise a ticket</Button>} />
         : <TicketList rows={data} onOpen={onOpen} />}
     </Card>
   );

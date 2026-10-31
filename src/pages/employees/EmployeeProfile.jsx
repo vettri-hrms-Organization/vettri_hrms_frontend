@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { employeesApi } from '../../api/endpoints/employees';
@@ -31,7 +31,7 @@ import LeaveSelfServicePanel from '../leave/LeaveSelfServicePanel';
 import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
 import { formatLeaveDuration } from '../../utils/formatLeave';
 import { categoricalColor } from '../../design-system/palette';
-import { ScrollText, ListChecks } from 'lucide-react';
+import { ScrollText, ListChecks, PenLine, UserCheck, LogOut } from 'lucide-react';
 import EmployeeLettersTab from '../letters/EmployeeLettersTab';
 import EmployeeOnboardingTab from '../onboarding/EmployeeOnboardingTab';
 import SelfieThumb from '../../components/attendance/SelfieThumb';
@@ -48,16 +48,31 @@ const TABS = [
   { key: 'letters', label: 'Letters', icon: ScrollText },
   { key: 'onboarding', label: 'Onboarding', icon: ListChecks },
 ];
+// Only on your own profile: things that are about you, not something HR looks up.
+const OWN_TABS = [
+  { key: 'signatures', label: 'E-signatures', icon: PenLine },
+  { key: 'probation', label: 'Probation', icon: UserCheck },
+  { key: 'resignation', label: 'Resignation', icon: LogOut },
+];
 const VALID_TAB_KEYS = TABS.map((tab) => tab.key);
 const EMPLOYEE_TAB_KEYS = ['overview', 'job', 'attendance', 'leave', 'documents', 'letters', 'onboarding'];
+const OWN_TAB_KEYS = OWN_TABS.map((tab) => tab.key);
+
+const OwnSignatures = lazy(() => import('../esign/Signatures'));
+const OwnResignation = lazy(() => import('../exit/MyResignation'));
+const OwnProbation = lazy(() => import('../probation/Probation').then((module) => ({ default: module.Mine })));
 
 export default function EmployeeProfile() {
   const { id } = useParams();
   const { user, hasPermission } = useAuth();
   const employeeId = id || user?.employeeId;
   const isEmployee = !!user?.employeeId && !hasPermission('EMPLOYEE_MANAGE');
-  const availableTabs = isEmployee ? TABS.filter((item) => EMPLOYEE_TAB_KEYS.includes(item.key)) : TABS;
-  const availableTabKeys = isEmployee ? EMPLOYEE_TAB_KEYS : VALID_TAB_KEYS;
+  const isOwnProfile = !!user?.employeeId && String(employeeId) === String(user.employeeId);
+  const availableTabs = useMemo(() => {
+    const base = isEmployee ? TABS.filter((item) => EMPLOYEE_TAB_KEYS.includes(item.key)) : TABS;
+    return isOwnProfile ? [...base, ...OWN_TABS] : base;
+  }, [isEmployee, isOwnProfile]);
+  const availableTabKeys = useMemo(() => availableTabs.map((item) => item.key), [availableTabs]);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = availableTabKeys.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
   const [tab, setTab] = useState(initialTab);
@@ -223,6 +238,13 @@ export default function EmployeeProfile() {
       {tab === 'leave' && <LeaveTab employee={employee} onApplyLeave={() => setShowApplyLeave(true)} />}
       {tab === 'letters' && <EmployeeLettersTab employee={employee} />}
       {tab === 'onboarding' && <EmployeeOnboardingTab employee={employee} />}
+      {isOwnProfile && OWN_TAB_KEYS.includes(tab) && (
+        <Suspense fallback={<Card><SkeletonText lines={4} /></Card>}>
+          {tab === 'signatures' && <OwnSignatures embedded />}
+          {tab === 'probation' && <OwnProbation showEmpty />}
+          {tab === 'resignation' && <OwnResignation embedded />}
+        </Suspense>
+      )}
       {tab === 'documents' && (
         <DocumentsTab
           employee={employee}

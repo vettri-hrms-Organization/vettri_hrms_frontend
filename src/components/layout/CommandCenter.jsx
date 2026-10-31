@@ -23,7 +23,7 @@ import {
 import { employeesApi } from '../../api/endpoints/employees';
 import { useAuth } from '../../hooks/useAuth';
 import Avatar from '../ui/Avatar';
-import { NAV_SECTIONS, visibleNavSections } from './navConfig';
+import { NAV_SECTIONS, SEARCH_ONLY_ITEMS, visibleNavSections } from './navConfig';
 import { useNavMemory } from './NavMemoryContext';
 
 const MAX_RESULTS = 12;
@@ -64,7 +64,13 @@ export default function CommandCenter({ open, onClose, onAskVettri }) {
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
   const visibleNavigation = useMemo(
-    () => visibleNavSections(hasPermission, hasRole).flatMap((section) => section.items.map((item) => ({ ...item, section: section.label, permission: item.permission || section.permission }))),
+    () => {
+      const inMenu = visibleNavSections(hasPermission, hasRole).flatMap((section) => section.items.map((item) => ({ ...item, section: section.label, permission: item.permission || section.permission })));
+      // Pages that moved into My Profile tabs, the Company page or the profile menu are still searchable.
+      const seen = new Set(inMenu.map((item) => item.to));
+      const extra = SEARCH_ONLY_ITEMS.filter((item) => !seen.has(item.to) && (!item.permission || hasPermission(item.permission)));
+      return [...inMenu, ...extra];
+    },
     [hasPermission, hasRole]
   );
   const visibleActions = useMemo(

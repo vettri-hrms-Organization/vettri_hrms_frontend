@@ -51,7 +51,7 @@ export default function Okrs() {
         {rows.length > 0 && <span style={{ fontSize: 13, color: 'var(--hz-text-muted)' }}>{rows.length} objective{rows.length === 1 ? '' : 's'} · average progress {avg.toFixed(0)}%</span>}
       </div>
       {isLoading ? <Card><SkeletonText lines={5} /></Card> : !rows.length ? (
-        <Card><EmptyState icon={Flag} title={`No objectives for ${period}`} description="Add an objective and break it into 2–5 measurable key results." /></Card>
+        <Card><EmptyState icon={Flag} title={`No objectives for ${period}`} description="Add an objective and break it into 2–5 measurable key results." action={<Button icon={Plus} onClick={() => setCreating(true)}>New objective</Button>} /></Card>
       ) : rows.map((o) => <Objective key={o.id} o={o} all={data} period={period} />)}
       {creating && <CreateDialog period={period} me={me} objectives={data || []} onClose={() => setCreating(false)} />}
     </div>

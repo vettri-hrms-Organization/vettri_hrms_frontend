@@ -121,7 +121,7 @@ function YearCalendar({ year, holidays }) {
 }
 
 /** Employee self-service: holidays for my location, and picking optional (restricted) holidays. */
-export default function MyHolidays() {
+export default function MyHolidays({ embedded = false } = {}) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const thisYear = new Date().getFullYear();
@@ -158,18 +158,27 @@ export default function MyHolidays() {
   const byMonth = MONTHS.map((month, index) => ({ month, holidays: mandatory.filter((h) => toDate(h.date).getMonth() === index) }))
     .filter((group) => group.holidays.length > 0);
 
+  const yearPicker = (
+    <select className="form-select" style={{ width: 'auto' }} value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Year">
+      {[thisYear - 1, thisYear, thisYear + 1].map((y) => <option key={y} value={y}>{y}</option>)}
+    </select>
+  );
+
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader
-        eyebrow="My workspace"
-        title="Holidays"
-        description={data?.officeLocationName ? `Holidays for ${data.officeLocationName}` : 'Company holidays that apply to you'}
-        actions={(
-          <select className="form-select" style={{ width: 'auto' }} value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Year">
-            {[thisYear - 1, thisYear, thisYear + 1].map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
-        )}
-      />
+      {embedded ? (
+        <div className="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+          <span className="text-muted" style={{ fontSize: 14 }}>{data?.officeLocationName ? `Holidays for ${data.officeLocationName}` : 'Company holidays that apply to you'}</span>
+          {yearPicker}
+        </div>
+      ) : (
+        <PageHeader
+          eyebrow="My workspace"
+          title="Holidays"
+          description={data?.officeLocationName ? `Holidays for ${data.officeLocationName}` : 'Company holidays that apply to you'}
+          actions={yearPicker}
+        />
+      )}
 
       {isLoading && <Card><SkeletonText lines={5} /></Card>}
 

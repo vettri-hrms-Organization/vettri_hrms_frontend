@@ -104,6 +104,7 @@ const SettingsCustomFields = lazy(() => import('./pages/settings/SettingsCustomF
 const SettingsSignIn = lazy(() => import('./pages/settings/SettingsSignIn'));
 const DataImportHub = lazy(() => import('./pages/imports/DataImportHub'));
 const AnnouncementsFeed = lazy(() => import('./pages/announcements/AnnouncementsFeed'));
+const Company = lazy(() => import('./pages/company/Company'));
 const AnnouncementAdmin = lazy(() => import('./pages/announcements/AnnouncementAdmin'));
 const MyPrivacy = lazy(() => import('./pages/privacy/MyPrivacy'));
 const LegalAcceptance = lazy(() => import('./pages/privacy/LegalAcceptance'));
@@ -194,6 +195,7 @@ export default function App() {
           <Route path="salary/accounting" element={<AccountingExport />} />
           <Route path="my-settlement" element={<MySettlement />} />
           <Route path="my-holidays" element={<MyHolidays />} />
+          <Route path="company" element={<Company />} />
           <Route path="my-profile" element={<MyProfileRoute />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="billing" element={<BillingSubscription />} />

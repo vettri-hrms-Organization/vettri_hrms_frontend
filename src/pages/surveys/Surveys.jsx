@@ -20,13 +20,13 @@ const STATUS = { DRAFT: ['Draft', 'neutral'], OPEN: ['Open', 'success'], CLOSED:
 const QTYPES = { RATING: 'Rating 1–5', SCALE10: 'Scale 0–10', SINGLE: 'One choice', MULTI: 'Several choices', TEXT: 'Written answer' };
 
 /** Surveys, polls and eNPS: answer the ones for you; HR builds, publishes and reads results. */
-export default function Surveys() {
+export default function Surveys({ embedded = false } = {}) {
   const { hasPermission } = useAuth();
   const isHr = hasPermission('EMPLOYEE_MANAGE');
   const [tab, setTab] = useState('mine');
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Engage" title="Surveys & polls" description="Share what you think - anonymous surveys never record who answered" />
+      {!embedded && <PageHeader eyebrow="Engage" title="Surveys & polls" description="Share what you think - anonymous surveys never record who answered" />}
       {isHr && <Tabs items={[{ key: 'mine', label: 'For me' }, { key: 'manage', label: 'Manage' }]} value={tab} onChange={setTab} />}
       {tab === 'mine' ? <ForMe /> : <Manage />}
     </div>

@@ -34,9 +34,11 @@ export default function Probation() {
   );
 }
 
-function Mine() {
-  const { data } = useQuery({ queryKey: ['probation-me'], queryFn: probationApi.mine });
-  if (!data) return null;
+/** My probation status. On the profile tab (`showEmpty`) it says so when there is no probation record. */
+export function Mine({ showEmpty = false } = {}) {
+  const { data, isLoading } = useQuery({ queryKey: ['probation-me'], queryFn: probationApi.mine });
+  if (isLoading && showEmpty) return <Card><SkeletonText lines={2} /></Card>;
+  if (!data) return showEmpty ? <Card><EmptyState icon={UserCheck} title="No probation on record" description="If you are on probation, your end date and confirmation status will show here." /></Card> : null;
   return (
     <Card title="My probation" actions={<Badge variant={STATUS[data.status][1]}>{STATUS[data.status][0]}</Badge>}>
       <p className="mb-0" style={{ fontSize: 14 }}>

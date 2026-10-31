@@ -29,7 +29,7 @@ export default function Travel() {
       <PageHeader eyebrow="Expenses" title="Travel" description="Plan business trips, get them approved and take a cash advance"
         actions={<Button icon={Plus} onClick={() => setCreating(true)}>New trip</Button>} />
       {canReview && <Tabs items={[{ key: 'mine', label: 'My trips' }, { key: 'review', label: 'Approvals & advances' }]} value={tab} onChange={setTab} />}
-      {tab === 'mine' ? <MyTrips /> : <Review finance={hasPermission('EXPENSE_MANAGE')} />}
+      {tab === 'mine' ? <MyTrips onCreate={() => setCreating(true)} /> : <Review finance={hasPermission('EXPENSE_MANAGE')} />}
       {creating && <TripDialog onClose={() => setCreating(false)} />}
     </div>
   );
@@ -68,13 +68,13 @@ function useTravel(fn, message, after) {
   });
 }
 
-function MyTrips() {
+function MyTrips({ onCreate }) {
   const { data, isLoading } = useQuery({ queryKey: ['travel-mine'], queryFn: travelApi.mine });
   const cancel = useTravel((id) => travelApi.cancel(id), 'Trip cancelled.');
   return (
     <Card title="My trips">
       {isLoading ? <SkeletonText lines={3} /> : !(data || []).length ? (
-        <EmptyState icon={Plane} title="No trips yet" description="Request a trip before you book, so your manager can approve it and finance can arrange an advance." />
+        <EmptyState icon={Plane} title="No trips yet" description="Request a trip before you book, so your manager can approve it and finance can arrange an advance." action={<Button icon={Plus} onClick={onCreate}>New trip</Button>} />
       ) : <div className="d-flex flex-column gap-2">{data.map((t) => (
         <TripRow key={t.id} t={t}>
           {['PENDING', 'APPROVED'].includes(t.status) && t.advanceStatus !== 'PAID' && <Button size="sm" variant="secondary" loading={cancel.isPending} onClick={() => cancel.mutate(t.id)}>Cancel</Button>}

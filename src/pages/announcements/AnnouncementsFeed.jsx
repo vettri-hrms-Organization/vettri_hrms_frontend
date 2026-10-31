@@ -23,7 +23,8 @@ const FILTERS = [
   { key: 'ack', label: 'Needs acknowledgement' },
 ];
 
-export default function AnnouncementsFeed() {
+/** `embedded` drops the page title when the feed is shown as a tab of the Company page. */
+export default function AnnouncementsFeed({ embedded = false } = {}) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { hasPermission } = useAuth();
@@ -64,12 +65,20 @@ export default function AnnouncementsFeed() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader
-        eyebrow="Company"
-        title="Announcements"
-        description={`${unread} unread${pendingAck ? ` · ${pendingAck} awaiting your acknowledgement` : ''}`}
-        actions={hasPermission('ANNOUNCEMENT_MANAGE') ? <Link to="/announcements/manage" className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"><Settings2 size={16} aria-hidden="true" /> Manage</Link> : null}
-      />
+      {embedded ? (
+        hasPermission('ANNOUNCEMENT_MANAGE') && (
+          <div className="d-flex justify-content-end">
+            <Link to="/announcements/manage" className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"><Settings2 size={16} aria-hidden="true" /> Manage</Link>
+          </div>
+        )
+      ) : (
+        <PageHeader
+          eyebrow="Company"
+          title="Announcements"
+          description={`${unread} unread${pendingAck ? ` · ${pendingAck} awaiting your acknowledgement` : ''}`}
+          actions={hasPermission('ANNOUNCEMENT_MANAGE') ? <Link to="/announcements/manage" className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"><Settings2 size={16} aria-hidden="true" /> Manage</Link> : null}
+        />
+      )}
       <Tabs items={FILTERS.map((item) => ({ ...item, label: item.key === 'unread' ? `Unread (${unread})` : item.key === 'ack' ? `Needs acknowledgement (${pendingAck})` : item.label }))} value={filter} onChange={setFilter} ariaLabel="Announcement filters" />
 
       {isLoading && <Card><SkeletonText lines={6} /></Card>}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles, KeyRound, Download } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, UserCircle, Menu, Building2, Sun, Moon, CheckCheck, Circle, Plus, Users, CalendarDays, Briefcase, Sparkles, KeyRound, Download, CalendarCheck2, LifeBuoy, ShieldCheck, Languages } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { employeesApi } from '../../api/endpoints/employees';
 import { supportAccessApi } from '../../api/endpoints/supportAccess';
@@ -99,6 +99,15 @@ export default function Topbar({ onOpenMobileNav }) {
     setCommandCenterOpen(false);
     setAskVettriOpen(true);
   }
+
+  // Other parts of the app (the home page's Ask box) open Ask Vettri with a question already typed.
+  useEffect(() => {
+    function handleAsk(e) {
+      openAskVettri(e.detail?.query || '');
+    }
+    window.addEventListener('vettri:ask', handleAsk);
+    return () => window.removeEventListener('vettri:ask', handleAsk);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Global command center shortcut.
   useEffect(() => {
@@ -218,7 +227,6 @@ export default function Topbar({ onOpenMobileNav }) {
             )}
           </div>
         )}
-        <LanguagePicker />
         <button type="button" className="hz-icon-btn d-flex align-items-center justify-content-center" style={{ width: 38, height: 38 }} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? 'Use light theme' : 'Use dark theme'} title={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}>
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
@@ -367,16 +375,25 @@ export default function Topbar({ onOpenMobileNav }) {
                     <Download size={16} /> Install app
                   </button>
                 )}
-                <button
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    navigate('/account/security');
-                  }}
-                  className="btn btn-light border-0 w-100 d-flex align-items-center gap-2 text-start px-2 py-2"
-                >
-                  <KeyRound size={16} /> Change password
-                </button>
+                {[
+                  hasPermission('SELF_PROFILE_VIEW') && { to: '/calendar-sync', icon: CalendarCheck2, label: 'Calendar sync' },
+                  { to: '/privacy', icon: ShieldCheck, label: 'My privacy' },
+                  { to: '/account/security', icon: KeyRound, label: 'Change password' },
+                  { to: '/support', icon: LifeBuoy, label: 'Help & support' },
+                ].filter(Boolean).map(({ to, icon: Icon, label }) => (
+                  <button
+                    key={to}
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate(to);
+                    }}
+                    className="btn btn-light border-0 w-100 d-flex align-items-center gap-2 text-start px-2 py-2"
+                  >
+                    <Icon size={16} /> {label}
+                  </button>
+                ))}
+                <LanguagePicker />
                 <button
                   role="menuitem"
                   onClick={logout}
@@ -398,8 +415,8 @@ export default function Topbar({ onOpenMobileNav }) {
 function LanguagePicker() {
   const { lang, setLang, t } = useLanguage();
   return (
-    <label className="d-flex align-items-center mb-0" title={t('Language')}>
-      <span className="visually-hidden">{t('Language')}</span>
+    <label className="d-flex align-items-center justify-content-between gap-2 mb-0 px-2 py-2" title={t('Language')}>
+      <span className="d-flex align-items-center gap-2" style={{ fontSize: 'var(--hz-text-sm)' }}><Languages size={16} aria-hidden="true" /> {t('Language')}</span>
       <select className="form-select form-select-sm" style={{ width: 'auto' }} value={lang} onChange={(e) => setLang(e.target.value)} aria-label="Language">
         {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.native}</option>)}
       </select>

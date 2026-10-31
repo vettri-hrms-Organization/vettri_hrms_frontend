@@ -16,7 +16,7 @@ import { useConfirm } from '../../components/ui/ConfirmDialog';
 const errorText = (error, fallback) => error?.response?.data?.message || fallback;
 
 /** Employee self-service resignation: resign, track it, withdraw, and complete the exit interview. */
-export default function MyResignation() {
+export default function MyResignation({ embedded = false } = {}) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['my-resignation'], queryFn: resignationsApi.mine });
   const store = (view) => queryClient.setQueryData(['my-resignation'], view);
@@ -24,7 +24,7 @@ export default function MyResignation() {
   if (isError) return <ErrorState description="Couldn't load your resignation details." onRetry={refetch} />;
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="My workspace" title="Resignation" description="Resign, follow its approval, and complete your exit interview" />
+      {!embedded && <PageHeader eyebrow="My workspace" title="Resignation" description="Resign, follow its approval, and complete your exit interview" />}
       {isLoading || !data ? <Card><SkeletonText lines={5} /></Card> : (
         <>
           {data.current ? <CurrentResignation resignation={data.current} onChange={store} /> : <ResignForm view={data} onDone={store} />}

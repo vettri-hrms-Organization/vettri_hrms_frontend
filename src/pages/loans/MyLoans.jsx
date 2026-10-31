@@ -34,7 +34,7 @@ export default function MyLoans() {
       <PageHeader eyebrow="My finances" title="Loans & advances" description="Borrow against your salary and repay through monthly deductions"
         actions={<Button icon={Plus} onClick={() => setAsking(true)}>Request</Button>} />
       {isLoading ? <Card><SkeletonText lines={4} /></Card> : loans.length === 0 ? (
-        <Card><EmptyState icon={HandCoins} title="No loans or advances" description="Need money before payday? Request a salary advance or a loan; it's repaid automatically from your salary." /></Card>
+        <Card><EmptyState icon={HandCoins} title="No loans or advances" description="Need money before payday? Request a salary advance or a loan; it's repaid automatically from your salary." action={<Button icon={Plus} onClick={() => setAsking(true)}>Request</Button>} /></Card>
       ) : (
         <div className="row g-3">
           {loans.map((l) => {

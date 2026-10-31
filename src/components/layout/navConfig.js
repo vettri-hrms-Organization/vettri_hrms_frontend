@@ -86,25 +86,19 @@ export const NAV_SECTIONS = [
     permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
+    // Daily things only. Documents, letters, e-signatures, onboarding, probation and resignation are tabs in
+    // My Profile; announcements, holidays and surveys are on the Company page; calendar sync, privacy and support
+    // are in the profile menu. Everything stays findable through search (SEARCH_ONLY_ITEMS).
     items: [
       { to: '/my-profile', icon: UserRound, label: 'My Profile', end: true, permission: 'SELF_PROFILE_VIEW' },
-      { to: '/my-profile?tab=job', icon: Briefcase, label: 'My Job', permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-attendance', icon: Clock, label: 'My Attendance', permission: 'SELF_ATTENDANCE_VIEW' },
       { to: '/my-timesheet', icon: ClipboardList, label: 'My Timesheet', permission: 'SELF_ATTENDANCE_VIEW' },
-      { to: '/my-holidays', icon: CalendarRange, label: 'Holidays', permission: 'SELF_LEAVE_VIEW' },
       { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave', permission: 'SELF_LEAVE_VIEW' },
-      { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents', permission: 'SELF_DOCUMENT_VIEW' },
-      { to: '/my-onboarding', icon: ListChecks, label: 'My Onboarding', permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-expenses', icon: Receipt, label: 'My Expenses', permission: 'SELF_EXPENSE_SUBMIT' },
       { to: '/travel', icon: Plane, label: 'Travel', permission: 'SELF_EXPENSE_SUBMIT' },
-      { to: '/signatures', icon: FileSignature, label: 'E-signatures', permission: 'SELF_DOCUMENT_VIEW' },
-      { to: '/probation', icon: UserCheck, label: 'Probation', permission: 'SELF_PROFILE_VIEW' },
-      { to: '/surveys', icon: ClipboardPen, label: 'Surveys & Polls', permission: 'SELF_PROFILE_VIEW' },
       { to: '/helpdesk', icon: Headset, label: 'HR Helpdesk', permission: 'SELF_PROFILE_VIEW' },
-      { to: '/calendar-sync', icon: CalendarCheck2, label: 'Calendar Sync', permission: 'SELF_PROFILE_VIEW' },
-      { to: '/announcements', icon: Megaphone, label: 'Announcements', permission: 'SELF_PROFILE_VIEW' },
+      { to: '/company', icon: Megaphone, label: 'Company', permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-interviews', icon: CalendarClock, label: 'My Interviews' },
-      { to: '/my-resignation', icon: DoorOpen, label: 'Resignation', permission: 'SELF_PROFILE_VIEW' },
     ],
   },
   {
@@ -260,17 +254,27 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/salary', icon: Wallet, label: 'Salary Dashboard', end: true },
       { to: '/salary/employees', icon: ListChecks, label: 'Employee Salary' },
-      { to: '/salary/structure', icon: FileSpreadsheet, label: 'Salary Structure' },
       { to: '/salary/payroll-processing', icon: PlayCircle, label: 'Payroll Processing' },
-      { to: '/salary/reports', icon: FileBarChart, label: 'Reports' },
       { to: '/salary/tax-declarations', icon: Receipt, label: 'Tax Declarations' },
-      { to: '/salary/revisions', icon: TrendingUp, label: 'Salary Revisions', permission: 'SALARY_VIEW' },
-      { to: '/salary/loans', icon: HandCoins, label: 'Loans & Advances', permission: 'SALARY_MANAGE' },
-      { to: '/salary/bonuses', icon: Gift, label: 'Bonuses', permission: 'SALARY_MANAGE' },
-      { to: '/salary/compensation', icon: Calculator, label: 'Compensation Planning', permission: 'SALARY_MANAGE' },
-      { to: '/salary/fbp', icon: Wallet, label: 'Flexible Benefits', permission: 'SALARY_MANAGE' },
       { to: '/salary/settlements', icon: UserCheck, label: 'Full & Final', permission: 'SALARY_VIEW' },
+      { to: '/salary/reports', icon: FileBarChart, label: 'Reports' },
       { to: '/salary/accounting', icon: FileSpreadsheet, label: 'Accounting Export', permission: 'SALARY_MANAGE' },
+    ],
+  },
+  {
+    id: 'payroll-setup',
+    label: 'Pay Setup',
+    description: 'Salary structures, revisions, benefits and payroll rules',
+    collapsible: true,
+    permission: 'SALARY_VIEW',
+    badge: null,
+    items: [
+      { to: '/salary/structure', icon: FileSpreadsheet, label: 'Salary Structure' },
+      { to: '/salary/revisions', icon: TrendingUp, label: 'Salary Revisions', permission: 'SALARY_VIEW' },
+      { to: '/salary/compensation', icon: Calculator, label: 'Compensation Planning', permission: 'SALARY_MANAGE' },
+      { to: '/salary/bonuses', icon: Gift, label: 'Bonuses', permission: 'SALARY_MANAGE' },
+      { to: '/salary/loans', icon: HandCoins, label: 'Loans & Advances', permission: 'SALARY_MANAGE' },
+      { to: '/salary/fbp', icon: Wallet, label: 'Flexible Benefits', permission: 'SALARY_MANAGE' },
       { to: '/salary/settings', icon: ShieldCheck, label: 'Payroll Settings', permission: 'SALARY_MANAGE' },
     ],
   },
@@ -289,8 +293,8 @@ export const NAV_SECTIONS = [
   },
   {
     id: 'workplace',
-    label: 'Expenses & Announcements',
-    description: 'Expense approvals and company announcements',
+    label: 'Employee Services',
+    description: 'Expenses, travel, helpdesk, announcements, surveys and e-signatures',
     collapsible: true,
     badge: null,
     items: [
@@ -328,14 +332,20 @@ export const NAV_SECTIONS = [
       { to: '/settings/integrations', icon: Plug, label: 'Integrations', permission: 'EMPLOYEE_MANAGE' },
       { to: '/settings/sign-in', icon: KeyRound, label: 'Sign-in & WhatsApp', roles: ['COMPANY_ADMIN', 'SUPER_ADMIN'] },
       { to: '/settings/data-import', icon: FileSpreadsheet, label: 'Data Import', permissionsAny: ['SALARY_MANAGE', 'LEAVE_MANAGE', 'EMPLOYEE_MANAGE', 'EMPLOYEE_IMPORT'] },
+      { to: '/onboarding', icon: ClipboardList, label: 'Workspace Setup', roles: ['COMPANY_ADMIN', 'SUPER_ADMIN'] },
+    ],
+  },
+  {
+    id: 'account',
+    label: 'Billing & Security',
+    description: 'Subscription, audit logs and data privacy',
+    collapsible: true,
+    badge: null,
+    items: [
+      { to: '/billing', icon: Wallet, label: 'Billing & Subscription', roles: ['COMPANY_ADMIN', 'HR_ADMIN', 'SUPER_ADMIN'] },
       { to: '/settings/audit', icon: ScrollText, label: 'Audit Logs', permission: 'AUDIT_VIEW' },
       { to: '/settings/privacy', icon: ShieldCheck, label: 'Privacy & Data', permission: 'PRIVACY_MANAGE' },
-      { to: '/billing', icon: Wallet, label: 'Billing & Subscription', roles: ['COMPANY_ADMIN', 'HR_ADMIN', 'SUPER_ADMIN'] },
       { to: '/settings/platform', icon: ShieldCheck, label: 'Platform Admin', role: 'SUPER_ADMIN' },
-      { to: '/onboarding', icon: ClipboardList, label: 'Workspace Setup', roles: ['COMPANY_ADMIN', 'SUPER_ADMIN'] },
-      { to: '/support', icon: LifeBuoy, label: 'Support Information' },
-      { to: '/privacy', icon: ShieldCheck, label: 'My Privacy' },
-      { to: '/account/security', icon: KeyRound, label: 'Change Password' },
     ],
   },
 ];
@@ -362,6 +372,23 @@ export const PLATFORM_NAV_SECTIONS = [
 
 /** Pages platform staff can open without being inside a company. */
 export const PLATFORM_ONLY_PATHS = ['/settings/platform', '/notifications', '/support', '/account/security'];
+
+/** Pages that are not in the sidebar any more but can still be found with search (Ctrl+K). */
+export const SEARCH_ONLY_ITEMS = [
+  { to: '/my-profile?tab=job', icon: Briefcase, label: 'My Job', permission: 'SELF_PROFILE_VIEW', section: 'My Profile' },
+  { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents', permission: 'SELF_DOCUMENT_VIEW', section: 'My Profile' },
+  { to: '/my-profile?tab=signatures', icon: FileSignature, label: 'E-signatures', permission: 'SELF_DOCUMENT_VIEW', section: 'My Profile' },
+  { to: '/my-profile?tab=onboarding', icon: ListChecks, label: 'My Onboarding', permission: 'SELF_PROFILE_VIEW', section: 'My Profile' },
+  { to: '/my-profile?tab=probation', icon: UserCheck, label: 'Probation', permission: 'SELF_PROFILE_VIEW', section: 'My Profile' },
+  { to: '/my-profile?tab=resignation', icon: DoorOpen, label: 'Resignation', permission: 'SELF_PROFILE_VIEW', section: 'My Profile' },
+  { to: '/company?tab=holidays', icon: CalendarRange, label: 'Holidays', permission: 'SELF_LEAVE_VIEW', section: 'Company' },
+  { to: '/company?tab=surveys', icon: ClipboardPen, label: 'Surveys & Polls', permission: 'SELF_PROFILE_VIEW', section: 'Company' },
+  { to: '/company', icon: Megaphone, label: 'Announcements', permission: 'SELF_PROFILE_VIEW', section: 'Company' },
+  { to: '/calendar-sync', icon: CalendarCheck2, label: 'Calendar Sync', permission: 'SELF_PROFILE_VIEW', section: 'Account' },
+  { to: '/support', icon: LifeBuoy, label: 'Support Information', section: 'Account' },
+  { to: '/privacy', icon: ShieldCheck, label: 'My Privacy', section: 'Account' },
+  { to: '/account/security', icon: KeyRound, label: 'Change Password', section: 'Account' },
+];
 
 /** Flat list of every navigable page, each tagged with its section label -
  *  what the search index and favorites picker actually iterate over. */
@@ -413,7 +440,7 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
     return { ...section, items };
   }).filter((section) => section.items.length > 0 && hasAccessRole(section));
 
-  const employeeSelfIds = new Set(['employee-me', 'employee-team', 'employee-finances', 'employee-performance', 'employee-apps']);
+  const employeeSelfIds = new Set(['employee-me', 'employee-team']);
   const employeeSelfItems = [];
   const peopleItems = hasPermission('EMPLOYEE_VIEW')
     ? [{ to: '/employees', icon: Users, label: 'Employees', permission: 'EMPLOYEE_VIEW' }]
@@ -483,6 +510,11 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
       items: employeeSelfItems,
     });
   }
+
+  const finances = filtered.find((section) => section.id === 'employee-finances');
+  if (finances) addSection({ ...finances, id: 'my-pay', label: 'My Pay', description: 'Payslips, tax, loans and benefits' });
+  const growth = filtered.find((section) => section.id === 'employee-performance');
+  if (growth) addSection({ ...growth, id: 'growth', label: 'Growth', description: 'Reviews, goals, feedback and 1:1s' });
 
   addSection({
     id: 'people',

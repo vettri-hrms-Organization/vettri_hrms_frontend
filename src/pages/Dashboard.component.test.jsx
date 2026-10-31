@@ -25,6 +25,14 @@ vi.mock('../api/endpoints/employees', () => ({ employeesApi: { getById: vi.fn() 
 vi.mock('../api/endpoints/attendance', () => ({ attendanceApi: { byEmployee: vi.fn() } }));
 vi.mock('../api/endpoints/salary', () => ({ employeeSalaryApi: { getDetail: vi.fn() } }));
 vi.mock('../api/endpoints/selfService', () => ({ selfServiceApi: { notifications: vi.fn() } }));
+vi.mock('../api/endpoints/home', () => ({
+  homeApi: {
+    todos: vi.fn().mockResolvedValue([]),
+    today: vi.fn().mockResolvedValue({ outToday: [], birthdays: [], anniversaries: [], it: null }),
+    setup: vi.fn().mockResolvedValue({ visible: false, done: 0, total: 0, steps: [] }),
+  },
+  askVettri: vi.fn(),
+}));
 vi.mock('../api/endpoints/announcements', () => ({ announcementsApi: { feed: vi.fn().mockResolvedValue([]) } }));
 
 const SUMMARY = {
@@ -97,7 +105,7 @@ describe('Dashboard (admin)', () => {
 
     expect(screen.getByText('Engineering')).toBeTruthy();
     expect(screen.getByText('Priya Raman')).toBeTruthy();
-    expect(screen.getByText('Arun Kumar')).toBeTruthy();
+    expect(await screen.findByText('Next holiday')).toBeTruthy();
     expect(screen.getByRole('link', { name: /Reports/ })).toBeTruthy();
   });
 

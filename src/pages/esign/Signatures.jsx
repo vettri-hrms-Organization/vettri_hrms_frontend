@@ -21,13 +21,14 @@ import './esign.css';
 const STATUS = { PENDING: ['Waiting for signature', 'warning'], SIGNED: ['Signed', 'success'], DECLINED: ['Declined', 'danger'], CANCELLED: ['Cancelled', 'neutral'] };
 
 /** Click-to-sign: employees sign documents HR sends; HR sends letters and tracks them. */
-export default function Signatures() {
+/** `embedded` is the own-profile tab: just my signature and my documents, no page title or HR tabs. */
+export default function Signatures({ embedded = false } = {}) {
   const { hasPermission } = useAuth();
-  const isHr = hasPermission('LETTER_MANAGE');
+  const isHr = hasPermission('LETTER_MANAGE') && !embedded;
   const [tab, setTab] = useState('mine');
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Documents" title="E-signatures" description="Read and sign documents online, with a tamper-evident audit trail" />
+      {!embedded && <PageHeader eyebrow="Documents" title="E-signatures" description="Read and sign documents online, with a tamper-evident audit trail" />}
       {isHr && <Tabs items={[{ key: 'mine', label: 'To sign' }, { key: 'sent', label: 'Sent for signature' }]} value={tab} onChange={setTab} />}
       {tab === 'mine' ? (
         <>
