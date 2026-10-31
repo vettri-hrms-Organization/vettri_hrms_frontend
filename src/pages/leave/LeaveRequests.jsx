@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Navigate } from 'react-router-dom';
-import { CalendarPlus, Check, X as XIcon, Calendar, CalendarDays, BarChart3, Download } from 'lucide-react';
+import { CalendarPlus, Check, X as XIcon, Calendar, CalendarDays, BarChart3 } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportToCsv';
 import { formatDateIST, toISTDateInputValue } from '../../utils/formatDateTime';
 import { leaveRequestsApi } from '../../api/endpoints/leave';
 import Card from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
 import Avatar from '../../components/ui/Avatar';
 import EmptyState from '../../components/ui/EmptyState';
-import ErrorState from '../../components/ui/ErrorState';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import ApplyLeaveModal from './ApplyLeaveModal';
 import { leaveStatusMeta } from './leaveStatusMeta';
@@ -18,8 +18,6 @@ import { formatLeaveDuration } from '../../utils/formatLeave';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import PageHeader from '../../components/ui/PageHeader';
-import FilterBar from '../../components/ui/FilterBar';
-import SearchField from '../../components/ui/SearchField';
 import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
 import Tabs from '../../components/ui/Tabs';
@@ -64,7 +62,6 @@ export default function LeaveRequests() {
 
 function LeaveManagement() {
   const [tab, setTab] = useState('PENDING');
-  const [search, setSearch] = useState('');
   const [showApply, setShowApply] = useState(false);
   const [decision, setDecision] = useState(null);
   const [decisionNote, setDecisionNote] = useState('');
@@ -94,23 +91,6 @@ function LeaveManagement() {
     queryFn: () => (isTeamScoped ? leaveRequestsApi.teamList(tab || undefined) : leaveRequestsApi.list(tab || undefined)),
   });
 
-  // Client-side, not a new backend query param: the endpoint already
-  // returns the full list for the selected status tab (no pagination
-  // exists here), so there's no extra request to make - just narrowing
-  // what's already in memory. "All Requests" with no way to find one
-  // employee's history was the real gap; this fixes that without
-  // needing a backend change.
-  const filteredRequests = useMemo(() => {
-    if (!requests || !search.trim()) return requests;
-    const q = search.trim().toLowerCase();
-    return requests.filter(
-      (r) =>
-        r.employeeName?.toLowerCase().includes(q) ||
-        r.leaveTypeName?.toLowerCase().includes(q) ||
-        r.departmentName?.toLowerCase().includes(q)
-    );
-  }, [requests, search]);
-
   const decide = useMutation({
     mutationFn: ({ id, approve, note }) => (approve ? leaveRequestsApi.approve(id, note) : leaveRequestsApi.reject(id, note)),
     onSuccess: () => {
@@ -124,25 +104,81 @@ function LeaveManagement() {
     onError: (error) => toast.error(error.response?.data?.message || 'Could not update the leave request.'),
   });
 
+  // Search, sorting and paging happen in DataTable on the list already loaded for the status tab
+  // (the endpoint is not paged). Department is a hidden column so it is still searchable.
+  const columns = useMemo(() => [
+    {
+      key: 'employee', label: 'Employee', className: 'ps-4', headerClassName: 'ps-4', hideable: false,
+      value: (r) => r.employeeName,
+      render: (r) => (
+        <Link to={`/employees/${r.employeeId}`} className="d-flex align-items-center gap-2 text-decoration-none">
+          <Avatar name={r.employeeName} size="sm" />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-primary)' }}>{r.employeeName}</div>
+            <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{r.departmentName || '—'}</div>
+          </div>
+        </Link>
+      ),
+    },
+    { key: 'departmentName', label: 'Department', defaultHidden: true },
+    { key: 'leaveTypeName', label: 'Leave Type' },
+    {
+      key: 'dates', label: 'Dates', value: (r) => r.startDate, searchable: false,
+      render: (r) => (
+        <span style={{ color: 'var(--hz-text-secondary)' }}>
+          {new Date(r.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} – {new Date(r.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </span>
+      ),
+    },
+    { key: 'days', label: 'Days', render: (r) => (r.halfDay ? formatLeaveDuration(r) : r.days) },
+    {
+      key: 'status', label: 'Status', value: (r) => leaveStatusMeta(r.status).label,
+      render: (r) => {
+        const meta = leaveStatusMeta(r.status);
+        return <StatusBadge status={r.status} variant={meta.variant} dot>{meta.label}</StatusBadge>;
+      },
+    },
+    {
+      key: 'appliedOn', label: 'Applied On', defaultHidden: true, searchable: false,
+      value: (r) => r.appliedOn || r.appliedAt || r.createdAt,
+      render: (r) => { const at = r.appliedOn || r.appliedAt || r.createdAt; return at ? formatDateIST(at) : '—'; },
+    },
+    {
+      key: 'actions', label: 'Actions', className: 'pe-4 text-end', headerClassName: 'pe-4 text-end', hideable: false, sortable: false, searchable: false,
+      render: (r) => canDecide && r.status === 'PENDING' && (
+        <div className="d-flex justify-content-end gap-2">
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+            onClick={() => setDecision({ id: r.id, approve: false, employeeName: r.employeeName })}
+            disabled={decide.isPending}
+            aria-label={`Reject ${r.employeeName}'s leave request`}
+          >
+            <XIcon size={14} aria-hidden="true" /> Reject
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+            onClick={() => setDecision({ id: r.id, approve: true, employeeName: r.employeeName })}
+            disabled={decide.isPending}
+            aria-label={`Approve ${r.employeeName}'s leave request`}
+          >
+            <Check size={14} aria-hidden="true" /> Approve
+          </button>
+        </div>
+      ),
+    },
+  // decide.isPending changes the buttons, so the columns follow it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [canDecide, decide.isPending]);
+
   return (
     <div className="hz-module-page hz-module-page--leave d-flex flex-column gap-4">
       <PageHeader
         eyebrow="Workforce"
         title="Leave"
         description={isTeamScoped ? "Your team's requests, approvals, and balances" : 'Requests, approvals, and balances'}
-        actions={(
-          <div className="d-flex gap-2">
-            <Button
-              variant="secondary"
-              icon={Download}
-              disabled={isLoading || isError || !filteredRequests?.length}
-              onClick={() => exportToCsv(`leave-register-${tab ? tab.toLowerCase() : 'all'}-${toISTDateInputValue()}`, filteredRequests.map(toLeaveExportRow))}
-            >
-              Export
-            </Button>
-            {canApplyForOthers && <Button icon={CalendarPlus} onClick={() => setShowApply(true)}>Apply Leave</Button>}
-          </div>
-        )}
+        actions={canApplyForOthers && <Button icon={CalendarPlus} onClick={() => setShowApply(true)}>Apply Leave</Button>}
       />
 
       {sectionTabs.length > 1 && <Tabs items={sectionTabs} value={section} onChange={setSection} ariaLabel="Leave workflows" />}
@@ -159,107 +195,25 @@ function LeaveManagement() {
         </div>
       )}
 
-      <FilterBar className="hz-leave-toolbar justify-content-between">
-        <Tabs items={TABS} value={tab} onChange={setTab} ariaLabel="Leave request status" />
-        <SearchField
-          value={search}
-          onChange={setSearch}
-          placeholder="Filter by name, type, dept…"
-          aria-label="Filter leave requests by employee, type, or department"
-        />
-      </FilterBar>
-
       <Card bodyClassName="p-0">
-        {isLoading && (
-          <div className="p-4">
-            <SkeletonText lines={6} />
-          </div>
-        )}
-
-        {isError && <ErrorState description="Couldn't load leave requests." onRetry={refetch} />}
-
-        {!isLoading && !isError && filteredRequests?.length === 0 && (
-          <EmptyState
-            icon={Calendar}
-            title={search ? 'No matches' : tab === 'PENDING' ? 'Nothing pending' : 'No leave requests yet'}
-            description={
-              search
-                ? `Nothing matches "${search}"`
-                : tab === 'PENDING'
-                ? isTeamScoped
-                  ? 'None of your direct reports have pending requests.'
-                  : 'New requests will show up here for approval.'
-                : 'Apply for leave to get started.'
-            }
-          />
-        )}
-
-        {!isLoading && !isError && filteredRequests?.length > 0 && (
-          <div className="table-responsive">
-            <table className="table mb-0 align-middle hz-table" aria-label="Leave requests">
-            <thead>
-              <tr style={{ fontSize: 'var(--hz-text-xs)', color: 'var(--hz-text-muted)', textTransform: 'uppercase' }}>
-                <th className="ps-4">Employee</th>
-                <th>Leave Type</th>
-                <th>Dates</th>
-                <th>Days</th>
-                <th>Status</th>
-                <th className="pe-4 text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRequests.map((r) => {
-                const meta = leaveStatusMeta(r.status);
-                return (
-                  <tr key={r.id}>
-                    <td className="ps-4">
-                      <Link to={`/employees/${r.employeeId}`} className="d-flex align-items-center gap-2 text-decoration-none">
-                        <Avatar name={r.employeeName} size="sm" />
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-primary)' }}>{r.employeeName}</div>
-                          <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{r.departmentName || '—'}</div>
-                        </div>
-                      </Link>
-                    </td>
-                    <td style={{ fontSize: 'var(--hz-text-sm)' }}>{r.leaveTypeName}</td>
-                    <td style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                      {new Date(r.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} – {new Date(r.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td style={{ fontSize: 'var(--hz-text-sm)' }}>{r.halfDay ? formatLeaveDuration(r) : r.days}</td>
-                    <td>
-                      <StatusBadge status={r.status} variant={meta.variant} dot>{meta.label}</StatusBadge>
-                    </td>
-                    <td className="pe-4 text-end">
-                      {canDecide && r.status === 'PENDING' && (
-                        <div className="d-flex justify-content-end gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
-                            onClick={() => setDecision({ id: r.id, approve: false, employeeName: r.employeeName })}
-                            disabled={decide.isPending}
-                            aria-label={`Reject ${r.employeeName}'s leave request`}
-                          >
-                            <XIcon size={14} aria-hidden="true" /> Reject
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
-                            onClick={() => setDecision({ id: r.id, approve: true, employeeName: r.employeeName })}
-                            disabled={decide.isPending}
-                            aria-label={`Approve ${r.employeeName}'s leave request`}
-                          >
-                            <Check size={14} aria-hidden="true" /> Approve
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          flush
+          columns={columns}
+          rows={requests}
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          ariaLabel="Leave requests"
+          storageKey="leave-requests"
+          searchPlaceholder="Filter by name, type, dept…"
+          toolbar={<Tabs items={TABS} value={tab} onChange={setTab} ariaLabel="Leave request status" />}
+          onExport={(rows) => exportToCsv(`leave-register-${tab ? tab.toLowerCase() : 'all'}-${toISTDateInputValue()}`, rows.map(toLeaveExportRow))}
+          emptyIcon={Calendar}
+          emptyTitle={tab === 'PENDING' ? 'Nothing pending' : 'No leave requests yet'}
+          emptyDescription={tab === 'PENDING'
+            ? isTeamScoped ? 'None of your direct reports have pending requests.' : 'New requests will show up here for approval.'
+            : 'Apply for leave to get started.'}
+        />
       </Card>
       </>)}
 

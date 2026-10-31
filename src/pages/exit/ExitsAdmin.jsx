@@ -9,13 +9,40 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
-import EmptyState from '../../components/ui/EmptyState';
+import DataTable from '../../components/ui/DataTable';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 
 const errorText = (error, fallback) => error?.response?.data?.message || fallback;
 const QUESTION_LABEL = Object.fromEntries(RATING_QUESTIONS);
+const lastDay = (r) => r.approvedLastWorkingDate || r.requestedLastWorkingDate || r.policyLastWorkingDate;
+
+function resignationColumns(onOpen) {
+  return [
+    {
+      key: 'employee', label: 'Employee', hideable: false,
+      value: (r) => [r.employeeName, r.employeeCode, r.designation, r.departmentName].filter(Boolean).join(' '),
+      exportValue: (r) => r.employeeName,
+      render: (r) => <><div style={{ fontWeight: 700 }}>{r.employeeName}</div><div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{[r.employeeCode, r.designation, r.departmentName].filter(Boolean).join(' · ')}</div></>,
+    },
+    { key: 'departmentName', label: 'Department', defaultHidden: true },
+    { key: 'resignationDate', label: 'Resigned on', searchable: false, render: (r) => fmtDate(r.resignationDate) },
+    { key: 'reasonCategory', label: 'Reason' },
+    {
+      key: 'lastDay', label: 'Last working day', value: lastDay, searchable: false,
+      render: (r) => <>{fmtDate(lastDay(r))}{!r.approvedLastWorkingDate && <div style={{ fontSize: 11, color: 'var(--hz-text-muted)' }}>{r.requestedLastWorkingDate ? 'requested' : 'per notice period'}</div>}</>,
+    },
+    {
+      key: 'status', label: 'Status', value: (r) => RESIGNATION_STATUS[r.status]?.label || r.status,
+      render: (r) => { const status = RESIGNATION_STATUS[r.status] || {}; return <Badge variant={status.variant}>{status.label}</Badge>; },
+    },
+    {
+      key: 'actions', label: '', className: 'text-end', hideable: false, sortable: false, searchable: false, export: false,
+      render: (r) => <Button size="sm" variant={r.canManagerReview || r.canHrReview ? 'primary' : 'secondary'} onClick={() => onOpen(r)}>{r.canManagerReview || r.canHrReview ? 'Review' : 'View'}</Button>,
+    },
+  ];
+}
 
 /** Resignations for HR (whole company, analytics, settings) and managers (their direct reports). */
 export default function ExitsAdmin() {
@@ -80,30 +107,19 @@ export default function ExitsAdmin() {
             ))}
           </div>
         )}>
-        {isLoading ? <SkeletonText lines={4} /> : rows.length === 0 ? (
-          <EmptyState icon={DoorOpen} title="No resignations" description={filter === 'OPEN' ? 'Nobody is resigning right now.' : 'No resignations yet.'} />
-        ) : (
-          <div className="table-responsive">
-            <table className="table align-middle mb-0">
-              <thead><tr><th>Employee</th><th>Resigned on</th><th>Reason</th><th>Last working day</th><th>Status</th><th aria-label="Actions" /></tr></thead>
-              <tbody>
-                {rows.map((r) => {
-                  const status = RESIGNATION_STATUS[r.status] || {};
-                  return (
-                    <tr key={r.id}>
-                      <td><div style={{ fontWeight: 700 }}>{r.employeeName}</div><div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{[r.employeeCode, r.designation, r.departmentName].filter(Boolean).join(' · ')}</div></td>
-                      <td>{fmtDate(r.resignationDate)}</td>
-                      <td>{r.reasonCategory}</td>
-                      <td>{fmtDate(r.approvedLastWorkingDate || r.requestedLastWorkingDate || r.policyLastWorkingDate)}{!r.approvedLastWorkingDate && <div style={{ fontSize: 11, color: 'var(--hz-text-muted)' }}>{r.requestedLastWorkingDate ? 'requested' : 'per notice period'}</div>}</td>
-                      <td><Badge variant={status.variant}>{status.label}</Badge></td>
-                      <td className="text-end"><Button size="sm" variant={r.canManagerReview || r.canHrReview ? 'primary' : 'secondary'} onClick={() => setOpen(r)}>{r.canManagerReview || r.canHrReview ? 'Review' : 'View'}</Button></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          columns={resignationColumns(setOpen)}
+          rows={rows}
+          isLoading={isLoading}
+          ariaLabel="Resignations"
+          storageKey="exits"
+          searchPlaceholder="Search employee, code or reason"
+          exportFileName={`resignations-${filter.toLowerCase()}`}
+          initialSort={{ key: 'resignationDate', dir: 'desc' }}
+          emptyIcon={DoorOpen}
+          emptyTitle="No resignations"
+          emptyDescription={filter === 'OPEN' ? 'Nobody is resigning right now.' : 'No resignations yet.'}
+        />
       </Card>
       {open && <ResignationDialog resignation={open} onClose={() => setOpen(null)} />}
       {showSettings && <ExitSettingsDialog onClose={() => setShowSettings(false)} />}

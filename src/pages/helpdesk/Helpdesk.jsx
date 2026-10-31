@@ -12,6 +12,7 @@ import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
 import EmptyState from '../../components/ui/EmptyState';
 import Tabs from '../../components/ui/Tabs';
+import DataTable from '../../components/ui/DataTable';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
 
@@ -44,28 +45,39 @@ export default function Helpdesk() {
 
 function TicketList({ rows, onOpen, agent = false }) {
   const map = agent ? AGENT_STATUS : STATUS;
+  const columns = [
+    {
+      key: 'ticket', label: 'Ticket', hideable: false,
+      value: (t) => `${t.ticketNumber} ${t.subject}`,
+      render: (t) => (
+        <>
+          <button type="button" className="btn btn-link p-0 text-start" onClick={(e) => { e.stopPropagation(); onOpen(t.id); }}>
+            <strong>{t.ticketNumber}</strong> {t.subject}
+          </button>
+          {t.confidential && <Lock size={12} className="ms-1" aria-label="Confidential" />}
+          {t.priority !== 'NORMAL' && <Badge className="ms-2" variant={PRIORITY[t.priority]}>{t.priority.toLowerCase()}</Badge>}
+        </>
+      ),
+    },
+    agent && { key: 'employeeName', label: 'Employee' },
+    { key: 'categoryName', label: 'Category' },
+    { key: 'priority', label: 'Priority', defaultHidden: true, value: (t) => t.priority?.toLowerCase() },
+    { key: 'status', label: 'Status', value: (t) => map[t.status][0], render: (t) => <Badge variant={map[t.status][1]}>{map[t.status][0]}</Badge> },
+    agent
+      ? { key: 'dueAt', label: 'Due', searchable: false, render: (t) => <span style={{ color: t.overdue ? 'var(--hz-danger-600)' : undefined }}>{t.overdue ? 'Overdue · ' : ''}{when(t.dueAt)}</span>, exportValue: (t) => `${t.overdue ? 'Overdue · ' : ''}${when(t.dueAt)}` }
+      : { key: 'createdAt', label: 'Raised', searchable: false, render: (t) => when(t.createdAt), exportValue: (t) => when(t.createdAt) },
+    agent && { key: 'assigneeName', label: 'Assignee', render: (t) => t.assigneeName || <span style={{ color: 'var(--hz-text-muted)' }}>Unassigned</span>, exportValue: (t) => t.assigneeName || 'Unassigned' },
+  ].filter(Boolean);
   return (
-    <div className="table-responsive">
-      <table className="table table-sm align-middle mb-0" style={{ fontSize: 13 }}>
-        <thead><tr><th>Ticket</th>{agent && <th>Employee</th>}<th>Category</th><th>Status</th><th>{agent ? 'Due' : 'Raised'}</th>{agent && <th>Assignee</th>}</tr></thead>
-        <tbody>{rows.map((t) => (
-          <tr key={t.id} style={{ cursor: 'pointer' }} onClick={() => onOpen(t.id)}>
-            <td>
-              <button type="button" className="btn btn-link p-0 text-start" onClick={(e) => { e.stopPropagation(); onOpen(t.id); }}>
-                <strong>{t.ticketNumber}</strong> {t.subject}
-              </button>
-              {t.confidential && <Lock size={12} className="ms-1" aria-label="Confidential" />}
-              {t.priority !== 'NORMAL' && <Badge className="ms-2" variant={PRIORITY[t.priority]}>{t.priority.toLowerCase()}</Badge>}
-            </td>
-            {agent && <td>{t.employeeName}</td>}
-            <td>{t.categoryName}</td>
-            <td><Badge variant={map[t.status][1]}>{map[t.status][0]}</Badge></td>
-            <td>{agent ? <span style={{ color: t.overdue ? 'var(--hz-danger-600, #dc2626)' : undefined }}>{t.overdue ? 'Overdue · ' : ''}{when(t.dueAt)}</span> : when(t.createdAt)}</td>
-            {agent && <td>{t.assigneeName || <span style={{ color: 'var(--hz-text-muted)' }}>Unassigned</span>}</td>}
-          </tr>
-        ))}</tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      rows={rows}
+      onRowClick={(t) => onOpen(t.id)}
+      ariaLabel={agent ? 'Ticket queue' : 'My tickets'}
+      storageKey={agent ? 'helpdesk-queue' : 'helpdesk-mine'}
+      searchPlaceholder={agent ? 'Search ticket, employee or category' : 'Search your tickets'}
+      exportFileName={agent ? 'helpdesk-tickets' : undefined}
+    />
   );
 }
 

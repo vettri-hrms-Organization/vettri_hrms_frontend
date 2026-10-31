@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import EmptyState from './EmptyState';
 import ErrorState from './ErrorState';
 import { Skeleton } from './Skeleton';
@@ -22,6 +23,9 @@ import { Skeleton } from './Skeleton';
  *     onRowClick={(row) => navigate(`/employees/${row.id}`)}
  *     emptyTitle="No employees yet"
  *   />
+ *
+ * Sorting is opt-in: pass `sort` ({ key, dir }) and `onSort(key)`, and mark columns `sortable`.
+ * DataTable does that for you, along with search, paging, export and column choice.
  */
 export default function Table({
   columns,
@@ -41,6 +45,8 @@ export default function Table({
   selectedKeys = new Set(),
   onToggleRow,
   onToggleAll,
+  sort = null,
+  onSort,
 }) {
   if (isError) {
     return <ErrorState description="Couldn't load this data." onRetry={onRetry} />;
@@ -56,11 +62,26 @@ export default function Table({
         <thead>
           <tr>
             {selectable && <th className="hz-table__selection"><input type="checkbox" checked={!isLoading && rows?.length > 0 && rows.every((row, index) => selectedKeys.has(getRowKey(row, index)))} onChange={(event) => onToggleAll?.(event.target.checked)} disabled={isLoading || !rows?.length} aria-label="Select all rows" /></th>}
-            {columns.map((col) => (
-              <th key={col.key} style={{ width: col.width, textAlign: col.align }} className={col.headerClassName}>
-                {col.label}
-              </th>
-            ))}
+            {columns.map((col) => {
+              const sortable = !!onSort && col.sortable;
+              const direction = sort?.key === col.key ? sort.dir : null;
+              const SortIcon = direction === 'asc' ? ArrowUp : direction === 'desc' ? ArrowDown : ChevronsUpDown;
+              return (
+                <th
+                  key={col.key}
+                  style={{ width: col.width, textAlign: col.align }}
+                  className={col.headerClassName}
+                  aria-sort={sortable ? ({ asc: 'ascending', desc: 'descending' }[direction] || 'none') : undefined}
+                >
+                  {sortable ? (
+                    <button type="button" className={`hz-table__sort${direction ? ' is-active' : ''}`} onClick={() => onSort(col.key)}>
+                      {col.label}
+                      <SortIcon size={13} aria-hidden="true" />
+                    </button>
+                  ) : col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>

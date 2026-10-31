@@ -5,6 +5,7 @@ import { Radio, Clock, Fingerprint, AlertTriangle, CalendarOff, Users, Download 
 import { attendanceApi } from '../../api/endpoints/attendance';
 import { authApi } from '../../api/endpoints/auth';
 import Card from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
@@ -194,6 +195,38 @@ function MonthlyMusterExport() {
   );
 }
 
+const PUNCH_COLUMNS = [
+  {
+    key: 'employee', label: 'Employee', className: 'ps-4', headerClassName: 'ps-4', hideable: false,
+    value: (r) => [r.employeeName, r.employeeCode].filter(Boolean).join(' '),
+    exportValue: (r) => r.employeeName,
+    render: (r) => (r.mapped ? (
+      <Link to={`/employees/${r.employeeId}`} className="d-flex align-items-center gap-2 text-decoration-none">
+        <Avatar name={r.employeeName} size="sm" />
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-primary)' }}>{r.employeeName}</div>
+          <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{r.employeeCode}</div>
+        </div>
+      </Link>
+    ) : (
+      <div className="d-flex align-items-center gap-2">
+        <Avatar name="?" size="sm" />
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)' }}>{r.employeeName}</div>
+          <StatusBadge status="PENDING" variant="warning">Unmapped</StatusBadge>
+        </div>
+      </div>
+    )),
+  },
+  { key: 'employeeCode', label: 'Employee code', defaultHidden: true },
+  { key: 'departmentName', label: 'Department', render: (r) => r.departmentName || '—' },
+  { key: 'punchTime', label: 'Punch Time', searchable: false, render: (r) => <span style={{ color: 'var(--hz-text-secondary)' }}>{formatTimeIST(r.punchTime)}</span>, exportValue: (r) => formatTimeIST(r.punchTime) },
+  { key: 'punchType', label: 'Type', render: (r) => <PunchBadge type={r.punchType} /> },
+  { key: 'source', label: 'Source', value: (r) => r.source || 'BIOMETRIC' },
+  { key: 'verifyMode', label: 'Verify Mode' },
+  { key: 'deviceName', label: 'Device', className: 'pe-4', headerClassName: 'pe-4' },
+];
+
 function AttendanceManagement() {
   const { hasPermission } = useAuth();
   const [liveRecords, setLiveRecords] = useState([]);
@@ -285,78 +318,22 @@ function AttendanceManagement() {
       <AttendanceRegularizationReviewCard />
 
       <Card bodyClassName="p-0">
-        {isLoading && (
-          <div className="p-4">
-            <SkeletonText lines={6} />
-          </div>
-        )}
-
-        {isError && <ErrorState description="Couldn't load today's attendance." onRetry={refetch} />}
-
-        {!isLoading && !isError && liveRecords.length === 0 && (
-          <EmptyState
-            icon={Clock}
-            title="No punches yet today"
-            description="As soon as someone scans their fingerprint on a mapped device, it'll show up here instantly."
-          />
-        )}
-
-        {!isLoading && !isError && liveRecords.length > 0 && (
-          <div className="table-responsive">
-            <table className="table mb-0 align-middle hz-table" aria-label="Today's attendance">
-            <thead>
-              <tr style={{ fontSize: 'var(--hz-text-xs)', color: 'var(--hz-text-muted)', textTransform: 'uppercase' }}>
-                <th className="ps-4">Employee</th>
-                <th>Department</th>
-                <th>Punch Time</th>
-                <th>Type</th>
-                <th>Source</th>
-                <th>Verify Mode</th>
-                <th className="pe-4">Device</th>
-              </tr>
-            </thead>
-            <tbody>
-              {liveRecords.map((r) => (
-                <tr key={r.id}>
-                  <td data-label="Employee" className="ps-4">
-                    {r.mapped ? (
-                      <Link to={`/employees/${r.employeeId}`} className="d-flex align-items-center gap-2 text-decoration-none">
-                        <Avatar name={r.employeeName} size="sm" />
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-primary)' }}>
-                            {r.employeeName}
-                          </div>
-                          <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{r.employeeCode}</div>
-                        </div>
-                      </Link>
-                    ) : (
-                      <div className="d-flex align-items-center gap-2">
-                        <Avatar name="?" size="sm" />
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)' }}>{r.employeeName}</div>
-                          <StatusBadge status="PENDING" variant="warning">Unmapped</StatusBadge>
-                        </div>
-                      </div>
-                    )}
-                  </td>
-                  <td data-label="Department" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.departmentName || '—'}</td>
-                  <td data-label="Punch time" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                    {formatTimeIST(r.punchTime)}
-                  </td>
-                  <td data-label="Type">
-                    <PunchBadge type={r.punchType} />
-                  </td>
-                  <td data-label="Source" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.source || 'BIOMETRIC'}</td>
-                  <td data-label="Verify mode" style={{ fontSize: 'var(--hz-text-sm)' }}>{r.verifyMode}</td>
-                  <td data-label="Device" className="pe-4" style={{ fontSize: 'var(--hz-text-sm)' }}>
-                    {r.deviceName}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          flush
+          columns={PUNCH_COLUMNS}
+          rows={liveRecords}
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          ariaLabel="Today's attendance"
+          storageKey="attendance-today"
+          searchPlaceholder="Search employee, code or device"
+          exportFileName={`attendance-${toISTDateInputValue()}`}
+          initialSort={{ key: 'punchTime', dir: 'desc' }}
+          emptyIcon={Clock}
+          emptyTitle="No punches yet today"
+          emptyDescription="As soon as someone scans their fingerprint on a mapped device, it'll show up here instantly."
+        />
       </Card>
     </div>
   );

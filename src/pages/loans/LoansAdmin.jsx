@@ -9,7 +9,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Dialog from '../../components/ui/Dialog';
 import FormField from '../../components/ui/FormField';
-import EmptyState from '../../components/ui/EmptyState';
+import DataTable from '../../components/ui/DataTable';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
@@ -17,6 +17,32 @@ import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { EmiPreview, LoanProgress, ScheduleTable } from './LoanPieces';
 
 const errorText = (error, fallback) => error?.response?.data?.message || fallback;
+const loanAmount = (l) => l.approvedAmount || l.requestedAmount;
+
+function loanColumns(onOpen) {
+  return [
+    {
+      key: 'employee', label: 'Employee', hideable: false,
+      value: (l) => [l.employeeName, l.employeeCode].filter(Boolean).join(' '),
+      exportValue: (l) => l.employeeName,
+      render: (l) => <><div style={{ fontWeight: 700 }}>{l.employeeName}</div><div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{l.employeeCode}</div></>,
+    },
+    { key: 'employeeCode', label: 'Employee code', defaultHidden: true },
+    { key: 'loanType', label: 'Type', value: (l) => loanLabel(l.loanType) },
+    { key: 'amount', label: 'Amount', className: 'text-end', headerClassName: 'text-end', value: loanAmount, searchable: false, render: (l) => <strong>{rupees(loanAmount(l))}</strong> },
+    { key: 'emi', label: 'EMI', value: (l) => l.emiAmount, searchable: false, render: (l) => (l.emiAmount ? `${rupees(l.emiAmount)} × ${l.tenureMonths}` : `${l.requestedMonths} months asked`) },
+    { key: 'repayment', label: 'Repayment', sortable: false, searchable: false, export: false, style: { minWidth: 180 }, render: (l) => (l.status === 'ACTIVE' || l.status === 'CLOSED' ? <LoanProgress loan={l} /> : '—') },
+    {
+      key: 'status', label: 'Status', value: (l) => LOAN_STATUS[l.status]?.label || l.status,
+      render: (l) => { const status = LOAN_STATUS[l.status] || {}; return <Badge variant={status.variant}>{status.label}</Badge>; },
+    },
+    {
+      key: 'actions', label: '', className: 'text-end', hideable: false, sortable: false, searchable: false, export: false,
+      render: (l) => <Button size="sm" variant={l.status === 'REQUESTED' ? 'primary' : 'secondary'} onClick={() => onOpen(l.id)}>{l.status === 'REQUESTED' ? 'Review' : 'Open'}</Button>,
+    },
+  ];
+}
+
 const FILTERS = [['OPEN', 'Requests & running'], ['REQUESTED', 'Waiting for approval'], ['ACTIVE', 'Repaying'], ['', 'All']];
 
 /** Payroll admins: approve requests, pay out, and manage repayment of every loan and advance. */
@@ -47,29 +73,18 @@ export default function LoansAdmin() {
           {FILTERS.map(([key, label]) => <button key={key || 'all'} type="button" className={`btn btn-sm ${filter === key ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setFilter(key)}>{label}</button>)}
         </div>
       )}>
-        {isLoading ? <SkeletonText lines={4} /> : loans.length === 0 ? <EmptyState icon={HandCoins} title="Nothing here" description="Employees request loans and advances from My Finances; you can also add one directly." /> : (
-          <div className="table-responsive">
-            <table className="table align-middle mb-0">
-              <thead><tr><th>Employee</th><th>Type</th><th className="text-end">Amount</th><th>EMI</th><th style={{ minWidth: 180 }}>Repayment</th><th>Status</th><th aria-label="Open" /></tr></thead>
-              <tbody>
-                {loans.map((l) => {
-                  const status = LOAN_STATUS[l.status] || {};
-                  return (
-                    <tr key={l.id}>
-                      <td><div style={{ fontWeight: 700 }}>{l.employeeName}</div><div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{l.employeeCode}</div></td>
-                      <td>{loanLabel(l.loanType)}</td>
-                      <td className="text-end"><strong>{rupees(l.approvedAmount || l.requestedAmount)}</strong></td>
-                      <td>{l.emiAmount ? `${rupees(l.emiAmount)} × ${l.tenureMonths}` : `${l.requestedMonths} months asked`}</td>
-                      <td>{l.status === 'ACTIVE' || l.status === 'CLOSED' ? <LoanProgress loan={l} /> : '—'}</td>
-                      <td><Badge variant={status.variant}>{status.label}</Badge></td>
-                      <td className="text-end"><Button size="sm" variant={l.status === 'REQUESTED' ? 'primary' : 'secondary'} onClick={() => setOpen(l.id)}>{l.status === 'REQUESTED' ? 'Review' : 'Open'}</Button></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          columns={loanColumns(setOpen)}
+          rows={loans}
+          isLoading={isLoading}
+          ariaLabel="Loans"
+          storageKey="loans"
+          searchPlaceholder="Search employee or loan type"
+          exportFileName={`loans-${(filter || 'all').toLowerCase()}`}
+          emptyIcon={HandCoins}
+          emptyTitle="Nothing here"
+          emptyDescription="Employees request loans and advances from My Finances; you can also add one directly."
+        />
       </Card>
       {open && <LoanDialog id={open} onClose={() => setOpen(null)} />}
       {adding && <AddLoanDialog onClose={() => setAdding(false)} />}
