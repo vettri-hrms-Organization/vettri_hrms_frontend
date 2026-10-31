@@ -26,6 +26,7 @@ function initialForm(type) {
     maxEncashableDaysPerYear: toInput(p.maxEncashableDaysPerYear),
     encashmentBasis: p.encashmentBasis || 'BASIC',
     creditExpiryDays: toInput(p.creditExpiryDays ?? 90),
+    sandwichRule: Boolean(p.sandwichRule),
   };
 }
 
@@ -65,6 +66,7 @@ export default function LeavePolicyDialog({ type, onClose }) {
       maxEncashableDaysPerYear: form.encashable ? toNumber(form.maxEncashableDaysPerYear) : null,
       encashmentBasis: form.encashmentBasis,
       creditExpiryDays: toNumber(form.creditExpiryDays),
+      sandwichRule: form.sandwichRule,
     });
   }
 
@@ -100,6 +102,14 @@ export default function LeavePolicyDialog({ type, onClose }) {
               <FormField col={6} label="Negative balance allowed (days)" type="number" min="0" step="0.5" value={form.negativeBalanceDays} onChange={(v) => set('negativeBalanceDays', v)} hint="Leave can be taken until the balance is -N" />
             </div>
             {form.accrualMode === 'YEARLY_UPFRONT' && check('policy-prorate', 'prorateOnJoining', 'Prorate the yearly allocation for mid-year joiners')}
+
+            <h3 className="mt-3" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>Sandwich rule</h3>
+            {check('policy-sandwich', 'sandwichRule', 'Count weekends and holidays that fall between leave days')}
+            {form.sandwichRule && (
+              <p style={{ fontSize: 'var(--hz-text-xs)', color: 'var(--hz-text-muted)' }}>
+                Friday + Monday leave counts as 4 days. This also applies when a new request joins an existing leave across a weekend or holiday.
+              </p>
+            )}
 
             <h3 className="mt-3" style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 600 }}>Year-end carry-forward</h3>
             {check('policy-carry', 'carryForward', 'Carry unused days into the next year')}

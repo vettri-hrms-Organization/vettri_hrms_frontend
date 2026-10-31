@@ -5,6 +5,7 @@ import { leaveTypesApi, leavePolicyApi } from '../api/endpoints/leave';
 import LeavePolicyDialog from './leave/LeavePolicyDialog';
 import HolidaySettingsPanel from './leave/HolidaySettingsPanel';
 import YearEndProcessing from './leave/YearEndProcessing';
+import ApprovalChainPanel from './leave/ApprovalChainPanel';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -16,6 +17,7 @@ import Tabs from '../components/ui/Tabs';
 const TABS = [
   { key: 'types', label: 'Leave Types' },
   { key: 'holidays', label: 'Holiday Calendar' },
+  { key: 'approvals', label: 'Approval Chain' },
   { key: 'yearend', label: 'Year-end Processing' },
 ];
 
@@ -30,6 +32,7 @@ export default function SettingsLeave() {
 
       {tab === 'types' && <LeaveTypesPanel />}
       {tab === 'holidays' && <HolidaySettingsPanel />}
+      {tab === 'approvals' && <ApprovalChainPanel />}
       {tab === 'yearend' && <YearEndProcessing />}
     </div>
   );

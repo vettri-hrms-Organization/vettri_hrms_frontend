@@ -1,3 +1,4 @@
+import { useT } from '../../i18n/LanguageContext';
 const VARIANT_CLASS = {
   primary: 'btn-primary',
   secondary: 'btn-outline-secondary',
@@ -17,6 +18,7 @@ export default function Button({
   type = 'button',
   ...rest
 }) {
+  const t = useT();
   const sizeClass = size === 'sm' ? 'btn-sm' : size === 'lg' ? 'btn-lg' : '';
   return (
     <button
@@ -28,7 +30,7 @@ export default function Button({
     >
       {loading && <span className="hz-button__spinner spinner-border spinner-border-sm" role="status" aria-hidden="true" />}
       {!loading && Icon && <Icon size={16} aria-hidden="true" />}
-      {children}
+      {typeof children === 'string' ? t(children) : children}
     </button>
   );
 }

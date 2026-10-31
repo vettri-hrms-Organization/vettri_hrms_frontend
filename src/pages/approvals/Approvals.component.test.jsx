@@ -15,6 +15,12 @@ const mocks = vi.hoisted(() => ({
   },
   overtimeApi: { list: vi.fn(), review: vi.fn() },
   expensesApi: { managerQueue: vi.fn(), financeQueue: vi.fn(), managerApprove: vi.fn(), approve: vi.fn(), reject: vi.fn() },
+  fbpApi: { claims: vi.fn().mockResolvedValue([]), approveClaim: vi.fn(), rejectClaim: vi.fn() },
+  loansApi: { list: vi.fn().mockResolvedValue([]), approve: vi.fn(), reject: vi.fn() },
+  resignationsApi: { pending: vi.fn().mockResolvedValue([]), approve: vi.fn(), retain: vi.fn() },
+  timesheetsApi: { approvals: vi.fn().mockResolvedValue([]), approve: vi.fn(), reject: vi.fn() },
+  profileApi: { pendingChanges: vi.fn().mockResolvedValue([]), approveChange: vi.fn(), rejectChange: vi.fn() },
+  travelApi: { queue: vi.fn().mockResolvedValue([]), decide: vi.fn() },
   permissions: new Set(),
 }));
 
@@ -26,6 +32,12 @@ vi.mock('../../api/endpoints/leave', () => ({
 vi.mock('../../api/endpoints/attendance', () => ({ attendanceApi: mocks.attendanceApi }));
 vi.mock('../../api/endpoints/shifts', () => ({ overtimeApi: mocks.overtimeApi }));
 vi.mock('../../api/endpoints/expenses', () => ({ expensesApi: mocks.expensesApi }));
+vi.mock('../../api/endpoints/fbp', async (importOriginal) => ({ ...(await importOriginal()), fbpApi: mocks.fbpApi }));
+vi.mock('../../api/endpoints/loans', async (importOriginal) => ({ ...(await importOriginal()), loansApi: mocks.loansApi }));
+vi.mock('../../api/endpoints/resignations', () => ({ resignationsApi: mocks.resignationsApi }));
+vi.mock('../../api/endpoints/timesheets', async (importOriginal) => ({ ...(await importOriginal()), timesheetsApi: mocks.timesheetsApi }));
+vi.mock('../../api/endpoints/profile', () => ({ profileApi: mocks.profileApi }));
+vi.mock('../../api/endpoints/workflows', async (importOriginal) => ({ ...(await importOriginal()), travelApi: mocks.travelApi }));
 vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => ({ user: { employeeId: 99 }, hasPermission: (code) => mocks.permissions.has(code) }),
 }));

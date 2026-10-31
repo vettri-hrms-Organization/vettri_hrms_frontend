@@ -22,6 +22,9 @@ import {
   Receipt,
   MonitorSmartphone,
   ClipboardList,
+  DoorOpen,
+  HandCoins,
+  Gift,
   LifeBuoy,
   Bell,
   PackageOpen,
@@ -32,6 +35,17 @@ import {
   Timer,
   Megaphone,
   ClipboardCheck,
+  Flag,
+  Heart,
+  Calculator,
+  Headset,
+  FileSignature,
+  Plane,
+  ClipboardPen,
+  CalendarCheck2,
+  Plug,
+  Table2,
+  Receipt as ReceiptIcon,
 } from 'lucide-react';
 
 /**
@@ -62,7 +76,7 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/dashboard', icon: LayoutDashboard, label: 'Home', end: true, permission: 'SELF_PROFILE_VIEW' },
       // One inbox for every request waiting on this person (leave, WFH, corrections, overtime, expenses...).
-      { to: '/approvals', icon: ClipboardCheck, label: 'Approvals', permissionsAny: ['LEAVE_APPROVE', 'LEAVE_MANAGE', 'ATTENDANCE_MANAGE', 'OVERTIME_APPROVE', 'EXPENSE_APPROVE', 'EXPENSE_MANAGE', 'EMPLOYEE_MANAGE', 'TIMESHEET_APPROVE'] },
+      { to: '/approvals', icon: ClipboardCheck, label: 'Approvals', permissionsAny: ['LEAVE_APPROVE', 'LEAVE_MANAGE', 'ATTENDANCE_MANAGE', 'OVERTIME_APPROVE', 'EXPENSE_APPROVE', 'EXPENSE_MANAGE', 'EMPLOYEE_MANAGE', 'TIMESHEET_APPROVE', 'SALARY_MANAGE'] },
     ],
   },
   {
@@ -82,8 +96,15 @@ export const NAV_SECTIONS = [
       { to: '/my-profile?tab=documents', icon: FileText, label: 'My Documents', permission: 'SELF_DOCUMENT_VIEW' },
       { to: '/my-onboarding', icon: ListChecks, label: 'My Onboarding', permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-expenses', icon: Receipt, label: 'My Expenses', permission: 'SELF_EXPENSE_SUBMIT' },
+      { to: '/travel', icon: Plane, label: 'Travel', permission: 'SELF_EXPENSE_SUBMIT' },
+      { to: '/signatures', icon: FileSignature, label: 'E-signatures', permission: 'SELF_DOCUMENT_VIEW' },
+      { to: '/probation', icon: UserCheck, label: 'Probation', permission: 'SELF_PROFILE_VIEW' },
+      { to: '/surveys', icon: ClipboardPen, label: 'Surveys & Polls', permission: 'SELF_PROFILE_VIEW' },
+      { to: '/helpdesk', icon: Headset, label: 'HR Helpdesk', permission: 'SELF_PROFILE_VIEW' },
+      { to: '/calendar-sync', icon: CalendarCheck2, label: 'Calendar Sync', permission: 'SELF_PROFILE_VIEW' },
       { to: '/announcements', icon: Megaphone, label: 'Announcements', permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-interviews', icon: CalendarClock, label: 'My Interviews' },
+      { to: '/my-resignation', icon: DoorOpen, label: 'Resignation', permission: 'SELF_PROFILE_VIEW' },
     ],
   },
   {
@@ -105,6 +126,8 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/my-payslip', icon: Wallet, label: 'My Pay' },
       { to: '/my-tax-declaration', icon: Receipt, label: 'Tax Declaration' },
+      { to: '/my-loans', icon: HandCoins, label: 'Loans & Advances' },
+      { to: '/my-fbp', icon: Wallet, label: 'Flexible Benefits' },
       { to: '/my-settlement', icon: FileText, label: 'Full & Final' },
     ],
   },
@@ -116,7 +139,13 @@ export const NAV_SECTIONS = [
     permission: 'SELF_PROFILE_VIEW',
     collapsible: true,
     badge: null,
-    items: [{ to: '/performance', icon: TrendingUp, label: 'My Performance' }],
+    items: [
+      { to: '/performance', icon: TrendingUp, label: 'My Performance' },
+      { to: '/performance/reviews', icon: ClipboardCheck, label: 'Reviews' },
+      { to: '/performance/okrs', icon: Flag, label: 'OKRs' },
+      { to: '/performance/conversations', icon: Heart, label: 'Feedback & 1:1s' },
+      { to: '/performance/improvement-plans', icon: LifeBuoy, label: 'Improvement Plans' },
+    ],
   },
   {
     id: 'employee-apps',
@@ -170,6 +199,7 @@ export const NAV_SECTIONS = [
       { to: '/attendance/late-early', icon: AlarmClock, label: 'Late & Early', permission: 'ATTENDANCE_VIEW' },
       { to: '/attendance/overtime', icon: Timer, label: 'Overtime Approvals', permission: 'OVERTIME_APPROVE' },
       { to: '/timesheets', icon: ClipboardList, label: 'Timesheets', permissionsAny: ['TIMESHEET_APPROVE', 'TIMESHEET_MANAGE'] },
+      { to: '/timesheets/billing', icon: ReceiptIcon, label: 'Project Billing', permission: 'TIMESHEET_MANAGE' },
     ],
   },
   {
@@ -180,10 +210,15 @@ export const NAV_SECTIONS = [
     badge: null,
     items: [
       { to: '/recruitment', icon: Briefcase, label: 'Recruitment', permission: 'RECRUITMENT_VIEW' },
+      { to: '/exits', icon: DoorOpen, label: 'Exits', permissionsAny: ['EMPLOYEE_MANAGE', 'LEAVE_APPROVE'] },
       { to: '/my-recruitment', icon: UserCheck, label: 'My Recruiting', permission: 'RECRUITMENT_MANAGE' },
       { to: '/my-interviews', icon: CalendarClock, label: 'My Interviews' },
       { to: '/performance', icon: TrendingUp, label: 'Performance', permission: 'PERFORMANCE_VIEW' },
+      { to: '/performance/reviews', icon: ClipboardCheck, label: 'Review Cycles', permission: 'PERFORMANCE_MANAGE' },
+      { to: '/performance/okrs', icon: Flag, label: 'OKRs', permission: 'PERFORMANCE_VIEW' },
+      { to: '/performance/improvement-plans', icon: LifeBuoy, label: 'Improvement Plans', permission: 'PERFORMANCE_MANAGE' },
       { to: '/hr-onboarding', icon: ListChecks, label: 'Onboarding', permission: 'ONBOARDING_MANAGE' },
+      { to: '/probation', icon: UserCheck, label: 'Probation', permissionsAny: ['EMPLOYEE_MANAGE', 'LEAVE_APPROVE'] },
     ],
   },
   {
@@ -229,6 +264,11 @@ export const NAV_SECTIONS = [
       { to: '/salary/payroll-processing', icon: PlayCircle, label: 'Payroll Processing' },
       { to: '/salary/reports', icon: FileBarChart, label: 'Reports' },
       { to: '/salary/tax-declarations', icon: Receipt, label: 'Tax Declarations' },
+      { to: '/salary/revisions', icon: TrendingUp, label: 'Salary Revisions', permission: 'SALARY_VIEW' },
+      { to: '/salary/loans', icon: HandCoins, label: 'Loans & Advances', permission: 'SALARY_MANAGE' },
+      { to: '/salary/bonuses', icon: Gift, label: 'Bonuses', permission: 'SALARY_MANAGE' },
+      { to: '/salary/compensation', icon: Calculator, label: 'Compensation Planning', permission: 'SALARY_MANAGE' },
+      { to: '/salary/fbp', icon: Wallet, label: 'Flexible Benefits', permission: 'SALARY_MANAGE' },
       { to: '/salary/settlements', icon: UserCheck, label: 'Full & Final', permission: 'SALARY_VIEW' },
       { to: '/salary/accounting', icon: FileSpreadsheet, label: 'Accounting Export', permission: 'SALARY_MANAGE' },
       { to: '/salary/settings', icon: ShieldCheck, label: 'Payroll Settings', permission: 'SALARY_MANAGE' },
@@ -243,6 +283,7 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/executive', icon: Presentation, label: 'Executive Dashboard', permission: 'REPORTS_VIEW' },
       { to: '/reports', icon: FileBarChart, label: 'Reports', permission: 'REPORTS_VIEW' },
+      { to: '/reports/builder', icon: Table2, label: 'Report Builder', permissionsAny: ['REPORTS_VIEW', 'EMPLOYEE_VIEW', 'LEAVE_VIEW', 'ATTENDANCE_VIEW', 'EXPENSE_MANAGE', 'TIMESHEET_MANAGE'] },
       { to: '/requirements', icon: ClipboardList, label: 'Requirements', permission: 'REQUIREMENT_VIEW' },
     ],
   },
@@ -255,6 +296,10 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/expenses/approvals', icon: Receipt, label: 'Expense Approvals', permissionsAny: ['EXPENSE_APPROVE', 'EXPENSE_MANAGE'] },
       { to: '/announcements/manage', icon: Megaphone, label: 'Manage Announcements', permission: 'ANNOUNCEMENT_MANAGE' },
+      { to: '/helpdesk', icon: Headset, label: 'HR Helpdesk', permission: 'EMPLOYEE_MANAGE' },
+      { to: '/surveys', icon: ClipboardPen, label: 'Surveys & Polls', permission: 'EMPLOYEE_MANAGE' },
+      { to: '/travel', icon: Plane, label: 'Travel & Advances', permissionsAny: ['EXPENSE_APPROVE', 'EXPENSE_MANAGE'] },
+      { to: '/signatures', icon: FileSignature, label: 'E-signatures', permission: 'LETTER_MANAGE' },
     ],
   },
   {
@@ -280,6 +325,7 @@ export const NAV_SECTIONS = [
       { to: '/settings/shifts', icon: Clock, label: 'Shifts', permission: 'ATTENDANCE_MANAGE' },
       { to: '/settings/expenses', icon: Receipt, label: 'Expense Settings', permission: 'EXPENSE_MANAGE' },
       { to: '/settings/custom-fields', icon: ListChecks, label: 'Custom Fields', permission: 'EMPLOYEE_MANAGE' },
+      { to: '/settings/integrations', icon: Plug, label: 'Integrations', permission: 'EMPLOYEE_MANAGE' },
       { to: '/settings/sign-in', icon: KeyRound, label: 'Sign-in & WhatsApp', roles: ['COMPANY_ADMIN', 'SUPER_ADMIN'] },
       { to: '/settings/data-import', icon: FileSpreadsheet, label: 'Data Import', permissionsAny: ['SALARY_MANAGE', 'LEAVE_MANAGE', 'EMPLOYEE_MANAGE', 'EMPLOYEE_IMPORT'] },
       { to: '/settings/audit', icon: ScrollText, label: 'Audit Logs', permission: 'AUDIT_VIEW' },

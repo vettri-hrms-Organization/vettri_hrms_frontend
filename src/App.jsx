@@ -21,6 +21,14 @@ const RosterGrid = lazy(() => import('./pages/attendance/RosterGrid'));
 const LateEarly = lazy(() => import('./pages/attendance/LateEarly'));
 const OvertimeApprovals = lazy(() => import('./pages/attendance/OvertimeApprovals'));
 const MyTimesheet = lazy(() => import('./pages/timesheets/MyTimesheet'));
+const MyResignation = lazy(() => import('./pages/exit/MyResignation'));
+const MyLoans = lazy(() => import('./pages/loans/MyLoans'));
+const LoansAdmin = lazy(() => import('./pages/loans/LoansAdmin'));
+const SalaryRevisions = lazy(() => import('./pages/salary/SalaryRevisions'));
+const BonusRuns = lazy(() => import('./pages/salary/BonusRuns'));
+const MyFbp = lazy(() => import('./pages/fbp/MyFbp'));
+const FbpAdmin = lazy(() => import('./pages/fbp/FbpAdmin'));
+const ExitsAdmin = lazy(() => import('./pages/exit/ExitsAdmin'));
 const TimesheetsAdmin = lazy(() => import('./pages/timesheets/TimesheetsAdmin'));
 const SettingsShifts = lazy(() => import('./pages/SettingsShifts'));
 const LeaveRequests = lazy(() => import('./pages/leave/LeaveRequests'));
@@ -28,6 +36,20 @@ const JobOpenings = lazy(() => import('./pages/recruitment/JobOpenings'));
 const CandidatePipeline = lazy(() => import('./pages/recruitment/CandidatePipeline'));
 const MyInterviews = lazy(() => import('./pages/recruitment/MyInterviews'));
 const PerformanceHub = lazy(() => import('./pages/performance/PerformanceHub'));
+const ReviewCycles = lazy(() => import('./pages/performance/ReviewCycles'));
+const Okrs = lazy(() => import('./pages/performance/Okrs'));
+const Conversations = lazy(() => import('./pages/performance/Conversations'));
+const ImprovementPlans = lazy(() => import('./pages/performance/ImprovementPlans'));
+const CompensationPlanning = lazy(() => import('./pages/salary/CompensationPlanning'));
+const Probation = lazy(() => import('./pages/probation/Probation'));
+const Helpdesk = lazy(() => import('./pages/helpdesk/Helpdesk'));
+const Signatures = lazy(() => import('./pages/esign/Signatures'));
+const Travel = lazy(() => import('./pages/travel/Travel'));
+const Surveys = lazy(() => import('./pages/surveys/Surveys'));
+const Integrations = lazy(() => import('./pages/settings/Integrations'));
+const CalendarSync = lazy(() => import('./pages/settings/CalendarSync'));
+const ReportBuilder = lazy(() => import('./pages/reports/ReportBuilder'));
+const ProjectBilling = lazy(() => import('./pages/timesheets/ProjectBilling'));
 const Reports = lazy(() => import('./pages/reports/Reports'));
 const ExecutiveOverview = lazy(() => import('./pages/reports/ExecutiveOverview'));
 const RecruiterDashboard = lazy(() => import('./pages/recruitment/RecruiterDashboard'));
@@ -119,6 +141,14 @@ export default function App() {
           <Route path="attendance/overtime" element={<OvertimeApprovals />} />
           <Route path="my-timesheet" element={<MyTimesheet />} />
           <Route path="timesheets" element={<TimesheetsAdmin />} />
+          <Route path="my-resignation" element={<MyResignation />} />
+          <Route path="exits" element={<ExitsAdmin />} />
+          <Route path="my-loans" element={<MyLoans />} />
+          <Route path="salary/loans" element={<LoansAdmin />} />
+          <Route path="salary/revisions" element={<SalaryRevisions />} />
+          <Route path="salary/bonuses" element={<BonusRuns />} />
+          <Route path="my-fbp" element={<MyFbp />} />
+          <Route path="salary/fbp" element={<FbpAdmin />} />
           <Route path="settings/shifts" element={<SettingsShifts />} />
           <Route path="my-attendance" element={<EmployeeAttendance />} />
           <Route path="leave" element={<LeaveRequests />} />
@@ -127,6 +157,20 @@ export default function App() {
           <Route path="my-recruitment" element={<RecruiterDashboard />} />
           <Route path="my-interviews" element={<MyInterviews />} />
           <Route path="performance" element={<PerformanceHub />} />
+          <Route path="performance/reviews" element={<ReviewCycles />} />
+          <Route path="performance/okrs" element={<Okrs />} />
+          <Route path="performance/conversations" element={<Conversations />} />
+          <Route path="performance/improvement-plans" element={<ImprovementPlans />} />
+          <Route path="salary/compensation" element={<CompensationPlanning />} />
+          <Route path="probation" element={<Probation />} />
+          <Route path="helpdesk" element={<Helpdesk />} />
+          <Route path="signatures" element={<Signatures />} />
+          <Route path="travel" element={<Travel />} />
+          <Route path="surveys" element={<Surveys />} />
+          <Route path="settings/integrations" element={<Integrations />} />
+          <Route path="calendar-sync" element={<CalendarSync />} />
+          <Route path="reports/builder" element={<ReportBuilder />} />
+          <Route path="timesheets/billing" element={<ProjectBilling />} />
           <Route path="monitoring" element={<MonitoringDashboard />} />
           <Route path="monitoring/live" element={<MonitoringDashboard />} />
           <Route path="monitoring/devices" element={<MonitoringDevices />} />

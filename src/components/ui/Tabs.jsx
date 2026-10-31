@@ -1,4 +1,6 @@
+import { useT } from '../../i18n/LanguageContext';
 export default function Tabs({ items, value, onChange, className = '', ariaLabel = 'Tabs' }) {
+  const t = useT();
   return (
     <div className={`hz-tabs d-flex gap-1 overflow-auto ${className}`} role="tablist" aria-label={ariaLabel}>
       {items.map((item) => {
@@ -15,7 +17,7 @@ export default function Tabs({ items, value, onChange, className = '', ariaLabel
             className={`hz-tab d-inline-flex align-items-center gap-2 ${active ? 'hz-tab--active' : ''}`}
           >
             {Icon && <Icon size={15} aria-hidden="true" />}
-            {item.label}
+            {t(item.label)}
           </button>
         );
       })}

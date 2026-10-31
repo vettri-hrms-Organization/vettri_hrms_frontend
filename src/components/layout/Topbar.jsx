@@ -14,6 +14,8 @@ import CommandCenter from './CommandCenter';
 import AskVettriPanel from './AskVettriPanel';
 import { promptInstall, usePwa } from '../../pwa/pwa';
 import IosInstallHint from '../../pwa/IosInstallHint';
+import { LANGUAGES, useLanguage } from '../../i18n/LanguageContext';
+import { syncAppBadge } from '../../pwa/OfflineBanner';
 
 export default function Topbar({ onOpenMobileNav }) {
   const { user, logout, hasPermission, hasRole, selectedCompanyId, setSelectedCompanyId } = useAuth();
@@ -51,6 +53,7 @@ export default function Topbar({ onOpenMobileNav }) {
     enabled: !!user,
   });
   const unreadNotifications = notificationData.unreadCount || 0;
+  useEffect(() => { syncAppBadge(unreadNotifications); }, [unreadNotifications]);
   const recentNotifications = notificationData.items || [];
   const markRead = useMutation({
     mutationFn: notificationsApi.markRead,
@@ -215,6 +218,7 @@ export default function Topbar({ onOpenMobileNav }) {
             )}
           </div>
         )}
+        <LanguagePicker />
         <button type="button" className="hz-icon-btn d-flex align-items-center justify-content-center" style={{ width: 38, height: 38 }} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? 'Use light theme' : 'Use dark theme'} title={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}>
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
@@ -387,5 +391,18 @@ export default function Topbar({ onOpenMobileNav }) {
         </div>
       </div>
     </header>
+  );
+}
+
+/** UI language: English, Hindi or Tamil (per browser). */
+function LanguagePicker() {
+  const { lang, setLang, t } = useLanguage();
+  return (
+    <label className="d-flex align-items-center mb-0" title={t('Language')}>
+      <span className="visually-hidden">{t('Language')}</span>
+      <select className="form-select form-select-sm" style={{ width: 'auto' }} value={lang} onChange={(e) => setLang(e.target.value)} aria-label="Language">
+        {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.native}</option>)}
+      </select>
+    </label>
   );
 }

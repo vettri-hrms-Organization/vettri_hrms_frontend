@@ -1,3 +1,4 @@
+import { useT } from '../../i18n/LanguageContext';
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronsLeft, LogOut, Plus, Settings2, ShieldCheck, UserCircle, X } from 'lucide-react';
@@ -87,6 +88,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const currentRole = formatRole(user?.roles?.[0]);
   const workspaceName = user?.companyName || 'Vettri Workspace';
 
+  const t = useT();
   return (
     <>
       {mobileOpen && <div className="vettri-sidebar-backdrop d-lg-none" onClick={onCloseMobile} aria-hidden="true" />}
@@ -145,11 +147,11 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                       aria-controls={groupId}
                       disabled={containsActive}
                     >
-                      <span>{section.label}</span>
+                      <span>{t(section.label)}</span>
                       <ChevronDown size={13} aria-hidden="true" />
                     </button>
                   ) : (
-                    <div className="vettri-nav-group-label">{section.label}</div>
+                    <div className="vettri-nav-group-label">{t(section.label)}</div>
                   ))}
                   {isOpen && (
                     <div id={groupId} className="vettri-nav-group-items">
@@ -163,7 +165,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                             end={item.end}
                             className={() => `vettri-nav-item ${active ? 'is-active' : ''}`}
                             aria-current={active ? 'page' : undefined}
-                            aria-label={isCollapsed ? item.label : undefined}
+                            aria-label={isCollapsed ? t(item.label) : undefined}
                             onClick={() => {
                               const matched = findNavItemByPath(item.to.split('?')[0]);
                               if (matched) recordVisit(matched);
@@ -171,9 +173,9 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                             }}
                           >
                             <span className="vettri-nav-icon"><Icon size={17} strokeWidth={1.8} /></span>
-                            {!isCollapsed && <span className="vettri-nav-label">{item.label}</span>}
+                            {!isCollapsed && <span className="vettri-nav-label">{t(item.label)}</span>}
                             {!isCollapsed && item.badge && <span className="vettri-nav-badge">{item.badge.value > 99 ? '99+' : item.badge.value}</span>}
-                            {isCollapsed && <span className="vettri-nav-tooltip" aria-hidden="true">{item.label}</span>}
+                            {isCollapsed && <span className="vettri-nav-tooltip" aria-hidden="true">{t(item.label)}</span>}
                           </NavLink>
                         );
                       })}

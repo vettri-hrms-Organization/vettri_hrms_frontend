@@ -8,6 +8,9 @@ import { overtimeApi } from '../../api/endpoints/shifts';
 import { expensesApi } from '../../api/endpoints/expenses';
 import { profileApi } from '../../api/endpoints/profile';
 import { formatHours, timesheetsApi } from '../../api/endpoints/timesheets';
+import { resignationsApi } from '../../api/endpoints/resignations';
+import { loanLabel, loansApi } from '../../api/endpoints/loans';
+import { fbpApi } from '../../api/endpoints/fbp';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -23,6 +26,7 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDateIST } from '../../utils/formatDateTime';
 import { formatLeaveDuration } from '../../utils/formatLeave';
 import { addDays, formatDay, formatMinutes, istToday } from '../attendance/shiftUtils';
+import { travelApi } from '../../api/endpoints/workflows';
 
 /** Pending overtime older than this is out of the inbox window (the list endpoint requires a range). */
 const OVERTIME_LOOKBACK_DAYS = 365;
@@ -54,7 +58,7 @@ function joinDetails(...parts) {
  * existing page for that queue uses, so we never call an endpoint the user
  * can't reach. `toItems` maps the real DTO fields into one row shape.
  */
-function buildSources(hasPermission) {
+function buildSources(hasPermission, myEmployeeId) {
   const leaveTeamScoped = hasPermission('LEAVE_APPROVE') && !hasPermission('LEAVE_MANAGE');
   const isFinance = hasPermission('EXPENSE_MANAGE');
   const canManagerReviewExpenses = hasPermission('EXPENSE_APPROVE') || isFinance;
@@ -68,7 +72,9 @@ function buildSources(hasPermission) {
       variant: 'primary',
       enabled: hasPermission('LEAVE_APPROVE'),
       fetch: () => (leaveTeamScoped ? leaveRequestsApi.teamList('PENDING') : leaveRequestsApi.list('PENDING')),
-      toItems: (rows) => rows.filter((r) => !r.status || r.status === 'PENDING').map((r) => ({
+      // With a multi-level chain, team approvers only see requests waiting on them (HR sees all).
+      toItems: (rows) => rows.filter((r) => !r.status || r.status === 'PENDING')
+        .filter((r) => !leaveTeamScoped || !r.pendingWith || r.pendingApproverEmployeeId === myEmployeeId).map((r) => ({
         id: r.id,
         employeeId: r.employeeId,
         employeeName: r.employeeName,
@@ -77,6 +83,7 @@ function buildSources(hasPermission) {
         details: joinDetails(
           r.startDate === r.endDate ? formatDay(r.startDate) : `${formatDay(r.startDate)} – ${formatDay(r.endDate)}`,
           r.halfDay ? formatLeaveDuration(r) : plural(r.days, 'day'),
+          r.pendingWith && r.approvalLevel > 0 ? `Step ${r.approvalLevel + 1} · with ${r.pendingWith}` : null,
         ),
         reason: r.reason,
       })),
@@ -233,6 +240,101 @@ function buildSources(hasPermission) {
       invalidate: [['leave-encashment-approvals'], ['leave-encashments'], ['leave-balance']],
     },
     {
+      key: 'fbp',
+      label: 'FBP claims',
+      variant: 'info',
+      enabled: hasPermission('SALARY_MANAGE'),
+      fetch: () => fbpApi.claims('SUBMITTED'),
+      toItems: (rows) => rows.map((r) => ({
+        id: r.id,
+        employeeId: r.employeeId,
+        employeeName: r.employeeName,
+        subtitle: r.employeeCode,
+        title: 'FBP claim',
+        details: joinDetails(r.componentName, formatCurrency(r.amount), r.billReference ? `bill ${r.billReference}` : null),
+        reason: r.description,
+        submittedAt: r.billDate,
+      })),
+      approve: (item, note) => fbpApi.approveClaim(item.id, note),
+      reject: (item, note) => fbpApi.rejectClaim(item.id, note),
+      rejectNoteRequired: true,
+      invalidate: [['fbp-claims']],
+    },
+    {
+      key: 'loan',
+      label: 'Loans',
+      variant: 'warning',
+      enabled: hasPermission('SALARY_MANAGE'),
+      fetch: () => loansApi.list('REQUESTED'),
+      toItems: (rows) => rows.filter((r) => r.status === 'REQUESTED').map((r) => ({
+        id: r.id,
+        employeeId: r.employeeId,
+        employeeName: r.employeeName,
+        subtitle: r.employeeCode,
+        title: loanLabel(r.loanType),
+        details: joinDetails(formatCurrency(r.requestedAmount), plural(r.requestedMonths, 'month')),
+        reason: r.reason,
+        submittedAt: r.requestedAt,
+      })),
+      // Approve as requested, interest-free, from next month; open Loans & Advances to change the terms.
+      approve: (item, note) => loansApi.approve(item.id, { note: note || null }),
+      reject: (item, note) => loansApi.reject(item.id, note),
+      rejectNoteRequired: true,
+      invalidate: [['loans']],
+    },
+    {
+      key: 'travel',
+      label: 'Travel',
+      variant: 'info',
+      // Reporting managers approve their reports' trips; finance sees all. The backend scopes the list.
+      enabled: hasPermission('EXPENSE_APPROVE') || hasPermission('EXPENSE_MANAGE') || hasPermission('LEAVE_APPROVE'),
+      fetch: () => travelApi.queue('PENDING'),
+      toItems: (rows) => rows.filter((r) => r.canDecide).map((r) => ({
+        id: r.id,
+        employeeId: r.employeeId,
+        employeeName: r.employeeName,
+        subtitle: r.employeeCode,
+        title: `Trip · ${r.fromCity} → ${r.toCity}`,
+        details: joinDetails(
+          r.departDate === r.returnDate ? formatDay(r.departDate) : `${formatDay(r.departDate)} – ${formatDay(r.returnDate)}`,
+          r.estimatedCost != null ? `est. ${formatCurrency(r.estimatedCost)}` : null,
+          Number(r.advanceAmount) > 0 ? `advance ${formatCurrency(r.advanceAmount)}` : null,
+        ),
+        reason: r.purpose,
+        submittedAt: r.createdAt,
+      })),
+      approve: (item, note) => travelApi.decide(item.id, true, note),
+      reject: (item, note) => travelApi.decide(item.id, false, note),
+      rejectNoteRequired: true,
+      invalidate: [['travel-queue'], ['travel-mine']],
+    },
+    {
+      key: 'resignation',
+      label: 'Resignations',
+      variant: 'danger',
+      enabled: hasPermission('EMPLOYEE_MANAGE') || hasPermission('LEAVE_APPROVE'),
+      fetch: () => resignationsApi.pending(),
+      toItems: (rows) => rows.map((r) => ({
+        id: r.id,
+        employeeId: r.employeeId,
+        employeeName: r.employeeName,
+        subtitle: [r.designation, r.departmentName].filter(Boolean).join(' · '),
+        title: r.canHrReview ? 'Resignation (HR)' : 'Resignation',
+        details: joinDetails(
+          r.reasonCategory,
+          `last day ${formatDay(r.managerRecommendedLastWorkingDate || r.requestedLastWorkingDate || r.policyLastWorkingDate)}`,
+          r.noticeShortfallDays > 0 ? `${r.noticeShortfallDays} days short of notice` : null,
+        ),
+        reason: r.reason,
+        submittedAt: r.resignationDate,
+      })),
+      // Approve keeps the suggested last day; open Exits to change it. Reject = retain the employee.
+      approve: (item, note) => resignationsApi.approve(item.id, note),
+      reject: (item, note) => resignationsApi.retain(item.id, note),
+      rejectNoteRequired: true,
+      invalidate: [['resignations'], ['resignation-summary']],
+    },
+    {
       key: 'timesheet',
       label: 'Timesheets',
       variant: 'info',
@@ -292,7 +394,7 @@ export default function Approvals() {
   const [rejectNote, setRejectNote] = useState('');
   const [bulkRunning, setBulkRunning] = useState(false);
 
-  const sources = useMemo(() => buildSources(hasPermission).filter((s) => s.enabled), [hasPermission]);
+  const sources = useMemo(() => buildSources(hasPermission, user?.employeeId).filter((s) => s.enabled), [hasPermission, user?.employeeId]);
 
   const results = useQueries({
     queries: sources.map((source) => ({

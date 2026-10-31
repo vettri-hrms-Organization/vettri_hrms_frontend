@@ -1,3 +1,4 @@
+import { useT } from '../../i18n/LanguageContext';
 /**
  * The exact markup this replaces - `<label className="form-label"
  * style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500 }}>` - is
@@ -32,6 +33,7 @@ export default function FormField({
   children,
   ...rest
 }) {
+  const t = useT();
   const generatedId = useId();
   const controlId = rest.id || `hz-field-${generatedId.replace(/:/g, '')}`;
   const hintId = `${controlId}-hint`;
@@ -77,7 +79,7 @@ export default function FormField({
     <div className="mb-3">
       {label && (
         <label className="hz-form-label" htmlFor={controlId}>
-          {label}
+          {t(label)}
           {required && <span className="hz-form-required" aria-hidden="true"> *</span>}
         </label>
       )}

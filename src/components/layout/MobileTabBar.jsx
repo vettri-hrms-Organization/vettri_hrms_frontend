@@ -1,3 +1,4 @@
+import { useT } from '../../i18n/LanguageContext';
 import { NavLink, useLocation } from 'react-router-dom';
 import { CalendarDays, Clock, Home, Menu, Wallet } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,6 +22,7 @@ export default function MobileTabBar({ onOpenMore, moreOpen = false }) {
     hasPermission('SELF_PAYSLIP_VIEW') && { to: '/my-payslip', label: 'Pay', icon: Wallet },
   ].filter(Boolean);
 
+  const t = useT();
   return (
     <nav className="hz-tabbar" aria-label="Quick navigation">
       {tabs.map((tab) => {
@@ -33,7 +35,7 @@ export default function MobileTabBar({ onOpenMore, moreOpen = false }) {
             className={({ isActive }) => `hz-tabbar__item${(tab.match ? tab.match() : isActive) ? ' is-active' : ''}`}
           >
             <Icon size={22} aria-hidden="true" />
-            <span>{tab.label}</span>
+            <span>{t(tab.label)}</span>
           </NavLink>
         );
       })}

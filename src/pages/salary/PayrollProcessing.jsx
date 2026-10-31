@@ -15,6 +15,7 @@ import { exportToCsv } from '../../utils/exportToCsv';
 import PayrollStatusBadge from './components/PayrollStatusBadge';
 import NewPayrollRunModal from './components/NewPayrollRunModal';
 import StatutoryExportsCard from './components/StatutoryExportsCard';
+import BankTransferDialog from './components/BankTransferDialog';
 import PageHeader from '../../components/ui/PageHeader';
 import StatCard from '../../components/ui/StatCard';
 import { PAYROLL_STEPS, PayrollChecklist, PayrollStepper, currentStepIndex, usePayrollChecklist } from './components/PayrollRunGuide';
@@ -26,6 +27,7 @@ export default function PayrollProcessing() {
   const [showNewRun, setShowNewRun] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [downloading, setDownloading] = useState(null);
+  const [bankFileOpen, setBankFileOpen] = useState(false);
   const { hasPermission } = useAuth();
   // The bank file carries full account numbers, so it is SALARY_MANAGE only (enforced server-side too).
   const canManage = hasPermission('SALARY_MANAGE');
@@ -123,10 +125,6 @@ export default function PayrollProcessing() {
     }
   }
 
-  function handleBankExport() {
-    download('bank', () => payrollApi.downloadBankTransferCsv(activeRunId, `bank-transfer-${run?.periodLabel?.replace(' ', '-') || activeRunId}.csv`), 'Could not export the bank transfer file');
-  }
-
   function handlePayslip(i) {
     download(`item-${i.id}`, () => payrollApi.downloadPayslipPdf(i.id, `payslip-${i.employeeCode}-${i.periodYear}-${String(i.periodMonth).padStart(2, '0')}.pdf`), 'Could not download the payslip');
   }
@@ -146,6 +144,7 @@ export default function PayrollProcessing() {
         ESI: i.components?.esi ?? 0,
         'Professional Tax': i.components?.professionalTax ?? 0,
         TDS: i.components?.tds ?? 0,
+        'Loan / advance recovery': (i.deductionLines || []).reduce((sum, d) => sum + Number(d.amount || 0), 0),
         'Total Deductions': i.totalDeductions,
         'Net Salary': i.netSalary,
         'Employer PF (EPF+EPS)': Number(i.employerEpf || 0) + Number(i.employerEps || 0),
@@ -250,11 +249,11 @@ export default function PayrollProcessing() {
                     {canManage && (
                       <button
                         className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
-                        onClick={handleBankExport}
-                        disabled={items.length === 0 || downloading === 'bank'}
-                        title="Employee name, code, bank, account number, IFSC and net pay for every item not on hold"
+                        onClick={() => setBankFileOpen(true)}
+                        disabled={items.length === 0 || !['PROCESSED', 'PAID'].includes(run?.status)}
+                        title={['PROCESSED', 'PAID'].includes(run?.status) ? 'Bulk salary payment file for your bank' : 'Process the run first'}
                       >
-                        <Landmark size={16} /> {downloading === 'bank' ? 'Exporting…' : 'Export bank transfer CSV'}
+                        <Landmark size={16} /> Bank transfer file
                       </button>
                     )}
                     {run?.status === 'DRAFT' && (
@@ -416,6 +415,8 @@ export default function PayrollProcessing() {
           )}
         </div>
       </div>
+
+      {bankFileOpen && activeRunId && <BankTransferDialog runId={activeRunId} onClose={() => setBankFileOpen(false)} />}
 
       {showNewRun && (
         <NewPayrollRunModal

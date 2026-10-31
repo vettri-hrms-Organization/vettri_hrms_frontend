@@ -11,6 +11,7 @@ import { NavMemoryProvider } from './NavMemoryContext';
 import { BreadcrumbProvider } from './BreadcrumbContext';
 import { useAuth } from '../../hooks/useAuth';
 import { NAV_SECTIONS, PLATFORM_ONLY_PATHS } from './navConfig';
+import OfflineBanner from '../../pwa/OfflineBanner';
 
 export default function MainLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -40,6 +41,7 @@ export default function MainLayout() {
           <Topbar onOpenMobileNav={() => setMobileNavOpen(true)} />
           <SubscriptionBanner />
           <SupportAccessBanner />
+          <OfflineBanner />
           <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
               <Breadcrumbs />

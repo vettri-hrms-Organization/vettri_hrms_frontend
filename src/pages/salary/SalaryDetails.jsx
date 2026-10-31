@@ -322,7 +322,10 @@ function PayslipBreakdown({ item }) {
     ...EARNING_LINES.filter(([key]) => Number(c[key]) > 0).map(([key, label]) => [label, c[key]]),
     ...(item.adjustments || []).map((a) => [`${a.label}${a.taxable ? '' : ' (non-taxable)'}`, a.amount]),
   ];
-  const deductions = DEDUCTION_LINES.filter(([key]) => Number(c[key]) > 0).map(([key, label]) => [label, c[key]]);
+  const deductions = [
+    ...DEDUCTION_LINES.filter(([key]) => Number(c[key]) > 0).map(([key, label]) => [label, c[key]]),
+    ...(item.deductionLines || []).map((d) => [d.label, d.amount]),
+  ];
   const employer = [
     ['Employer EPF', item.employerEpf],
     ['Employer EPS (pension)', item.employerEps],

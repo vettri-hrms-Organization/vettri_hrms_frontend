@@ -12,7 +12,8 @@
  * Bump VERSION whenever this file's caching rules change.
  */
 // v2: never cache an HTML page answered for a missing /assets bundle (old builds after a deploy).
-const VERSION = 'v2';
+// v3: manifest shortcuts for payslips, approvals and the helpdesk.
+const VERSION = 'v3';
 const SHELL_CACHE = `vettri-shell-${VERSION}`;
 const ASSET_CACHE = `vettri-assets-${VERSION}`;
 const STATIC_CACHE = `vettri-static-${VERSION}`;

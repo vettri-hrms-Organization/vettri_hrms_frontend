@@ -25,6 +25,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ConfirmProvider } from './components/ui/ConfirmDialog';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LanguageProvider } from './i18n/LanguageContext';
 import App from './App.jsx';
 import PwaUpdatePrompt from './pwa/PwaUpdatePrompt';
 import { registerServiceWorker } from './pwa/pwa';
@@ -92,12 +93,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <ThemeProvider>
+              <LanguageProvider>
               <ToastProvider>
                 <ConfirmProvider>
                   <App />
                   <PwaUpdatePrompt />
                 </ConfirmProvider>
               </ToastProvider>
+              </LanguageProvider>
             </ThemeProvider>
           </AuthProvider>
         </QueryClientProvider>

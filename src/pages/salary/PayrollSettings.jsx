@@ -10,6 +10,7 @@ import ErrorState from '../../components/ui/ErrorState';
 import PageHeader from '../../components/ui/PageHeader';
 import { SkeletonText } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
+import LwfCard from './components/LwfCard';
 
 const EDITABLE_KEYS = [
   'pfEnabled', 'pfEmployeeRate', 'pfEmployerRate', 'epsRate', 'pfWageCeiling', 'pfOnFullBasic',
@@ -158,6 +159,7 @@ export default function PayrollSettings() {
           </div>
         </form>
       )}
+      {!isLoading && form && <LwfCard />}
     </div>
   );
 }
