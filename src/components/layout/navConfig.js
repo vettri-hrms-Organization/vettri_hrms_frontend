@@ -117,12 +117,14 @@ export const NAV_SECTIONS = [
     permission: 'SELF_PAYSLIP_VIEW',
     collapsible: true,
     badge: null,
+    // Labelled "My ..." so HR admins, who also see the Payroll and Pay Setup menus, can tell their own pages
+    // from the company-wide ones with the same name.
     items: [
-      { to: '/my-payslip', icon: Wallet, label: 'My Pay' },
-      { to: '/my-tax-declaration', icon: Receipt, label: 'Tax Declaration' },
-      { to: '/my-loans', icon: HandCoins, label: 'Loans & Advances' },
-      { to: '/my-fbp', icon: Wallet, label: 'Flexible Benefits' },
-      { to: '/my-settlement', icon: FileText, label: 'Full & Final' },
+      { to: '/my-payslip', icon: Wallet, label: 'My Payslips' },
+      { to: '/my-tax-declaration', icon: Receipt, label: 'My Tax Declaration' },
+      { to: '/my-loans', icon: HandCoins, label: 'My Loans' },
+      { to: '/my-fbp', icon: Wallet, label: 'My Benefits' },
+      { to: '/my-settlement', icon: FileText, label: 'My Settlement' },
     ],
   },
   {
@@ -256,8 +258,9 @@ export const NAV_SECTIONS = [
       { to: '/salary/employees', icon: ListChecks, label: 'Employee Salary' },
       { to: '/salary/payroll-processing', icon: PlayCircle, label: 'Payroll Processing' },
       { to: '/salary/tax-declarations', icon: Receipt, label: 'Tax Declarations' },
+      { to: '/salary/loans', icon: HandCoins, label: 'Loans & Advances', permission: 'SALARY_MANAGE' },
       { to: '/salary/settlements', icon: UserCheck, label: 'Full & Final', permission: 'SALARY_VIEW' },
-      { to: '/salary/reports', icon: FileBarChart, label: 'Reports' },
+      { to: '/salary/reports', icon: FileBarChart, label: 'Payroll Reports' },
       { to: '/salary/accounting', icon: FileSpreadsheet, label: 'Accounting Export', permission: 'SALARY_MANAGE' },
     ],
   },
@@ -273,7 +276,6 @@ export const NAV_SECTIONS = [
       { to: '/salary/revisions', icon: TrendingUp, label: 'Salary Revisions', permission: 'SALARY_VIEW' },
       { to: '/salary/compensation', icon: Calculator, label: 'Compensation Planning', permission: 'SALARY_MANAGE' },
       { to: '/salary/bonuses', icon: Gift, label: 'Bonuses', permission: 'SALARY_MANAGE' },
-      { to: '/salary/loans', icon: HandCoins, label: 'Loans & Advances', permission: 'SALARY_MANAGE' },
       { to: '/salary/fbp', icon: Wallet, label: 'Flexible Benefits', permission: 'SALARY_MANAGE' },
       { to: '/salary/settings', icon: ShieldCheck, label: 'Payroll Settings', permission: 'SALARY_MANAGE' },
     ],
