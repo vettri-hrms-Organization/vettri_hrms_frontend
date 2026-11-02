@@ -77,7 +77,8 @@
 .hz-tab {
   color: var(--hz-clarity-tab-text) !important;
   font-weight: 500 !important;
-  font-size: 14px !important;
+  /* One step below the content they switch, so the tab row never outweighs the page. */
+  font-size: 13px !important;
 }
 
 .hz-tab:hover:not(.hz-tab--active) {
@@ -222,4 +223,12 @@
   background-clip: padding-box, border-box !important;
   border-bottom: 2px solid transparent !important;
   box-shadow: 0 1px 2px rgba(16, 23, 42, 0.10), 0 4px 10px -4px rgba(65, 105, 225, 0.35) !important;
+}
+
+/* ---- Numbers: fixed-width digits wherever figures sit in columns or lists ---- */
+.table td,
+.hz-table td,
+.hz-profile-hero__fact,
+.hz-profile-contact-strip__item {
+  font-variant-numeric: tabular-nums;
 }

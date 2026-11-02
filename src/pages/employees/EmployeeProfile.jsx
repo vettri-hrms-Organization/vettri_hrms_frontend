@@ -1166,10 +1166,11 @@ function formatLeaveNumber(value) {
 
 function InfoRow({ icon: Icon, label, value }) {
   return (
-    <div className="d-flex align-items-center gap-2 py-2" style={{ borderBottom: '1px solid var(--hz-border)' }}>
-      {Icon && <Icon size={15} style={{ color: 'var(--hz-text-muted)', flexShrink: 0 }} />}
-      <span style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-muted)', minWidth: 110 }}>{label}</span>
-      <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500 }}>{value || '—'}</span>
+    // Fixed icon slot and label column, so values line up whether or not a row has an icon.
+    <div className="py-2" style={{ display: 'grid', gridTemplateColumns: '16px minmax(110px, 38%) minmax(0, 1fr)', alignItems: 'center', columnGap: 8, borderBottom: '1px solid var(--hz-border)' }}>
+      <span aria-hidden="true" style={{ display: 'inline-flex' }}>{Icon && <Icon size={15} style={{ color: 'var(--hz-text-muted)' }} />}</span>
+      <span style={{ fontSize: 'var(--hz-text-sm)', fontWeight: 500, color: 'var(--hz-text-muted)' }}>{label}</span>
+      <span style={{ fontSize: 'var(--hz-text-base)', fontWeight: 600, color: 'var(--hz-text-primary)', fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere' }}>{value || '—'}</span>
     </div>
   );
 }
