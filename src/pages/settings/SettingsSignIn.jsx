@@ -166,7 +166,8 @@ function WhatsAppSettingsCard() {
                   <td>{WHATSAPP_EVENTS[row.eventType] || row.eventType}</td>
                   <td>{row.phone}</td>
                   <td>{row.status}</td>
-                  <td className="text-truncate" style={{ maxWidth: 260 }}>{row.error || row.providerMessageId || ''}</td>
+                  {/* Truncated to fit; hover shows the provider's full error. */}
+                  <td className="text-truncate" style={{ maxWidth: 260 }} title={row.error || row.providerMessageId || ''}>{row.error || row.providerMessageId || ''}</td>
                 </tr>
               ))}
             </tbody>

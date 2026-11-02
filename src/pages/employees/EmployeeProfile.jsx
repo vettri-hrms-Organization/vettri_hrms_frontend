@@ -435,28 +435,17 @@ function JobTab({ employee }) {
           <InfoRow icon={Briefcase} label="Job Title" value={employee.designationTitle} />
           <InfoRow label="Worker Type" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType} />
           <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
+          <InfoRow icon={Clock} label="Attendance ID" value={employee.biometricDeviceUserId} />
         </Card>
       </div>
       <div className="col-12 col-lg-6">
         <Card title="Organization">
           <InfoRow label="Department" value={employee.departmentName} />
           <InfoRow label="Team" value={employee.teamName} />
-          <InfoRow icon={MapPin} label="Location" value={employee.address} />
           <InfoRow icon={Users} label="Reports To" value={employee.reportingManagerName} />
         </Card>
       </div>
-      <div className="col-12 col-lg-6">
-        <Card title="Employee Time">
-          <InfoRow icon={Clock} label="Attendance Number" value={employee.biometricDeviceUserId} />
-          <InfoRow label="Attendance Policy" value={null} />
-          <InfoRow label="Holiday Calendar" value={null} />
-        </Card>
-      </div>
-      <div className="col-12 col-lg-6">
-        <Card title="Other">
-          <div className="hz-profile-empty-note">Additional job settings are not configured for this employee.</div>
-        </Card>
-      </div>
+      {/* The office (and so the holiday calendar) is set in the Work location card; the home address is in the contact strip. */}
       <WorkLocationGratuityCards employee={employee} />
     </div>
   );
