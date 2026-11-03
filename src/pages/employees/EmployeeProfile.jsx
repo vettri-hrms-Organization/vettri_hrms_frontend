@@ -85,6 +85,15 @@ export default function EmployeeProfile() {
     setTab(availableTabKeys.includes(requestedTab) ? requestedTab : 'overview');
   }, [searchParams, availableTabKeys]);
 
+  // "Request leave" shortcuts (home widget) open the leave tab with the request form already showing.
+  useEffect(() => {
+    if (searchParams.get('apply') !== 'leave') return;
+    setShowApplyLeave(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('apply');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   function changeTab(key) {
     setTab(key);
     setSearchParams(key === 'overview' ? {} : { tab: key }, { replace: true });
@@ -314,6 +323,7 @@ function OverviewTab({ employee }) {
   const isOwnRecord = !!user?.employeeId && String(user.employeeId) === String(employee.id);
   const canResendInvitation = hasPermission('EMPLOYEE_CREATE');
   const canDisableAccount = hasPermission('EMPLOYEE_MANAGE') && !isOwnRecord;
+  const canManageBiometric = hasPermission('EMPLOYEE_MANAGE');
   const [pinValue, setPinValue] = useState(employee.biometricDeviceUserId || '');
   const accountStatus = employee.accountStatus || (employee.linkedUserId ? 'ACTIVE' : 'INVITED');
   const sendInvitation = useMutation({
@@ -373,22 +383,13 @@ function OverviewTab({ employee }) {
           <p className="mb-0">A new invitation link has been sent to {employee.email}.</p>
         </Dialog>
       </div>
-      <div className="col-12 col-lg-6">
-        <Card title="Employment">
-          <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
-          <InfoRow icon={Briefcase} label="Employment Type" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType} />
-          <InfoRow icon={Users} label="Team" value={employee.teamName} />
-        </Card>
-      </div>
-      <div className="col-12 col-lg-6">
+      {/* Joining date, employment type and team are in the header and the Job tab, so they are not repeated here. */}
+      <div className={canManageBiometric ? 'col-12 col-lg-6' : 'col-12'}>
         {/* HR edits colleagues' bank details directly; everyone (HR included) requests changes to their own. */}
         <BankStatutoryCard employee={employee} canEdit={hasPermission('EMPLOYEE_MANAGE') && !isOwnRecord} canRequestChange={isOwnRecord} InfoRow={InfoRow} />
       </div>
-      <ProfileSections employee={employee} isOwnRecord={isOwnRecord} canManage={hasPermission('EMPLOYEE_MANAGE')} />
-      <div className="col-12">
-        <CustomFieldsCard employeeId={employee.id} />
-      </div>
-      <div className="col-12 col-lg-6">
+      {/* Only HR maps the device PIN; employees see it read-only as "Attendance ID" on the Job tab. */}
+      {canManageBiometric && <div className="col-12 col-lg-6">
         <Card title="Biometric Enrollment" subtitle="The PIN this employee is enrolled under on the fingerprint device">
           <div className="d-flex align-items-center gap-2 py-2">
             <Fingerprint size={15} style={{ color: 'var(--hz-text-muted)', flexShrink: 0 }} />
@@ -420,7 +421,12 @@ function OverviewTab({ employee }) {
               </>
             )}
           </div>
+          {saveBiometric.isError && <div className="text-danger small">{saveBiometric.error?.response?.data?.message || 'Could not save the device PIN.'}</div>}
         </Card>
+      </div>}
+      <ProfileSections employee={employee} isOwnRecord={isOwnRecord} canManage={hasPermission('EMPLOYEE_MANAGE')} />
+      <div className="col-12">
+        <CustomFieldsCard employeeId={employee.id} />
       </div>
     </div>
   );
@@ -431,9 +437,9 @@ function JobTab({ employee }) {
     <div className="row g-3">
       <div className="col-12 col-lg-6">
         <Card title="Job Details">
-          <InfoRow label="Employee Number" value={employee.employeeCode} />
+          <InfoRow label="Employee ID" value={employee.employeeCode} />
           <InfoRow icon={Briefcase} label="Job Title" value={employee.designationTitle} />
-          <InfoRow label="Worker Type" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType} />
+          <InfoRow label="Employment Type" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType} />
           <InfoRow icon={Calendar} label="Date of Joining" value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null} />
           <InfoRow icon={Clock} label="Attendance ID" value={employee.biometricDeviceUserId} />
         </Card>
@@ -1056,7 +1062,7 @@ function LeaveTab({ employee, onApplyLeave }) {
             </div>
             <p>{leaveBalances.length ? `Across ${leaveBalances.length} leave type${leaveBalances.length === 1 ? '' : 's'}` : 'No leave balances available'}</p>
             <div className="hz-leave-widget__actions">
-              <button type="button" className="hz-leave-widget__action hz-leave-widget__action--primary" onClick={onApplyLeave}>Apply Leave</button>
+              <button type="button" className="hz-leave-widget__action hz-leave-widget__action--primary" onClick={onApplyLeave}>Request leave</button>
               <Link to="/leave" className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
             </div>
           </div>

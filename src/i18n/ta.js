@@ -14,7 +14,7 @@ export default {
   Attendance: 'வருகை',
   Talent: 'திறமை',
   'Team Monitoring': 'குழு கண்காணிப்பு',
-  'IT MANAGEMENT': 'ஐடி மேலாண்மை',
+  'IT Management': 'ஐடி மேலாண்மை',
   Payroll: 'சம்பளப் பட்டியல்',
   Pay: 'சம்பளம்',
   Insights: 'நுண்ணறிவுகள்',

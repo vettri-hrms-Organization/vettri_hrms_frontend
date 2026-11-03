@@ -31,7 +31,7 @@ export default function Helpdesk() {
   if (isHr) items.push({ key: 'categories', label: 'Categories' });
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Support" title="HR helpdesk" description="Ask HR anything - payroll, leave, documents, policies - and track the answer"
+      <PageHeader eyebrow="Support" title="HR Helpdesk" description="Ask HR anything - payroll, leave, documents, policies - and track the answer"
         actions={<Button icon={Plus} onClick={() => setRaising(true)}>Raise a ticket</Button>} />
       <Tabs items={items} value={tab} onChange={setTab} />
       {tab === 'mine' && <MyTickets onOpen={setOpen} onRaise={() => setRaising(true)} />}

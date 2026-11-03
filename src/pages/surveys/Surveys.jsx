@@ -26,7 +26,7 @@ export default function Surveys({ embedded = false } = {}) {
   const [tab, setTab] = useState('mine');
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      {!embedded && <PageHeader eyebrow="Engage" title="Surveys & polls" description="Share what you think - anonymous surveys never record who answered" />}
+      {!embedded && <PageHeader eyebrow="Engage" title="Surveys & Polls" description="Share what you think - anonymous surveys never record who answered" />}
       {isHr && <Tabs items={[{ key: 'mine', label: 'For me' }, { key: 'manage', label: 'Manage' }]} value={tab} onChange={setTab} />}
       {tab === 'mine' ? <ForMe /> : <Manage />}
     </div>

@@ -76,8 +76,8 @@ export default function BillingInvoices() {
 
   return (
     <div className="hz-page-shell hz-billing-page">
-      <PageHeader eyebrow="Billing & Subscription" title="Billing history" description="Find, download, and email your Vettri HRMS payment records." />
-      <Card title="Billing history" subtitle="Payment verification receipts and future subscription invoices for this workspace.">
+      <PageHeader eyebrow="Billing & Subscription" title="Billing History" description="Find, download, and email your Vettri HRMS payment records." />
+      <Card title="Invoices & receipts" subtitle="Payment verification receipts and future subscription invoices for this workspace.">
         <div className="hz-billing-toolbar">
           <label className="hz-billing-search">
             <Search size={16} aria-hidden="true" />

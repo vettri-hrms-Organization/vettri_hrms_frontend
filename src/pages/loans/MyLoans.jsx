@@ -31,7 +31,7 @@ export default function MyLoans() {
   const loans = data || [];
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="My finances" title="Loans & advances" description="Borrow against your salary and repay through monthly deductions"
+      <PageHeader eyebrow="My finances" title="My Loans" description="Borrow against your salary and repay through monthly deductions"
         actions={<Button icon={Plus} onClick={() => setAsking(true)}>Request</Button>} />
       {isLoading ? <Card><SkeletonText lines={4} /></Card> : loans.length === 0 ? (
         <Card><EmptyState icon={HandCoins} title="No loans or advances" description="Need money before payday? Request a salary advance or a loan; it's repaid automatically from your salary." action={<Button icon={Plus} onClick={() => setAsking(true)}>Request</Button>} /></Card>

@@ -58,7 +58,7 @@ export default function AccountingExport() {
 
   return (
     <div className="hz-module-page hz-module-page--payroll d-flex flex-column gap-4">
-      <PageHeader eyebrow="Payroll" title="Accounting export" description="Post a processed payroll run to your books as one balanced journal voucher" />
+      <PageHeader eyebrow="Payroll" title="Accounting Export" description="Post a processed payroll run to your books as one balanced journal voucher" />
 
       <Card
         title="Export a payroll run"

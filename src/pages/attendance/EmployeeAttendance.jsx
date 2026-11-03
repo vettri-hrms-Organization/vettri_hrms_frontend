@@ -419,7 +419,7 @@ export default function EmployeeAttendance() {
         {selfieOpen && message?.code === 'SELFIE' && <div className="alert alert-danger mt-3 mb-0" role="alert">{message.text}</div>}
       </Dialog>
 
-      <PageHeader eyebrow="Self service" title="My attendance" description="Check in when your organization’s attendance policy allows, request WFH, and see your attendance history." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); history.refetch(); context.refetch(); policy.refetch(); wfhRequests.refetch(); regularizations.refetch(); }}>Refresh</Button>} />
+      <PageHeader eyebrow="Self service" title="My Attendance" description="Check in when your organization’s attendance policy allows, request WFH, and see your attendance history." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); history.refetch(); context.refetch(); policy.refetch(); wfhRequests.refetch(); regularizations.refetch(); }}>Refresh</Button>} />
 
       {message && <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'} mb-0`} role="status">{message.text}{message.type === 'error' && (message.code?.startsWith('LOCATION_') || message.code === 'SELFIE') && <button type="button" className="btn btn-link p-0 ms-2" onClick={retryCheckIn}>Try again</button>}</div>}
 

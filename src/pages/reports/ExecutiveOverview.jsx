@@ -64,7 +64,7 @@ export default function ExecutiveOverview() {
     <div className="hz-admin-page hz-admin-page--executive d-flex flex-column gap-4">
       <PageHeader
         eyebrow="Insights"
-        title="Executive overview"
+        title="Executive Dashboard"
         description="Organisation health at a glance: headcount, attendance, leave and hiring in one view."
         actions={(
           <Link to="/reports" className="btn btn-outline-secondary d-inline-flex align-items-center gap-2">

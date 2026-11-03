@@ -25,7 +25,7 @@ export default function ProjectBilling() {
   const [tab, setTab] = useState('invoices');
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Timesheets" title="Project billing" description="Bill clients for approved hours and see who is billable" />
+      <PageHeader eyebrow="Timesheets" title="Project Billing" description="Bill clients for approved hours and see who is billable" />
       <Tabs items={[{ key: 'invoices', label: 'Invoices' }, { key: 'rates', label: 'Rates' }, { key: 'utilization', label: 'Utilization' }]} value={tab} onChange={setTab} />
       {tab === 'invoices' && <Invoices />}
       {tab === 'rates' && <Rates />}

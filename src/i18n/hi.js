@@ -14,7 +14,7 @@ export default {
   Attendance: 'उपस्थिति',
   Talent: 'प्रतिभा',
   'Team Monitoring': 'टीम मॉनिटरिंग',
-  'IT MANAGEMENT': 'आईटी प्रबंधन',
+  'IT Management': 'आईटी प्रबंधन',
   Payroll: 'पेरोल',
   Pay: 'वेतन',
   Insights: 'जानकारी',

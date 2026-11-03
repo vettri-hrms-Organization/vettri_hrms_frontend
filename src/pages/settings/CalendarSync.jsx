@@ -26,7 +26,7 @@ export default function CalendarSync() {
   const copy = () => navigator.clipboard?.writeText(url).then(() => toast.success('Link copied.'), () => toast.error('Copy failed - select and copy it manually.'));
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Me" title="Calendar sync" description="See holidays, your leave, your team's leave, 1:1s and trips in the calendar you already use" />
+      <PageHeader eyebrow="Me" title="Calendar Sync" description="See holidays, your leave, your team's leave, 1:1s and trips in the calendar you already use" />
       <Card title="Your calendar link">
         {isLoading ? <SkeletonText lines={2} /> : !url ? (
           <>

@@ -54,7 +54,7 @@ export default function SalaryRevisions() {
   const rows = data || [];
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Payroll" title="Salary revisions" description="Raises, promotions and corrections - back-dated ones pay arrears automatically"
+      <PageHeader eyebrow="Payroll" title="Salary Revisions" description="Raises, promotions and corrections - back-dated ones pay arrears automatically"
         actions={canManage && <Button icon={TrendingUp} onClick={() => setRevising(true)}>Revise salary</Button>} />
       <Card title="Revision history">
         {isLoading ? <SkeletonText lines={4} /> : rows.length === 0 ? (

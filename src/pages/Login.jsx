@@ -124,7 +124,7 @@ export default function Login() {
                     <ShieldCheck size={14} className="me-1" />
                     Secure workspace access
                   </span>
-                  <h1 className="h2 fw-bold text-dark mt-3 mb-2">Welcome back</h1>
+                  <h1 className="h2 fw-bold mt-3 mb-2" style={{ color: 'var(--hz-text-primary)' }}>Welcome back</h1>
                   <p className="text-secondary mb-0">
                     Sign in to continue to your Vettri HRMS workspace.
                   </p>
@@ -139,7 +139,7 @@ export default function Login() {
 
                 <form onSubmit={handleSubmit} noValidate>
                   <div className="mb-3">
-                    <label htmlFor="login-identifier" className="form-label fw-semibold text-dark">
+                    <label htmlFor="login-identifier" className="form-label fw-semibold">
                       Username or email
                     </label>
                     <div className="vettri-auth-field">
@@ -164,7 +164,7 @@ export default function Login() {
 
                   <div className="mb-3">
                     <div className="d-flex align-items-center justify-content-between mb-2">
-                      <label htmlFor="login-password" className="form-label fw-semibold text-dark mb-0">
+                      <label htmlFor="login-password" className="form-label fw-semibold mb-0">
                         Password
                       </label>
                       <Link to="/reset-password" className="small text-primary text-decoration-none fw-semibold">
@@ -353,7 +353,7 @@ export function MfaStep({ challenge, defaultRemember = false, verifyMfa, onVerif
           <ShieldCheck size={14} className="me-1" />
           Two-step verification
         </span>
-        <h1 className="h2 fw-bold text-dark mt-3 mb-2">Verify it&apos;s you</h1>
+        <h1 className="h2 fw-bold mt-3 mb-2" style={{ color: 'var(--hz-text-primary)' }}>Verify it&apos;s you</h1>
         <p className="text-secondary mb-0">{prompt}</p>
       </div>
 
@@ -403,7 +403,7 @@ export function MfaStep({ challenge, defaultRemember = false, verifyMfa, onVerif
         )}
 
         <div className="mb-3">
-          <label htmlFor="mfa-code" className="form-label fw-semibold text-dark">
+          <label htmlFor="mfa-code" className="form-label fw-semibold">
             {isRecovery ? 'Recovery code' : 'Verification code'}
           </label>
           <input

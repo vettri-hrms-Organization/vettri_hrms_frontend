@@ -53,7 +53,7 @@ export default function SettingsOrganization() {
 
   return (
     <div className="hz-admin-page hz-admin-page--organization hz-settings-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Settings" title="Organization" description="The structure your employees, teams, and reporting lines are built on" />
+      <PageHeader eyebrow="Settings" title="Organization Settings" description="The structure your employees, teams, and reporting lines are built on" />
 
       <Tabs items={visibleTabs} value={tab} onChange={setTab} />
 

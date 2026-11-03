@@ -24,7 +24,7 @@ export default function ImprovementPlans() {
   const [creating, setCreating] = useState(false);
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Performance" title="Improvement plans" description="Clear expectations, regular check-ins and a documented outcome"
+      <PageHeader eyebrow="Performance" title="Improvement Plans" description="Clear expectations, regular check-ins and a documented outcome"
         actions={canManage && <Button icon={Plus} onClick={() => setCreating(true)}>New plan</Button>} />
       {loadingMine ? <Card><SkeletonText lines={3} /></Card> : mine.map((p) => <Plan key={p.id} p={p} self />)}
       {canManage && (

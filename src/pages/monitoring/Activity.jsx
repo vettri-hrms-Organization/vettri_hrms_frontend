@@ -39,6 +39,8 @@ import FilterBar from '../../components/ui/FilterBar';
 const PAGE_SIZE =10;
 
 const HEADER_COLOR = 'var(--vettri-navy)';
+// Text on page surfaces follows the theme; the navy stays only behind the white table-header text.
+const TEXT_COLOR = 'var(--hz-text-primary)';
 
 
 /* ============================================================
@@ -1180,7 +1182,7 @@ export default function Activity() {
                           fontWeight:
                             600,
                           color:
-                            'var(--vettri-navy)',
+                            TEXT_COLOR,
                         }}
                       >
 
@@ -1467,7 +1469,7 @@ export default function Activity() {
                       32,
 
                     backgroundColor:
-                      '#ffffff',
+                      'var(--hz-bg-surface)',
 
                     border:
                       '1px solid var(--hz-border-strong)',
@@ -1535,7 +1537,7 @@ export default function Activity() {
                     className="mx-1"
                     style={{
                       color:
-                        HEADER_COLOR,
+                        TEXT_COLOR,
                     }}
                   >
                     {
@@ -1575,7 +1577,7 @@ export default function Activity() {
                       32,
 
                     backgroundColor:
-                      '#ffffff',
+                      'var(--hz-bg-surface)',
 
                     border:
                       '1px solid var(--hz-border-strong)',

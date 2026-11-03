@@ -119,7 +119,7 @@ export default function AnnouncementAdmin() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Company" title="Manage announcements" description="Publish news and policies, schedule posts, and track acknowledgements" actions={<Button icon={Plus} onClick={() => openEditor(null)}>New announcement</Button>} />
+      <PageHeader eyebrow="Company" title="Manage Announcements" description="Publish news and policies, schedule posts, and track acknowledgements" actions={<Button icon={Plus} onClick={() => openEditor(null)}>New announcement</Button>} />
 
       <Card bodyClassName="p-0">
         {list.isLoading && <div className="p-4"><SkeletonText lines={6} /></div>}

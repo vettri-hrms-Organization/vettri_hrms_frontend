@@ -26,7 +26,7 @@ export default function MyFbp() {
   const d = data.declaration;
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="My finances" title="Flexible benefits" description={`Save tax by moving part of your special allowance into bills you'd pay anyway - ${fyLabel(data.financialYear)}`}
+      <PageHeader eyebrow="My finances" title="My Benefits" description={`Save tax by moving part of your special allowance into bills you'd pay anyway - ${fyLabel(data.financialYear)}`}
         actions={d?.status === 'APPROVED' && <Button icon={Plus} onClick={() => setClaiming(true)}>Claim a bill</Button>} />
       {data.components.length === 0 ? (
         <Card><EmptyState icon={Wallet} title="Flexible benefits aren't set up" description="Your company hasn't turned on flexible benefits yet." /></Card>

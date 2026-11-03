@@ -24,7 +24,7 @@ export default function CompensationPlanning() {
   if (open) return <Round id={open} onBack={() => setOpen(null)} />;
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Payroll" title="Compensation planning" description="Plan appraisal raises against a budget and apply them as salary revisions"
+      <PageHeader eyebrow="Payroll" title="Compensation Planning" description="Plan appraisal raises against a budget and apply them as salary revisions"
         actions={<Button icon={Plus} onClick={() => setCreating(true)}>New round</Button>} />
       <Card>
         {isLoading ? <SkeletonText lines={3} /> : !(data || []).length ? (

@@ -62,7 +62,7 @@ export default function SalaryDashboard() {
         <div className="position-relative d-flex flex-wrap align-items-end justify-content-between gap-3">
           <div>
             <p style={{ fontSize: 'var(--hz-text-sm)', color: 'rgba(255,255,255,0.75)', fontWeight: 500, marginBottom: 6 }}>Salary &amp; Payroll</p>
-            <h1 style={{ fontSize: 'var(--hz-text-3xl)', fontWeight: 700, marginBottom: 8, letterSpacing: '-0.02em' }}>Payroll Overview</h1>
+            <h1 style={{ fontSize: 'var(--hz-text-3xl)', fontWeight: 700, marginBottom: 8, letterSpacing: '-0.02em' }}>Salary Dashboard</h1>
             <p style={{ fontSize: 'var(--hz-text-base)', color: 'rgba(255,255,255,0.85)', maxWidth: 480, marginBottom: 0 }}>
               {overview ? (
                 <>

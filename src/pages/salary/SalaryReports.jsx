@@ -53,7 +53,7 @@ export default function SalaryReports() {
 
   return (
     <div className="hz-module-page hz-module-page--payroll d-flex flex-column gap-4">
-      <PageHeader eyebrow="Payroll" title="Salary Reports" description="Payroll cost, trend and department analysis" />
+      <PageHeader eyebrow="Payroll" title="Payroll Reports" description="Payroll cost, trend and department analysis" />
 
       <div className="row g-3">
         <div className="col-6 col-xl-3">

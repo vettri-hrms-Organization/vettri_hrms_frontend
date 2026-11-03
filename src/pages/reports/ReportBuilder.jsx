@@ -69,7 +69,7 @@ export default function ReportBuilder() {
   if (!datasets.length) {
     return (
       <div className="hz-module-page d-flex flex-column gap-4">
-        <PageHeader eyebrow="Insights" title="Report builder" description="Build your own reports" />
+        <PageHeader eyebrow="Insights" title="Report Builder" description="Build your own reports" />
         <Card><EmptyState icon={Table2} title="No data you can report on" description="Ask an admin for access to employees, leave, attendance, expenses or timesheets." /></Card>
       </div>
     );
@@ -77,7 +77,7 @@ export default function ReportBuilder() {
   const current = saved.find((s) => s.id === savedId);
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Insights" title="Report builder" description="Pick a dataset and columns, filter and group, then save or export to Excel (CSV)" />
+      <PageHeader eyebrow="Insights" title="Report Builder" description="Pick a dataset and columns, filter and group, then save or export to Excel (CSV)" />
       <div className="row g-3">
         <div className="col-12 col-lg-4">
           <Card title="Report">

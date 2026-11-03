@@ -17,7 +17,7 @@ export default function MySettlement() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="My finances" title="Full & Final settlement" description="Your final dues once your settlement is approved" />
+      <PageHeader eyebrow="My finances" title="My Settlement" description="Your final dues once your settlement is approved" />
       {isLoading && <Card><SkeletonText lines={4} /></Card>}
       {!isLoading && data.length === 0 && (
         <Card><EmptyState icon={FileText} title="No settlement yet" description="Your full and final statement appears here after HR approves it." /></Card>

@@ -54,7 +54,7 @@ export default function LoginBrandPanel() {
           </div>
 
           <div className="glimpse glimpse--payroll">
-            <small>October payroll</small>
+            <small>Monthly payroll</small>
             <strong>Ready to release</strong>
             <span className="glimpse__progress"><i /></span>
           </div>

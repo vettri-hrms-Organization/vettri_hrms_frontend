@@ -24,7 +24,7 @@ export default function Probation() {
   const [starting, setStarting] = useState(false);
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="People" title="Probation & confirmation" description="Track probation end dates, collect manager recommendations and confirm employees"
+      <PageHeader eyebrow="People" title="Probation" description="Track probation end dates, collect manager recommendations and confirm employees"
         actions={isHr && <Button icon={Plus} onClick={() => setStarting(true)}>Set probation</Button>} />
       <Mine />
       {isHr && <SettingsCard />}

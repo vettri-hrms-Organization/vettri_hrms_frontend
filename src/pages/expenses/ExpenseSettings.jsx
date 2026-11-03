@@ -77,7 +77,7 @@ export default function ExpenseSettings() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Settings" title="Expense settings" description="Categories, per-claim limits, receipt rules, and how approved claims are paid" />
+      <PageHeader eyebrow="Settings" title="Expense Settings" description="Categories, per-claim limits, receipt rules, and how approved claims are paid" />
 
       <Card title="Reimbursement" subtitle="How approved claims reach employees">
         <div className="d-flex flex-column gap-2" role="radiogroup" aria-label="Reimbursement mode">

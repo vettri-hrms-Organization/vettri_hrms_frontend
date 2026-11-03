@@ -39,6 +39,8 @@ import AssignSalaryStructureModal from './components/AssignSalaryStructureModal'
 const PAGE_SIZE = 10;
 
 const HEADER_COLOR = 'var(--vettri-navy)';
+// Text on page surfaces follows the theme; the navy stays only behind the white table-header text.
+const TEXT_COLOR = 'var(--hz-text-primary)';
 
 
 /* ============================================================
@@ -521,7 +523,7 @@ export default function EmployeeSalaryList() {
               marginBottom:
                 4,
               color:
-                HEADER_COLOR,
+                TEXT_COLOR,
             }}
           >
             Employee Salary
@@ -1218,7 +1220,7 @@ export default function EmployeeSalaryList() {
                                   fontWeight:
                                     600,
                                   color:
-                                    HEADER_COLOR,
+                                    TEXT_COLOR,
                                   fontSize:
                                     13,
                                 }}
@@ -1363,7 +1365,7 @@ export default function EmployeeSalaryList() {
                             fontWeight:
                               600,
                             color:
-                              HEADER_COLOR,
+                              TEXT_COLOR,
                           }}
                         >
 
@@ -1618,7 +1620,7 @@ export default function EmployeeSalaryList() {
                         32,
 
                       backgroundColor:
-                        '#ffffff',
+                        'var(--hz-bg-surface)',
 
                       border:
                         '1px solid var(--hz-border-strong)',
@@ -1684,7 +1686,7 @@ export default function EmployeeSalaryList() {
                       className="mx-1"
                       style={{
                         color:
-                          HEADER_COLOR,
+                          TEXT_COLOR,
                       }}
                     >
 
@@ -1728,7 +1730,7 @@ export default function EmployeeSalaryList() {
                         32,
 
                       backgroundColor:
-                        '#ffffff',
+                        'var(--hz-bg-surface)',
 
                       border:
                         '1px solid var(--hz-border-strong)',

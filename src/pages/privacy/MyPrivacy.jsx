@@ -192,7 +192,7 @@ export default function MyPrivacy() {
                       <td>{REQUEST_TYPES[r.requestType]?.label || r.requestType}</td>
                       <td>{formatDateIST(r.createdAt)}</td>
                       <td>{formatDateIST(r.dueDate)}</td>
-                      <td><StatusBadge variant={STATUS_VARIANT[r.status] || 'neutral'}>{r.status.replace('_', ' ')}</StatusBadge></td>
+                      <td><StatusBadge variant={STATUS_VARIANT[r.status] || 'neutral'}>{r.status.charAt(0) + r.status.slice(1).toLowerCase().replaceAll('_', ' ')}</StatusBadge></td>
                       <td className="small" style={{ maxWidth: 360 }}>{r.resolutionNote || r.details || '-'}</td>
                       <td className="text-end">
                         {r.requestType === 'ACCESS' && r.status === 'READY' && (

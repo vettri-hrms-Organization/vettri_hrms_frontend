@@ -232,7 +232,7 @@ export const NAV_SECTIONS = [
   },
   {
     id: 'monitoring',
-    label: 'IT MANAGEMENT',
+    label: 'IT Management',
     description: 'Managed devices and software',
     collapsible: true,
     permission: 'IT_MANAGEMENT_ACCESS',
@@ -364,10 +364,10 @@ export const PLATFORM_NAV_SECTIONS = [
     collapsible: false,
     badge: null,
     items: [
-      { to: '/settings/platform', icon: Presentation, label: 'Customers & billing', end: true },
+      { to: '/settings/platform', icon: Presentation, label: 'Customers & Billing', end: true },
       { to: '/notifications', icon: Bell, label: 'Notifications' },
-      { to: '/support', icon: LifeBuoy, label: 'Support information' },
-      { to: '/account/security', icon: KeyRound, label: 'Change password' },
+      { to: '/support', icon: LifeBuoy, label: 'Support Information' },
+      { to: '/account/security', icon: KeyRound, label: 'Change Password' },
     ],
   },
 ];
@@ -441,6 +441,19 @@ export function visibleNavSections(hasPermission, hasRole = () => false) {
       : [];
     return { ...section, items };
   }).filter((section) => section.items.length > 0 && hasAccessRole(section));
+
+  // A page that is both a self-service link ("Team Leave", "My Performance") and a permission-gated admin link
+  // ("Leave Management", "Performance") is shown once below. For people who hold the admin permission, drop the
+  // self-service copy so the page appears under its admin name in the admin menu.
+  const selfServiceIds = new Set(['employee-me', 'employee-team', 'employee-performance']);
+  const adminPaths = new Set(filtered
+    .filter((section) => !section.id.startsWith('employee-') && section.id !== 'root')
+    .flatMap((section) => section.items)
+    .filter((item) => item.permission || item.permissionsAny || item.role || item.roles)
+    .map((item) => item.to));
+  for (const section of filtered) {
+    if (selfServiceIds.has(section.id)) section.items = section.items.filter((item) => !adminPaths.has(item.to));
+  }
 
   const employeeSelfIds = new Set(['employee-me', 'employee-team']);
   const employeeSelfItems = [];

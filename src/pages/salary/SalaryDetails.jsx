@@ -118,7 +118,7 @@ export default function SalaryDetails() {
           <div className="d-flex align-items-center gap-3">
             <Avatar name={data.employeeName} src={data.profilePhotoUrl} size="xl" />
             <div>
-              <h1 style={{ fontSize: 'var(--hz-text-2xl)', fontWeight: 700, marginBottom: 4, color: '#fff' }}>{isEmployee ? 'My pay' : data.employeeName}</h1>
+              <h1 style={{ fontSize: 'var(--hz-text-2xl)', fontWeight: 700, marginBottom: 4, color: '#fff' }}>{isEmployee ? 'My Payslips' : data.employeeName}</h1>
               <p style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 0, fontSize: 'var(--hz-text-sm)' }}>
                 {isEmployee ? 'Salary details and payslips, securely in one place.' : `${data.employeeCode} · ${data.designationTitle || '—'} · ${data.departmentName || '—'}`}
               </p>

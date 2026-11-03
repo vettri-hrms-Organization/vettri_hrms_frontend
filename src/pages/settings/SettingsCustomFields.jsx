@@ -92,7 +92,7 @@ export default function SettingsCustomFields() {
 
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Settings" title="Employee custom fields"
+      <PageHeader eyebrow="Settings" title="Custom Fields"
         description="Extra details your company tracks on every employee. They appear on the employee profile, the add-employee form, CSV export and Excel import (match a column by the field's label or key)." />
 
       <Card title="Fields" subtitle="Use the arrows to change the order shown on profiles."

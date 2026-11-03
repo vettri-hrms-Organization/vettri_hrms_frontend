@@ -176,9 +176,9 @@ function LeaveManagement() {
     <div className="hz-module-page hz-module-page--leave d-flex flex-column gap-4">
       <PageHeader
         eyebrow="Workforce"
-        title="Leave"
+        title={isTeamScoped ? 'Team Leave' : 'Leave Management'}
         description={isTeamScoped ? "Your team's requests, approvals, and balances" : 'Requests, approvals, and balances'}
-        actions={canApplyForOthers && <Button icon={CalendarPlus} onClick={() => setShowApply(true)}>Apply Leave</Button>}
+        actions={canApplyForOthers && <Button icon={CalendarPlus} onClick={() => setShowApply(true)}>Request leave</Button>}
       />
 
       {sectionTabs.length > 1 && <Tabs items={sectionTabs} value={section} onChange={setSection} ariaLabel="Leave workflows" />}
@@ -251,16 +251,12 @@ function EmployeeLeaveWorkspace({ employeeId }) {
     <div className="hz-keka-leave-page">
       <PageHeader eyebrow="My workspace" title="Leave" description="Plan time away, review balances, and track requests" actions={<Button icon={CalendarPlus} onClick={() => setShowApply(true)}>Request leave</Button>} />
 
-      <nav className="hz-keka-leave-page__nav" aria-label="Leave navigation">
-        <button type="button" className="is-active">Summary</button>
-      </nav>
-
       <section className="hz-keka-leave-page__request-zone" aria-labelledby="pending-leave-title">
         <div className="hz-keka-leave-page__pending">
           <div className="hz-keka-leave-page__pending-icon"><CalendarDays size={22} /></div>
           <div><span className="hz-dashboard__section-kicker">Requests</span><h2 id="pending-leave-title">{pending.length ? `${pending.length} pending leave request${pending.length === 1 ? '' : 's'}` : 'No pending leave requests'}</h2><p>{pending.length ? 'Your request is waiting for approval.' : 'Request leave whenever you need time away.'}</p></div>
         </div>
-        <div className="hz-keka-leave-page__request-actions"><Button size="sm" onClick={() => setShowApply(true)}>Request leave</Button><a href="#leave-balances">View balances</a><a href="#leave-history">Leave policy and history</a></div>
+        <div className="hz-keka-leave-page__request-actions"><a href="#leave-balances">View balances</a><a href="#leave-history">Leave history</a></div>
       </section>
 
       <section aria-labelledby="leave-stats-title">
@@ -275,7 +271,7 @@ function EmployeeLeaveWorkspace({ employeeId }) {
         {!balancesLoading && leaveBalances.length > 0 && <div className="hz-keka-leave-page__balance-grid">{leaveBalances.map((balance) => {
           const quota = balance.allocatedDays + balance.carriedForwardDays;
           const usage = Math.min(100, Math.round((balance.usedDays / (quota || 1)) * 100));
-          return <article className="hz-keka-leave-page__balance" key={balance.leaveTypeId}><header><strong>{balance.leaveTypeName}</strong><a href="#leave-history">View details</a></header><div className="hz-keka-leave-page__ring" style={{ '--hz-leave-used': `${usage}%` }}><div><strong>{balance.remainingDays}</strong><span>days<br />available</span></div></div><div className="hz-keka-leave-page__balance-stats"><span>Available<strong>{balance.remainingDays} days</strong></span><span>Consumed<strong>{balance.usedDays || 0} days</strong></span><span>Accrued<strong>{balance.carriedForwardDays || 0} days</strong></span><span>Annual quota<strong>{quota} days</strong></span></div></article>;
+          return <article className="hz-keka-leave-page__balance" key={balance.leaveTypeId}><header><strong>{balance.leaveTypeName}</strong><a href="#leave-history">View details</a></header><div className="hz-keka-leave-page__ring" style={{ '--hz-leave-used': `${usage}%` }}><div><strong>{balance.remainingDays}</strong><span>days<br />available</span></div></div><div className="hz-keka-leave-page__balance-stats"><span>Available<strong>{balance.remainingDays} days</strong></span><span>Consumed<strong>{balance.usedDays || 0} days</strong></span><span>Carried forward<strong>{balance.carriedForwardDays || 0} days</strong></span><span>Annual quota<strong>{quota} days</strong></span></div></article>;
         })}</div>}
       </section>
 

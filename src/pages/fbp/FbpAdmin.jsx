@@ -21,7 +21,7 @@ export default function FbpAdmin() {
   const [tab, setTab] = useState('claims');
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Payroll" title="Flexible benefits (FBP)" description="Tax-free benefits employees fund from special allowance and claim back with bills" />
+      <PageHeader eyebrow="Payroll" title="Flexible Benefits" description="Tax-free benefits employees fund from special allowance and claim back with bills" />
       <Tabs items={[{ key: 'claims', label: 'Claims' }, { key: 'plans', label: 'Employee plans' }, { key: 'components', label: 'Components' }]} value={tab} onChange={setTab} />
       {tab === 'claims' && <Claims />}
       {tab === 'plans' && <Plans />}

@@ -58,7 +58,7 @@ export default function ApplyLeaveModal({ onClose, defaultEmployeeId }) {
   }
 
   return (
-    <Dialog open onClose={onClose} title="Apply Leave" size="md" hasUnsavedChanges={[form.employeeId, form.leaveTypeId, form.startDate, form.endDate, form.reason, form.halfDay].some(Boolean) && !apply.isSuccess}>
+    <Dialog open onClose={onClose} title="Request leave" size="md" hasUnsavedChanges={[form.employeeId, form.leaveTypeId, form.startDate, form.endDate, form.reason, form.halfDay].some(Boolean) && !apply.isSuccess}>
       <form onSubmit={handleSubmit}>
         {error && (
           <ErrorBanner>{error}</ErrorBanner>

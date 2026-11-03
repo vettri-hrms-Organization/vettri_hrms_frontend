@@ -218,7 +218,7 @@ export default function MyHolidays({ embedded = false } = {}) {
 
           {/* Summary tiles */}
           <div className="row g-3">
-            <div className="col-6 col-lg-3"><StatTile icon={CalendarDays} label="Holidays" value={mandatory.length} detail={`in ${year}`} color="#4169E1" /></div>
+            <div className="col-6 col-lg-3"><StatTile icon={CalendarDays} label="Company holidays" value={mandatory.length} detail={`in ${year}`} color="#4169E1" /></div>
             <div className="col-6 col-lg-3"><StatTile icon={Clock} label="Still to come" value={upcoming.length} detail={upcoming.length ? `next ${countdown(daysUntil(upcoming[0].date)).toLowerCase()}` : 'none left'} color="#12735A" /></div>
             <div className="col-6 col-lg-3"><StatTile icon={Sun} label="Next to a weekend" value={weekendBreaks} detail="Monday or Friday holidays" color="#9A6519" /></div>
             <div className="col-6 col-lg-3">
@@ -233,7 +233,7 @@ export default function MyHolidays({ embedded = false } = {}) {
           </div>
 
           <Card
-            title="Holidays"
+            title="Holiday calendar"
             subtitle={`${mandatory.length} ${mandatory.length === 1 ? 'holiday' : 'holidays'} in ${year}`}
             actions={(
               <div className="btn-group" role="group" aria-label="Holiday view">

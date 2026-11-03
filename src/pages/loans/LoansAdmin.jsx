@@ -56,7 +56,7 @@ export default function LoansAdmin() {
   const waiting = loans.filter((l) => l.status === 'REQUESTED').length;
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Payroll" title="Loans & advances" description="Requests, pay-outs and EMI recovery through payroll"
+      <PageHeader eyebrow="Payroll" title="Loans & Advances" description="Requests, pay-outs and EMI recovery through payroll"
         actions={<Button icon={Plus} onClick={() => setAdding(true)}>Add loan</Button>} />
       <div className="row g-3">
         {[['Waiting for approval', waiting], ['Outstanding (repaying)', rupees(outstanding)]].map(([label, value]) => (

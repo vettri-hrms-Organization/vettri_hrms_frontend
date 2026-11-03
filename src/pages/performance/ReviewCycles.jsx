@@ -28,7 +28,7 @@ export default function ReviewCycles() {
   if (canRun) items.push({ key: 'cycles', label: me?.hr ? 'Cycles' : 'My team' });
   return (
     <div className="hz-module-page d-flex flex-column gap-4">
-      <PageHeader eyebrow="Performance" title="Review cycles" description="Self, peer and manager reviews, calibration and results" />
+      <PageHeader eyebrow="Performance" title="Review Cycles" description="Self, peer and manager reviews, calibration and results" />
       <Tabs items={items} value={tab} onChange={setTab} />
       {tab === 'todo' && <Tasks />}
       {tab === 'mine' && <MyResults />}
@@ -157,7 +157,7 @@ function Cycles({ hr }) {
   const release = useMutation({ mutationFn: perfApi.releaseCycle, onSuccess: () => { refresh(); toast.success('Results released to employees.'); }, onError: (e) => toast.error(errorText(e, 'Could not release.')) });
   return (
     <>
-      <Card title="Review cycles" actions={hr && <Button size="sm" icon={Plus} onClick={() => setCreating(true)}>New cycle</Button>}>
+      <Card title="All cycles" actions={hr && <Button size="sm" icon={Plus} onClick={() => setCreating(true)}>New cycle</Button>}>
         {isLoading ? <SkeletonText lines={3} /> : !(data || []).length ? <EmptyState icon={ClipboardCheck} title="No cycles yet" description={hr ? 'Create a cycle to start reviews.' : 'Cycles your team is part of appear here.'} /> : (
           <div className="table-responsive">
             <table className="table table-sm align-middle mb-0" style={{ fontSize: 13 }}>
