@@ -18,7 +18,7 @@ export default function MobileTabBar({ onOpenMore, moreOpen = false }) {
   const tabs = [
     { to: '/dashboard', label: 'Home', icon: Home, end: true },
     hasPermission('SELF_ATTENDANCE_VIEW') && { to: '/my-attendance', label: 'Attendance', icon: Clock },
-    hasPermission('SELF_LEAVE_VIEW') && { to: '/my-profile?tab=leave', label: 'Leave', icon: CalendarDays, match: () => location.pathname === '/my-profile' && new URLSearchParams(location.search).get('tab') === 'leave' },
+    hasPermission('SELF_LEAVE_VIEW') && { to: '/my-leave', label: 'Leave', icon: CalendarDays },
     hasPermission('SELF_PAYSLIP_VIEW') && { to: '/my-payslip', label: 'Pay', icon: Wallet },
   ].filter(Boolean);
 

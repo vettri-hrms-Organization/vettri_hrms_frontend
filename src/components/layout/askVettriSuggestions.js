@@ -38,7 +38,7 @@ const ASK_VETTRI_INTENTS = [
     id: 'personal-leave',
     label: 'Check my leave',
     description: 'Open your leave balance and requests',
-    route: '/my-profile?tab=leave',
+    route: '/my-leave',
     permissions: ['SELF_PROFILE_VIEW', 'SELF_LEAVE_VIEW'],
     keywords: ['my leave', 'leave balance', 'my time off', 'my vacation', 'my absence'],
     audiences: ['employee'],

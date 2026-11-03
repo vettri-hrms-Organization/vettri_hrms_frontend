@@ -52,7 +52,7 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   if (user?.employeeId && !hasPermission('LEAVE_VIEW') && !hasPermission('LEAVE_APPROVE') && location.pathname === '/leave') {
-    return <Navigate to="/my-profile?tab=leave" replace />;
+    return <Navigate to="/my-leave" replace />;
   }
 
   if (allowedRoles && !hasAnyRole(allowedRoles)) {

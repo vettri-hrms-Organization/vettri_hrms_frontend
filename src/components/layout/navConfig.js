@@ -93,7 +93,7 @@ export const NAV_SECTIONS = [
       { to: '/my-profile', icon: UserRound, label: 'My Profile', end: true, permission: 'SELF_PROFILE_VIEW' },
       { to: '/my-attendance', icon: Clock, label: 'My Attendance', permission: 'SELF_ATTENDANCE_VIEW' },
       { to: '/my-timesheet', icon: ClipboardList, label: 'My Timesheet', permission: 'SELF_ATTENDANCE_VIEW' },
-      { to: '/my-profile?tab=leave', icon: CalendarDays, label: 'Leave', permission: 'SELF_LEAVE_VIEW' },
+      { to: '/my-leave', icon: CalendarDays, label: 'Leave', permission: 'SELF_LEAVE_VIEW' },
       { to: '/my-expenses', icon: Receipt, label: 'My Expenses', permission: 'SELF_EXPENSE_SUBMIT' },
       { to: '/travel', icon: Plane, label: 'Travel', permission: 'SELF_EXPENSE_SUBMIT' },
       { to: '/helpdesk', icon: Headset, label: 'HR Helpdesk', permission: 'SELF_PROFILE_VIEW' },

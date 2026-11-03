@@ -1,0 +1,456 @@
+/*
+ * My Leave: one calm page per employee - pending requests, stats, balances and history.
+ * Plain panels with hairline borders and small uppercase labels; every colour comes from
+ * theme tokens so dark mode follows.
+ */
+
+.hz-my-leave {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.hz-my-leave__year {
+  width: auto;
+  min-width: 200px;
+  font-weight: 600;
+  color: var(--hz-primary-600);
+  border-color: var(--hz-primary-500);
+}
+
+.hz-my-leave__panel {
+  background: var(--hz-bg-surface);
+  border: 1px solid var(--hz-border);
+  border-radius: var(--hz-radius-lg, 12px);
+  padding: 20px 22px;
+}
+
+.hz-my-leave__heading {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--hz-text-primary);
+  margin: 0 0 14px;
+}
+
+.hz-my-leave__section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hz-text-primary);
+  margin: 0 0 14px;
+}
+
+/* ---- Pending + actions ---- */
+.hz-my-leave__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+}
+
+.hz-my-leave__all-clear {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hz-my-leave__all-clear-icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--hz-primary-50);
+  color: var(--hz-primary-600);
+}
+
+.hz-my-leave__all-clear strong {
+  display: block;
+  font-size: 15px;
+  color: var(--hz-text-primary);
+}
+
+.hz-my-leave__all-clear p {
+  margin: 2px 0 0;
+  color: var(--hz-text-secondary);
+  font-size: 13.5px;
+}
+
+.hz-my-leave__pending-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hz-my-leave__pending-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--hz-border);
+}
+
+.hz-my-leave__pending-list li:first-child { border-top: 0; padding-top: 0; }
+
+.hz-my-leave__pending-list strong {
+  display: block;
+  font-size: 14px;
+  color: var(--hz-text-primary);
+}
+
+.hz-my-leave__pending-list span {
+  font-size: 13px;
+  color: var(--hz-text-secondary);
+}
+
+.hz-my-leave__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hz-my-leave__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--hz-primary-600);
+  cursor: pointer;
+}
+
+.hz-my-leave__link:hover { text-decoration: underline; }
+.hz-my-leave__link:focus-visible { outline: 2px solid var(--hz-primary-500); outline-offset: 3px; border-radius: 4px; }
+
+/* ---- Stats ---- */
+.hz-my-leave__stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+  gap: 20px;
+}
+
+.hz-my-leave__stat h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--hz-text-primary);
+  margin: 0;
+}
+
+.hz-my-leave__stat-hint {
+  font-size: 12.5px;
+  color: var(--hz-text-muted);
+  margin: 2px 0 10px;
+}
+
+.hz-my-leave__donut {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 150px;
+}
+
+.hz-my-leave__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--hz-text-secondary);
+  min-width: 0;
+}
+
+.hz-my-leave__legend li { display: flex; align-items: center; gap: 6px; }
+.hz-my-leave__legend i { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.hz-my-leave__legend strong { margin-left: auto; padding-left: 8px; color: var(--hz-text-primary); font-variant-numeric: tabular-nums; }
+
+/* ---- Balances ---- */
+.hz-my-leave__balances {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 20px;
+}
+
+.hz-my-leave__balance {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hz-my-leave__balance header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 20px 0;
+}
+
+.hz-my-leave__balance h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--hz-text-primary);
+  margin: 0;
+}
+
+.hz-my-leave__balance header a {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--hz-primary-600);
+  text-decoration: none;
+}
+
+.hz-my-leave__balance header a:hover { text-decoration: underline; }
+
+.hz-my-leave__ring {
+  --ring-size: 150px;
+  width: var(--ring-size);
+  height: var(--ring-size);
+  margin: 22px auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--ring-color) var(--ring-share), color-mix(in srgb, var(--ring-color) 18%, transparent) 0);
+}
+
+.hz-my-leave__ring > div {
+  width: calc(var(--ring-size) - 26px);
+  height: calc(var(--ring-size) - 26px);
+  border-radius: 50%;
+  background: var(--hz-bg-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.hz-my-leave__ring strong {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--hz-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-my-leave__ring span {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--hz-text-secondary);
+}
+
+.hz-my-leave__figures {
+  margin: auto 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--hz-border);
+}
+
+.hz-my-leave__figures > div {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--hz-border);
+}
+
+.hz-my-leave__figures > div:nth-child(odd) { border-right: 1px solid var(--hz-border); }
+.hz-my-leave__figures > div:nth-last-child(-n + 2):nth-child(odd),
+.hz-my-leave__figures > div:last-child { border-bottom: 0; }
+
+.hz-my-leave__figures dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hz-text-muted);
+}
+
+.hz-my-leave__figures dd {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--hz-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-my-leave__other {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--hz-text-secondary);
+}
+
+/* ---- History ---- */
+.hz-my-leave__history { padding: 0; overflow: hidden; }
+
+.hz-my-leave__filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--hz-border);
+}
+
+.hz-my-leave__filters .form-select { width: 190px; }
+
+.hz-my-leave__search {
+  flex: 1 1 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px;
+  height: 38px;
+  border: 1px solid var(--hz-border);
+  border-radius: var(--hz-radius-md, 8px);
+  color: var(--hz-text-muted);
+  background: var(--hz-bg-surface);
+}
+
+.hz-my-leave__search:focus-within { border-color: var(--hz-primary-500); box-shadow: var(--hz-shadow-focus); }
+
+.hz-my-leave__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--hz-text-primary);
+  font-size: 14px;
+}
+
+.hz-my-leave__total {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--hz-text-muted);
+}
+
+.hz-my-leave__table-wrap { overflow-x: auto; }
+
+.hz-my-leave__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--hz-text-primary);
+}
+
+.hz-my-leave__table th {
+  padding: 11px 18px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--hz-text-muted);
+  background: var(--hz-surface-muted);
+  border-bottom: 1px solid var(--hz-border);
+}
+
+.hz-my-leave__table td {
+  padding: 14px 18px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--hz-border);
+}
+
+.hz-my-leave__table tbody tr:last-child td { border-bottom: 0; }
+.hz-my-leave__table tbody tr:hover td { background: var(--hz-surface-muted); }
+
+.hz-my-leave__table td strong { display: block; font-weight: 600; white-space: nowrap; }
+.hz-my-leave__table td small { display: block; margin-top: 3px; font-size: 12.5px; color: var(--hz-text-muted); }
+.hz-my-leave__table td:nth-child(4) { white-space: nowrap; color: var(--hz-text-secondary); }
+
+.hz-my-leave__note {
+  max-width: 220px;
+  color: var(--hz-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.hz-my-leave__row-actions { width: 56px; text-align: right; }
+
+.hz-my-leave__menu { position: relative; display: inline-block; }
+
+.hz-my-leave__menu-button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hz-border);
+  border-radius: 50%;
+  background: var(--hz-bg-surface);
+  color: var(--hz-text-secondary);
+  cursor: pointer;
+}
+
+.hz-my-leave__menu-button:hover,
+.hz-my-leave__menu-button[aria-expanded='true'] { color: var(--hz-primary-600); border-color: var(--hz-primary-500); }
+
+.hz-my-leave__menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  min-width: 160px;
+  padding: 4px;
+  background: var(--hz-bg-surface);
+  border: 1px solid var(--hz-border);
+  border-radius: var(--hz-radius-md, 8px);
+  box-shadow: var(--hz-shadow-md);
+}
+
+.hz-my-leave__menu-list button {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
+  font-size: 13.5px;
+  color: var(--hz-danger-500);
+  cursor: pointer;
+}
+
+.hz-my-leave__menu-list button:hover { background: var(--hz-surface-muted); }
+
+.hz-my-leave__pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--hz-border);
+  font-size: 13px;
+  color: var(--hz-text-muted);
+}
+
+/* ---- Policy dialog ---- */
+.hz-my-leave__policy { display: flex; flex-direction: column; gap: 18px; }
+.hz-my-leave__policy h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; color: var(--hz-text-primary); }
+.hz-my-leave__policy ul { margin: 0; padding-left: 18px; color: var(--hz-text-secondary); font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+
+/* ---- Small screens ---- */
+@media (max-width: 1100px) {
+  .hz-my-leave__stats { grid-template-columns: 1fr 1fr; }
+  .hz-my-leave__stat--wide { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+  .hz-my-leave__top,
+  .hz-my-leave__stats { grid-template-columns: 1fr; }
+  .hz-my-leave__filters .form-select { width: 100%; }
+  .hz-my-leave__total { margin-left: 0; }
+  .hz-my-leave__panel { padding: 16px; }
+  .hz-my-leave__balance { padding: 0; }
+}

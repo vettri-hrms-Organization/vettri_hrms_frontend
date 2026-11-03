@@ -527,7 +527,7 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
           <h1>{greeting}</h1>
         </div>
         <div className="hz-dash__hero-actions">
-          <Link to="/my-profile?tab=leave" className="btn btn-light">
+          <Link to="/my-leave?apply=leave" className="btn btn-light">
             <CalendarOff size={16} aria-hidden="true" /> Request leave
           </Link>
         </div>
@@ -585,7 +585,7 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
           <div className="hz-dashboard__action-grid">
             <Link to="/my-profile"><UserCheck size={18} /><span>My profile</span></Link>
             <Link to="/my-attendance"><Clock3 size={18} /><span>My attendance</span></Link>
-            <Link to="/my-profile?tab=leave"><CalendarOff size={18} /><span>Manage leave</span></Link>
+            <Link to="/my-leave"><CalendarOff size={18} /><span>Manage leave</span></Link>
             <Link to="/my-payslip"><WalletCards size={18} /><span>View payslip</span></Link>
             <Link to="/helpdesk"><LifeBuoy size={18} /><span>Ask HR</span></Link>
             <Link to="/company"><Megaphone size={18} /><span>Company</span></Link>

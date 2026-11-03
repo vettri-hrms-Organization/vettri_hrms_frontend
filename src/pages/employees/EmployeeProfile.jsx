@@ -84,16 +84,6 @@ export default function EmployeeProfile() {
     const requestedTab = searchParams.get('tab');
     setTab(availableTabKeys.includes(requestedTab) ? requestedTab : 'overview');
   }, [searchParams, availableTabKeys]);
-
-  // "Request leave" shortcuts (home widget) open the leave tab with the request form already showing.
-  useEffect(() => {
-    if (searchParams.get('apply') !== 'leave') return;
-    setShowApplyLeave(true);
-    const next = new URLSearchParams(searchParams);
-    next.delete('apply');
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
-
   function changeTab(key) {
     setTab(key);
     setSearchParams(key === 'overview' ? {} : { tab: key }, { replace: true });
@@ -1032,6 +1022,9 @@ function AddDocumentModal({ employeeId, onClose }) {
 
 function LeaveTab({ employee, onApplyLeave }) {
   const year = new Date().getFullYear();
+  const { user } = useAuth();
+  // Your own full leave page is My Leave; HR viewing a colleague goes to Leave Management.
+  const historyLink = user?.employeeId && String(user.employeeId) === String(employee.id) ? '/my-leave#leave-history' : '/leave';
   const { data: balances, isLoading: balancesLoading } = useQuery({
     queryKey: ['leave-balance', String(employee.id), year],
     queryFn: () => leaveRequestsApi.balance(employee.id, year),
@@ -1063,7 +1056,7 @@ function LeaveTab({ employee, onApplyLeave }) {
             <p>{leaveBalances.length ? `Across ${leaveBalances.length} leave type${leaveBalances.length === 1 ? '' : 's'}` : 'No leave balances available'}</p>
             <div className="hz-leave-widget__actions">
               <button type="button" className="hz-leave-widget__action hz-leave-widget__action--primary" onClick={onApplyLeave}>Request leave</button>
-              <Link to="/leave" className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
+              <Link to={historyLink} className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
             </div>
           </div>
 

@@ -94,8 +94,8 @@ export function LeaveWidget({ balances, requests, loading, year, holidays = [], 
                 </div>
                 <p>{`Across ${balances.length} leave type${balances.length === 1 ? '' : 's'}`}</p>
                 <div className="hz-leave-widget__actions">
-                  <Link to="/my-profile?tab=leave&apply=leave" className="hz-leave-widget__action hz-leave-widget__action--primary">Request leave</Link>
-                  <Link to="/my-profile?tab=leave" className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
+                  <Link to="/my-leave?apply=leave" className="hz-leave-widget__action hz-leave-widget__action--primary">Request leave</Link>
+                  <Link to="/my-leave#leave-history" className="hz-leave-widget__action hz-leave-widget__action--secondary">View History</Link>
                 </div>
               </div>
 
@@ -118,7 +118,7 @@ export function LeaveWidget({ balances, requests, loading, year, holidays = [], 
 
           <div className="hz-leave-widget__footer">
             <span>{upcoming ? `Next leave: ${upcoming.leaveTypeName} · ${new Date(upcoming.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Plan time away with confidence.'}</span>
-            <Link to="/my-profile?tab=leave" className="hz-dashboard__text-link">Manage leave <ArrowRight size={15} /></Link>
+            <Link to="/my-leave" className="hz-dashboard__text-link">Manage leave <ArrowRight size={15} /></Link>
           </div>
         </div>
 

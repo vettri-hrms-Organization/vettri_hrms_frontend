@@ -66,6 +66,7 @@ const FullAndFinal = lazy(() => import('./pages/salary/FullAndFinal'));
 const AccountingExport = lazy(() => import('./pages/salary/AccountingExport'));
 const MySettlement = lazy(() => import('./pages/salary/MySettlement'));
 const MyHolidays = lazy(() => import('./pages/leave/MyHolidays'));
+const MyLeave = lazy(() => import('./pages/leave/MyLeave'));
 const MonitoringDashboard = lazy(() => import('./pages/monitoring/MonitoringDashboard'));
 const MonitoringDevices = lazy(() => import('./pages/monitoring/Devices'));
 const MonitoringDeviceDetails = lazy(() => import('./pages/monitoring/DeviceDetails'));
@@ -195,6 +196,7 @@ export default function App() {
           <Route path="salary/accounting" element={<AccountingExport />} />
           <Route path="my-settlement" element={<MySettlement />} />
           <Route path="my-holidays" element={<MyHolidays />} />
+          <Route path="my-leave" element={<MyLeave />} />
           <Route path="company" element={<Company />} />
           <Route path="my-profile" element={<MyProfileRoute />} />
           <Route path="notifications" element={<Notifications />} />

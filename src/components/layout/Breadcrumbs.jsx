@@ -28,7 +28,8 @@ const ROUTES = [
     crumbs: [{ label: 'Attendance', path: '/attendance' }, { label: 'Devices' }],
   },
 
-  { pattern: '/leave', crumbs: [{ label: 'Leave' }] },
+  { pattern: '/leave', crumbs: [{ label: 'Leave Management' }] },
+  { pattern: '/my-leave', crumbs: [{ label: 'My Leave' }] },
   { pattern: '/my-payslip', crumbs: [{ label: 'My Payslip', dynamic: true }] },
   { pattern: '/my-profile', crumbs: [{ label: 'My Profile' }] },
   { pattern: '/notifications', crumbs: [{ label: 'Notifications' }] },
