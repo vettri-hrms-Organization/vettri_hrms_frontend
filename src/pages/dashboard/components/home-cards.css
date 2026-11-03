@@ -98,6 +98,3 @@
   .hz-home-setup__steps { grid-template-columns: 1fr; }
   .hz-home-it { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-/* Employee home: quick actions span the full row now, so lay them out in columns. */
-.hz-dashboard__quick .hz-dashboard__action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); column-gap: 24px; }

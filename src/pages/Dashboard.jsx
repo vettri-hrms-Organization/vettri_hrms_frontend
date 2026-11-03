@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Users, UserCheck, CalendarOff, CalendarDays, Clock3, FileText, ArrowRight, ClipboardCheck, WalletCards, LifeBuoy, Megaphone, AlertCircle } from 'lucide-react';
+import { Users, UserCheck, CalendarOff, CalendarDays, Clock3, FileText, ArrowRight, ClipboardCheck, AlertCircle } from 'lucide-react';
 import { dashboardApi } from '../api/endpoints/dashboard';
 import { holidaysApi, leaveRequestsApi } from '../api/endpoints/leave';
 import { employeesApi } from '../api/endpoints/employees';
 import { attendanceApi } from '../api/endpoints/attendance';
+import { dailyAttendanceApi } from '../api/endpoints/shifts';
 import { employeeSalaryApi } from '../api/endpoints/salary';
+import { homeApi } from '../api/endpoints/home';
 import Avatar from '../components/ui/Avatar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import AnimatedNumber from '../components/ui/AnimatedNumber';
@@ -14,9 +16,13 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { getDisplayName, getWelcomeGreeting } from '../utils/vettriMicrocopy';
 import { toISTDateInputValue } from '../utils/formatDateTime';
-import { AttendanceWidget, LeaveWidget, FinanceWidget } from './dashboard/components/EmployeeWidgets';
+import { weekStart } from './attendance/shiftUtils';
+import {
+  ApprovalsCard, EmployeeGreeting, HolidaysPanel, LeaveCard, PayslipCard, QuickLinksPanel, WeekCard,
+} from './dashboard/components/EmployeeWidgets';
 import AnnouncementsCard from './announcements/AnnouncementsCard';
 import { AskVettriBox, SetupChecklist, TeamPulse, TodosCard } from './dashboard/components/HomeCards';
+import './dashboard/employee-home.css';
 
 async function safeAuthorizedQuery(request, fallbackValue = null) {
   try {
@@ -446,11 +452,11 @@ function formatLeaveRange(start, end) {
   return `${formatShortDate(start)} – ${formatShortDate(end)}`;
 }
 
-/** "In at 9:31 AM · 3h 12m so far" for the Home "Today" card, from the day's web/WFH/tray session. */
+/** "In at 9:31 AM · 3h 12m so far" for the Home "Today" status, from the day's web/WFH/tray session. */
 function todayAttendanceDetail(session, hasCheckedIn, hasCheckedOut) {
   const checkIn = session?.checkInTime ? new Date(session.checkInTime) : null;
   if (!checkIn || Number.isNaN(checkIn.getTime())) {
-    return hasCheckedIn ? (hasCheckedOut ? 'Attendance complete' : 'Have a productive day') : 'Tap to check in';
+    return hasCheckedIn ? (hasCheckedOut ? 'Attendance complete for today' : 'Have a productive day') : null;
   }
   const end = session.checkOutTime ? new Date(session.checkOutTime) : new Date();
   const minutes = Math.max(0, Math.round((end.getTime() - checkIn.getTime()) / 60000));
@@ -459,8 +465,22 @@ function todayAttendanceDetail(session, hasCheckedIn, hasCheckedOut) {
   return session.checkOutTime ? `In at ${inAt} · ${worked} worked` : `In at ${inAt} · ${worked} so far`;
 }
 
+/** Same permissions that show the Approvals inbox in the menu. */
+const APPROVER_PERMISSIONS = ['LEAVE_APPROVE', 'LEAVE_MANAGE', 'ATTENDANCE_MANAGE', 'OVERTIME_APPROVE', 'EXPENSE_APPROVE', 'EXPENSE_MANAGE', 'EMPLOYEE_MANAGE', 'TIMESHEET_APPROVE', 'SALARY_MANAGE'];
+
+/**
+ * Employee home: greeting with today's shift and check-in state, one row of key cards, then
+ * to-dos, holidays, announcements and the team pulse as plain panels.
+ */
 function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
+  const { hasPermission } = useAuth();
+  const canViewPayslip = hasPermission('SELF_PAYSLIP_VIEW');
+  const canApprove = APPROVER_PERMISSIONS.some((permission) => hasPermission(permission));
   const year = new Date().getFullYear();
+  // punchTime is a UTC instant; "today" means today in IST, not UTC.
+  const todayKey = toISTDateInputValue();
+  const monday = weekStart(todayKey);
+
   const { data: employee } = useQuery({
     queryKey: ['employee-dashboard-profile', employeeId],
     queryFn: () => safeAuthorizedQuery(() => employeesApi.getById(employeeId), null),
@@ -474,9 +494,17 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
     retry: false,
   });
   // Biometric punches come from byEmployee; browser/WFH check-ins are sessions from /today.
-  const { data: todaySession } = useQuery({
+  const { data: todaySession, isLoading: sessionLoading } = useQuery({
     queryKey: ['employee-dashboard-today-session', employeeId],
     queryFn: () => safeAuthorizedQuery(() => attendanceApi.today(), null),
+    enabled: !!employeeId,
+    retry: false,
+  });
+  // Shift-aware daily attendance for Monday..today; same cache entry My Attendance's week strip uses,
+  // so checking in there refreshes it here. null means the account can't read attendance.
+  const { data: weekData, isLoading: weekLoading } = useQuery({
+    queryKey: ['attendance-daily-me', monday, todayKey],
+    queryFn: () => safeAuthorizedQuery(() => dailyAttendanceApi.mine(monday, todayKey), null),
     enabled: !!employeeId,
     retry: false,
   });
@@ -486,16 +514,16 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
     enabled: !!employeeId,
     retry: false,
   });
-  const { data: leaveRequestsData } = useQuery({
+  const { data: leaveRequestsData, isLoading: leaveRequestsLoading } = useQuery({
     queryKey: ['employee-dashboard-leave', employeeId],
     queryFn: () => safeAuthorizedQuery(() => leaveRequestsApi.byEmployee(employeeId), []),
     enabled: !!employeeId,
     retry: false,
   });
-  const { data: salary } = useQuery({
+  const { data: salary, isLoading: salaryLoading } = useQuery({
     queryKey: ['employee-dashboard-salary', employeeId],
     queryFn: () => safeAuthorizedQuery(() => employeeSalaryApi.getDetail(employeeId), null),
-    enabled: !!employeeId,
+    enabled: !!employeeId && canViewPayslip,
     retry: false,
   });
   const { data: holidaysData, isLoading: holidaysLoading, isError: holidaysError } = useQuery({
@@ -504,145 +532,62 @@ function EmployeeDashboard({ employeeId, firstName, greeting, today }) {
     enabled: !!employeeId,
     retry: false,
   });
+  // Shares the to-do card's cache entry, so approvers get their count without a second request.
+  const { data: todos, isLoading: todosLoading, isError: todosError } = useQuery({
+    queryKey: ['home-todos'],
+    queryFn: homeApi.todos,
+    staleTime: 30_000,
+    enabled: canApprove,
+  });
+
   const attendance = Array.isArray(attendanceData) ? attendanceData : [];
   const leaveBalance = Array.isArray(leaveBalanceData) ? leaveBalanceData : [];
   const leaveRequests = Array.isArray(leaveRequestsData) ? leaveRequestsData : [];
   const holidays = Array.isArray(holidaysData) ? holidaysData : [];
-  // punchTime is a UTC instant; "today" means today in IST, not UTC.
-  const todayKey = toISTDateInputValue();
+  const weekDays = Array.isArray(weekData) ? weekData : [];
+  const weekUnavailable = !weekLoading && !Array.isArray(weekData);
+  const shiftToday = weekDays.find((day) => String(day.date).slice(0, 10) === todayKey) || null;
   const todayPunches = attendance.filter((record) => typeof record.punchTime === 'string' && toISTDateInputValue(record.punchTime) === todayKey);
   const session = todaySession && typeof todaySession === 'object' && todaySession.status ? todaySession : null;
-  const hasCheckedIn = !!session || todayPunches.some((record) => record.punchType === 'IN');
+  const hasCheckedIn = !!session || todayPunches.some((record) => record.punchType === 'IN') || !!shiftToday?.firstIn;
   const hasCheckedOut = session?.status === 'CHECKED_OUT' || todayPunches.some((record) => record.punchType === 'OUT');
-  const nextHoliday = holidays
-    .filter((holiday) => typeof holiday.date === 'string' && holiday.date >= todayKey)
-    .sort((first, second) => first.date.localeCompare(second.date))[0];
-  const totalRemainingLeave = leaveBalance.reduce((total, item) => total + (item.remainingDays || 0), 0);
 
   return (
-    <div className="hz-dashboard hz-dashboard--employee">
-      <header className="hz-dash__hero">
-        <div className="hz-dash__hero-copy">
-          <p className="hz-dash__eyebrow">{today}</p>
-          <h1>{greeting}</h1>
-        </div>
-        <div className="hz-dash__hero-actions">
-          <Link to="/my-leave?apply=leave" className="btn btn-light">
-            <CalendarOff size={16} aria-hidden="true" /> Request leave
-          </Link>
-        </div>
-      </header>
+    <div className="hz-emp-home">
+      <EmployeeGreeting
+        greeting={greeting}
+        today={today}
+        employee={employee}
+        firstName={firstName}
+        hasCheckedIn={hasCheckedIn}
+        hasCheckedOut={hasCheckedOut}
+        attendanceDetail={todayAttendanceDetail(session, hasCheckedIn, hasCheckedOut)}
+        attendanceLoading={!!employeeId && (attendanceLoading || sessionLoading)}
+        shiftToday={shiftToday}
+        shiftLoading={!!employeeId && weekLoading}
+        shiftAvailable={!weekUnavailable}
+      />
+
+      <div className="hz-emp-home__cards" aria-label="Your overview" role="group">
+        <LeaveCard balances={leaveBalance} requests={leaveRequests} loading={!!employeeId && (leaveLoading || leaveRequestsLoading)} year={year} />
+        <WeekCard days={weekDays} loading={!!employeeId && weekLoading} unavailable={weekUnavailable} monday={monday} today={todayKey} />
+        {canViewPayslip && <PayslipCard salary={salary} loading={!!employeeId && salaryLoading} />}
+        {canApprove && <ApprovalsCard todos={todos} loading={todosLoading} error={todosError} />}
+      </div>
 
       <div className="hz-dash__grid hz-dash__grid--main">
         <TodosCard />
         <AskVettriBox />
       </div>
 
-      <section className="hz-dashboard__kpi-grid" aria-labelledby="employee-overview-title">
-        <div className="hz-dashboard__section-heading">
-          <div>
-            <span className="hz-dashboard__section-kicker">At a glance</span>
-            <h2 id="employee-overview-title">Your overview</h2>
-          </div>
-          <Link to="/my-profile" className="hz-dashboard__text-link">View profile <ArrowRight size={15} /></Link>
-        </div>
-
-        <div className="hz-dashboard__metric-grid">
-          <Link to="/my-attendance" className="hz-dashboard__metric text-decoration-none" style={{ color: 'inherit' }} aria-label="Today's attendance - open My Attendance">
-            <div className="hz-dashboard__metric-icon" style={{ color: 'var(--hz-primary-600)' }}><Clock3 size={19} /></div>
-            <span>Today</span>
-            <strong>{attendanceLoading ? '...' : hasCheckedOut ? 'Complete' : hasCheckedIn ? 'Checked in' : 'Not recorded'}</strong>
-            <small>{todayAttendanceDetail(session, hasCheckedIn, hasCheckedOut)}</small>
-          </Link>
-          <article className="hz-dashboard__metric">
-            <div className="hz-dashboard__metric-icon" style={{ color: 'var(--hz-success-500)' }}><CalendarOff size={19} /></div>
-            <span>Leave balance</span>
-            <strong>{leaveLoading ? '...' : `${totalRemainingLeave} days`}</strong>
-            <small>{year} remaining across leave types</small>
-          </article>
-          <article className="hz-dashboard__metric">
-            <div className="hz-dashboard__metric-icon" style={{ color: 'var(--hz-warning-500)' }}><WalletCards size={19} /></div>
-            <span>My pay</span>
-            <strong>{salary?.currentStructure ? 'Available' : 'Not set'}</strong>
-            <small>{salary?.currentStructure ? 'View salary and payslips' : 'Contact HR for details'}</small>
-          </article>
-          <article className="hz-dashboard__metric">
-            <div className="hz-dashboard__metric-icon" style={{ color: 'var(--hz-primary-600)' }}><CalendarDays size={19} /></div>
-            <span>Next holiday</span>
-            <strong>{nextHoliday?.name || 'None'}</strong>
-            <small>{nextHoliday?.date ? new Date(`${nextHoliday.date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Company calendar'}</small>
-          </article>
-        </div>
-      </section>
-
-        <section className="hz-dashboard__surface hz-dashboard__quick" aria-labelledby="employee-quick-actions-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <span className="hz-dashboard__section-kicker">Shortcuts</span>
-              <h2 id="employee-quick-actions-title">Quick actions</h2>
-            </div>
-          </div>
-          <div className="hz-dashboard__action-grid">
-            <Link to="/my-profile"><UserCheck size={18} /><span>My profile</span></Link>
-            <Link to="/my-attendance"><Clock3 size={18} /><span>My attendance</span></Link>
-            <Link to="/my-leave"><CalendarOff size={18} /><span>Manage leave</span></Link>
-            <Link to="/my-payslip"><WalletCards size={18} /><span>View payslip</span></Link>
-            <Link to="/helpdesk"><LifeBuoy size={18} /><span>Ask HR</span></Link>
-            <Link to="/company"><Megaphone size={18} /><span>Company</span></Link>
-          </div>
-        </section>
-
-      <div className="hz-dashboard__employee-widgets">
-        <AttendanceWidget records={attendance} loading={attendanceLoading} />
-        <FinanceWidget salary={salary} />
+      <div className="hz-dash__grid hz-dash__grid--main">
+        <HolidaysPanel holidays={holidays} loading={!!employeeId && holidaysLoading} error={holidaysError} today={todayKey} />
+        <QuickLinksPanel canViewPayslip={canViewPayslip} />
       </div>
-
-      <LeaveWidget
-        balances={leaveBalance}
-        requests={leaveRequests}
-        loading={leaveLoading}
-        year={year}
-        holidays={holidays}
-        holidaysLoading={holidaysLoading}
-        holidaysError={holidaysError}
-      />
 
       <AnnouncementsCard />
 
       <TeamPulse showBirthdays />
-
-      <div className="hz-dash__grid hz-dash__grid--main">
-        <section className="hz-dashboard__surface" aria-labelledby="employee-record-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <span className="hz-dashboard__section-kicker">Your record</span>
-              <h2 id="employee-record-title">Employee details</h2>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3 p-3" style={{ background: 'var(--hz-gray-50)', borderRadius: 10 }}>
-            <Avatar name={employee?.fullName || firstName} src={employee?.profilePhotoUrl} size="lg" />
-            <div>
-              <strong>{employee?.fullName || firstName || 'Employee'}</strong>
-              <small className="d-block text-secondary-hz">
-                {employee?.designationTitle || 'Employee'}
-                {employee?.departmentName ? ` · ${employee.departmentName}` : ''}
-              </small>
-            </div>
-          </div>
-          <Link to="/my-profile" className="hz-dashboard__text-link mt-3 d-inline-flex">Open my profile <ArrowRight size={15} /></Link>
-        </section>
-
-        <section className="hz-dashboard__surface" aria-labelledby="employee-support-title">
-          <div className="hz-dashboard__section-heading">
-            <div>
-              <h2 id="employee-support-title">Need a hand?</h2>
-            </div>
-            <LifeBuoy size={20} aria-hidden="true" />
-          </div>
-          <p className="text-secondary-hz mb-3">Raise a ticket with HR for questions about pay, leave, or your employee record.</p>
-          <Link to="/helpdesk" className="hz-dashboard__text-link">Open HR helpdesk <ArrowRight size={15} /></Link>
-        </section>
-      </div>
     </div>
   );
 }

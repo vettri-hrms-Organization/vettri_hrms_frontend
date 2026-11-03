@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Check, CheckCheck, ClipboardCheck, RefreshCw, X as XIcon } from 'lucide-react';
+import { AlertTriangle, Check, CheckCheck, ClipboardCheck, RefreshCw, Search, X as XIcon } from 'lucide-react';
 import { compOffApi, encashmentApi, leaveRequestsApi } from '../../api/endpoints/leave';
 import { attendanceApi } from '../../api/endpoints/attendance';
 import { overtimeApi } from '../../api/endpoints/shifts';
@@ -23,10 +23,11 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { formatCurrency } from '../../utils/formatCurrency';
-import { formatDateIST } from '../../utils/formatDateTime';
+import { formatDateIST, toISTDateInputValue } from '../../utils/formatDateTime';
 import { formatLeaveDuration } from '../../utils/formatLeave';
 import { addDays, formatDay, formatMinutes, istToday } from '../attendance/shiftUtils';
 import { travelApi } from '../../api/endpoints/workflows';
+import './approvals.css';
 
 /** Pending overtime older than this is out of the inbox window (the list endpoint requires a range). */
 const OVERTIME_LOOKBACK_DAYS = 365;
@@ -86,6 +87,8 @@ function buildSources(hasPermission, myEmployeeId) {
           r.pendingWith && r.approvalLevel > 0 ? `Step ${r.approvalLevel + 1} · with ${r.pendingWith}` : null,
         ),
         reason: r.reason,
+        submittedAt: r.requestedAt,
+        requestDate: r.startDate,
       })),
       approve: (item, note) => leaveRequestsApi.approve(item.id, note),
       reject: (item, note) => leaveRequestsApi.reject(item.id, note),
@@ -104,6 +107,7 @@ function buildSources(hasPermission, myEmployeeId) {
         title: 'Work from home',
         details: formatDay(r.workDate),
         reason: r.reason,
+        requestDate: r.workDate,
       })),
       approve: (item, note) => attendanceApi.approveWfh(item.id, note),
       reject: (item, note) => attendanceApi.rejectWfh(item.id, note),
@@ -125,6 +129,7 @@ function buildSources(hasPermission, myEmployeeId) {
           r.requestedCheckIn && `${r.requestedCheckIn}${r.requestedCheckOut ? ` – ${r.requestedCheckOut}` : ''}`,
         ),
         reason: r.reason,
+        requestDate: r.attendanceDate,
       })),
       approve: (item, note) => attendanceApi.reviewRegularization(item.id, true, note),
       reject: (item, note) => attendanceApi.reviewRegularization(item.id, false, note),
@@ -148,6 +153,7 @@ function buildSources(hasPermission, myEmployeeId) {
           title: r.source === 'EMPLOYEE' ? 'Overtime claim' : 'Overtime',
           details: joinDetails(formatDay(r.workDate), `${formatMinutes(r.computedMinutes)} computed`, r.shiftName),
           reason: r.employeeNote,
+          requestDate: r.workDate,
         })),
       // approvedMinutes null = approve the full computed overtime.
       approve: (item, note) => overtimeApi.review(item.id, true, null, note || null),
@@ -210,6 +216,7 @@ function buildSources(hasPermission, myEmployeeId) {
         ),
         reason: r.reason,
         submittedAt: r.createdAt,
+        requestDate: r.workDate,
       })),
       approve: (item, note) => compOffApi.approve(item.id, note),
       reject: (item, note) => compOffApi.reject(item.id, note),
@@ -251,9 +258,15 @@ function buildSources(hasPermission, myEmployeeId) {
         employeeName: r.employeeName,
         subtitle: r.employeeCode,
         title: 'FBP claim',
-        details: joinDetails(r.componentName, formatCurrency(r.amount), r.billReference ? `bill ${r.billReference}` : null),
+        details: joinDetails(
+          r.componentName,
+          formatCurrency(r.amount),
+          r.billReference ? `bill ${r.billReference}` : null,
+          r.billDate ? `dated ${formatDay(r.billDate)}` : null,
+        ),
         reason: r.description,
-        submittedAt: r.billDate,
+        // The claim DTO has no submitted time, only the bill's date, so it shows no pending age.
+        requestDate: r.billDate,
       })),
       approve: (item, note) => fbpApi.approveClaim(item.id, note),
       reject: (item, note) => fbpApi.rejectClaim(item.id, note),
@@ -302,6 +315,7 @@ function buildSources(hasPermission, myEmployeeId) {
         ),
         reason: r.purpose,
         submittedAt: r.createdAt,
+        requestDate: r.departDate,
       })),
       approve: (item, note) => travelApi.decide(item.id, true, note),
       reject: (item, note) => travelApi.decide(item.id, false, note),
@@ -353,6 +367,7 @@ function buildSources(hasPermission, myEmployeeId) {
         ),
         reason: r.projectSummary,
         submittedAt: r.submittedAt,
+        requestDate: r.weekStart,
       })),
       approve: (item, note) => timesheetsApi.approve(item.id, note),
       reject: (item, note) => timesheetsApi.reject(item.id, note),
@@ -383,16 +398,49 @@ function buildSources(hasPermission, myEmployeeId) {
   ];
 }
 
+/** Calendar days (IST) a request has waited since it was submitted; null when the source has no submitted time. */
+function pendingDays(submittedAt) {
+  if (!submittedAt || Number.isNaN(new Date(submittedAt).getTime())) return null;
+  const toUtc = (day) => { const [y, m, d] = day.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+  return Math.max(0, Math.round((toUtc(istToday()) - toUtc(toISTDateInputValue(submittedAt))) / 86400000));
+}
+
+function ageLabel(days) {
+  if (days === null) return '—';
+  if (days === 0) return 'Today';
+  if (days < 60) return plural(days, 'day');
+  return plural(Math.floor(days / 30), 'month');
+}
+
+/**
+ * Sort key for oldest/newest-first: when it was submitted, else the date the
+ * request is for (WFH day, attendance date, week…) for sources whose DTO has
+ * no submitted time. Items with neither sort last either way.
+ */
+function sortTime(item) {
+  const time = new Date(item.submittedAt || item.requestDate || '').getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
+/** Requests waiting this long are flagged in the "Pending since" column. */
+const STALE_AFTER_DAYS = 3;
+
 export default function Approvals() {
   const { hasPermission, user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState('all');
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState('oldest');
   const [selected, setSelected] = useState(() => new Set());
   const [busy, setBusy] = useState(() => new Set());
   const [rejecting, setRejecting] = useState(null);
   const [rejectNote, setRejectNote] = useState('');
-  const [bulkRunning, setBulkRunning] = useState(false);
+  // { done, total } while "Approve selected" works through the batch one by one.
+  const [bulkProgress, setBulkProgress] = useState(null);
+  // Requests the last bulk run couldn't approve, with the server's reason, until dismissed.
+  const [bulkFailures, setBulkFailures] = useState([]);
+  const tabRefs = useRef({});
 
   const sources = useMemo(() => buildSources(hasPermission, user?.employeeId).filter((s) => s.enabled), [hasPermission, user?.employeeId]);
 
@@ -410,23 +458,41 @@ export default function Approvals() {
       ...item,
       uid: `${source.key}:${item.id}`,
       source,
+      age: pendingDays(item.submittedAt),
     }));
     return { source, result, items };
   });
 
   const allItems = sections.flatMap((s) => s.items);
-  const visibleItems = filter === 'all' ? allItems : (sections.find((s) => s.source.key === filter)?.items || []);
+  const inTab = filter === 'all' ? allItems : (sections.find((s) => s.source.key === filter)?.items || []);
+  const needle = query.trim().toLowerCase();
+  const visibleItems = inTab
+    .filter((item) => !needle || [item.employeeName, item.subtitle, item.title]
+      .some((value) => String(value || '').toLowerCase().includes(needle)))
+    .map((item) => ({ item, time: sortTime(item) }))
+    .sort((a, b) => {
+      if (a.time === b.time) return 0;
+      if (a.time === null) return 1;
+      if (b.time === null) return -1;
+      return sort === 'oldest' ? a.time - b.time : b.time - a.time;
+    })
+    .map(({ item }) => item);
   const isLoading = sections.some((s) => s.result.isLoading);
   const failed = sections.filter((s) => s.result.isError);
+  const inScope = (s) => filter === 'all' || s.source.key === filter;
+  const failedInTab = failed.filter(inScope);
+  const loadingInTab = sections.some((s) => s.result.isLoading && inScope(s));
   const total = allItems.length;
+  const bulkRunning = bulkProgress !== null;
 
   const visibleSelected = visibleItems.filter((item) => selected.has(item.uid));
   const allVisibleSelected = visibleItems.length > 0 && visibleSelected.length === visibleItems.length;
 
   const tabs = [
-    { key: 'all', label: 'All', count: total },
-    ...sections.map((s) => ({ key: s.source.key, label: s.source.label, count: s.items.length })),
+    { key: 'all', label: 'All', count: total, loading: isLoading, error: false },
+    ...sections.map((s) => ({ key: s.source.key, label: s.source.label, count: s.items.length, loading: s.result.isLoading, error: s.result.isError })),
   ];
+  const activeTab = tabs.find((t) => t.key === filter);
 
   const markBusy = (uids, on) => setBusy((prev) => {
     const next = new Set(prev);
@@ -441,6 +507,8 @@ export default function Approvals() {
     });
   };
 
+  const unselect = (uid) => setSelected((prev) => { const next = new Set(prev); next.delete(uid); return next; });
+
   const toggle = (uid) => setSelected((prev) => {
     const next = new Set(prev);
     if (next.has(uid)) next.delete(uid); else next.add(uid);
@@ -454,12 +522,22 @@ export default function Approvals() {
     return next;
   });
 
+  // Roving focus for the type chips: arrows / Home / End move between tabs (WAI-ARIA tabs pattern).
+  const onTabKeyDown = (event, index) => {
+    const moves = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: tabs.length - 1 };
+    if (!(event.key in moves)) return;
+    event.preventDefault();
+    const target = tabs[(moves[event.key] + tabs.length) % tabs.length];
+    setFilter(target.key);
+    tabRefs.current[target.key]?.focus();
+  };
+
   async function approveOne(item) {
     markBusy([item.uid], true);
     try {
       await item.source.approve(item, undefined);
       toast.success(`Approved ${item.employeeName}'s ${item.title.toLowerCase()}.`);
-      setSelected((prev) => { const next = new Set(prev); next.delete(item.uid); return next; });
+      unselect(item.uid);
     } catch (error) {
       toast.error(errorMessage(error, `Could not approve ${item.employeeName}'s request.`));
     } finally {
@@ -478,7 +556,7 @@ export default function Approvals() {
     try {
       await item.source.reject(item, note || undefined);
       toast.success(`Rejected ${item.employeeName}'s ${item.title.toLowerCase()}.`);
-      setSelected((prev) => { const next = new Set(prev); next.delete(item.uid); return next; });
+      unselect(item.uid);
       setRejecting(null);
       setRejectNote('');
     } catch (error) {
@@ -489,28 +567,40 @@ export default function Approvals() {
     }
   }
 
+  /**
+   * Approves the selected visible rows one at a time with the same single-item
+   * calls the row buttons use, so each source's own rules apply. Failures stay
+   * selected and are listed with the server's reason; nothing is dropped.
+   */
   async function approveSelected() {
     const items = visibleSelected;
-    if (!items.length) return;
-    setBulkRunning(true);
+    if (!items.length || bulkRunning) return;
+    setBulkFailures([]);
+    setBulkProgress({ done: 0, total: items.length });
     markBusy(items.map((i) => i.uid), true);
-    const outcomes = await Promise.allSettled(items.map((item) => item.source.approve(item, undefined)));
-    const succeeded = items.filter((_, i) => outcomes[i].status === 'fulfilled');
-    const failedCount = items.length - succeeded.length;
-    setSelected((prev) => {
-      const next = new Set(prev);
-      succeeded.forEach((item) => next.delete(item.uid));
-      return next;
-    });
-    markBusy(items.map((i) => i.uid), false);
-    setBulkRunning(false);
+    let succeeded = 0;
+    const failures = [];
+    for (const item of items) {
+      try {
+        // Sequential on purpose: one decision at a time, with visible progress.
+        await item.source.approve(item, undefined);
+        succeeded += 1;
+        unselect(item.uid);
+      } catch (error) {
+        failures.push({ uid: item.uid, label: `${item.employeeName || 'Employee'} · ${item.title}`, message: errorMessage(error, 'Could not approve.') });
+      }
+      markBusy([item.uid], false);
+      setBulkProgress({ done: succeeded + failures.length, total: items.length });
+    }
+    setBulkProgress(null);
+    setBulkFailures(failures);
     refreshSources([...new Set(items.map((i) => i.source))]);
-    if (failedCount === 0) {
-      toast.success(`Approved ${plural(succeeded.length, 'request')}.`);
-    } else if (succeeded.length === 0) {
-      toast.error(`None of the ${plural(failedCount, 'request')} could be approved. They're still in the list.`);
+    if (failures.length === 0) {
+      toast.success(`Approved ${plural(succeeded, 'request')}.`);
+    } else if (succeeded === 0) {
+      toast.error(`None of the ${plural(failures.length, 'request')} could be approved. They're still in the list.`);
     } else {
-      toast.info(`Approved ${succeeded.length}, ${failedCount} failed. Failed requests are still in the list.`);
+      toast.info(`Approved ${succeeded}, ${failures.length} failed. Failed requests are still in the list.`);
     }
   }
 
@@ -521,7 +611,7 @@ export default function Approvals() {
       : `${plural(total, 'request')} waiting on your decision across leave, attendance and expenses.`;
 
   return (
-    <div className="hz-module-page d-flex flex-column gap-4">
+    <div className="hz-module-page hz-approvals">
       <PageHeader
         eyebrow="Workspace"
         title="Approvals"
@@ -540,89 +630,173 @@ export default function Approvals() {
         <Card><EmptyState icon={ClipboardCheck} title="No approval access" description="Approvals appear here once you're given permission to review requests." /></Card>
       ) : (
         <>
-          <div className="hz-tabs d-flex gap-1 overflow-auto" role="tablist" aria-label="Filter approvals by type">
-            {tabs.map((tab) => {
+          <div className="hz-approvals__chips" role="tablist" aria-label="Filter approvals by type">
+            {tabs.map((tab, index) => {
               const active = filter === tab.key;
+              const empty = tab.count === 0 && !tab.loading && !tab.error;
               return (
                 <button
                   key={tab.key}
+                  ref={(node) => { tabRefs.current[tab.key] = node; }}
                   type="button"
                   role="tab"
+                  id={`approvals-tab-${tab.key}`}
+                  aria-controls="approvals-panel"
                   aria-selected={active}
                   tabIndex={active ? 0 : -1}
                   onClick={() => setFilter(tab.key)}
-                  className={`hz-tab d-inline-flex align-items-center gap-2 text-nowrap ${active ? 'hz-tab--active' : ''}`}
+                  onKeyDown={(event) => onTabKeyDown(event, index)}
+                  className={`hz-approvals__chip${active ? ' is-active' : ''}${empty ? ' is-empty' : ''}`}
                 >
                   {tab.label}
-                  <span className={`hz-badge ${active ? 'hz-badge--primary' : 'hz-badge--neutral'}`} aria-label={`${tab.count} pending`}>{isLoading ? '…' : tab.count}</span>
+                  {tab.error ? (
+                    <span className="hz-approvals__chip-count is-error" aria-label="couldn't load"><AlertTriangle size={12} aria-hidden="true" /></span>
+                  ) : (
+                    <span className="hz-approvals__chip-count" aria-label={`${tab.count} pending`}>{tab.loading ? '…' : tab.count}</span>
+                  )}
                 </button>
               );
             })}
           </div>
 
           {failed.length > 0 && (
-            <div className="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2 mb-0" role="alert">
-              <span className="d-inline-flex align-items-center gap-2">
-                <AlertTriangle size={16} aria-hidden="true" />
+            <div className="hz-approvals__alert" role="alert">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span className="hz-approvals__alert-text">
                 Couldn't load {failed.map((s) => s.source.label).join(', ')}. Other approvals are shown below.
               </span>
-              <Button variant="secondary" size="sm" onClick={() => failed.forEach((s) => s.result.refetch?.())}>Retry</Button>
+              <span className="hz-approvals__alert-actions">
+                {failed.map((s) => (
+                  <Button key={s.source.key} variant="secondary" size="sm" icon={RefreshCw} onClick={() => s.result.refetch?.()} aria-label={`Retry ${s.source.label}`}>
+                    {failed.length > 1 ? s.source.label : 'Retry'}
+                  </Button>
+                ))}
+              </span>
             </div>
           )}
 
-          <Card bodyClassName="p-0">
-            {isLoading && allItems.length === 0 ? (
-              <div className="d-flex flex-column" aria-busy="true" aria-label="Loading approvals">
+          {bulkFailures.length > 0 && (
+            <div className="hz-approvals__alert" role="alert">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <div className="hz-approvals__alert-text">
+                <strong>{plural(bulkFailures.length, 'request')} couldn't be approved and {bulkFailures.length === 1 ? 'is' : 'are'} still selected:</strong>
+                <ul>
+                  {bulkFailures.map((failure) => <li key={failure.uid}>{`${failure.label}: ${failure.message}`}</li>)}
+                </ul>
+              </div>
+              <button type="button" className="hz-approvals__icon-button" onClick={() => setBulkFailures([])} aria-label="Dismiss approval failures">
+                <XIcon size={16} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+
+          <section className="hz-approvals__panel" id="approvals-panel" role="tabpanel" aria-labelledby={`approvals-tab-${filter}`}>
+            <div className="hz-approvals__toolbar">
+              <label className="hz-approvals__search">
+                <Search size={15} aria-hidden="true" />
+                <input type="search" placeholder="Search by name" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search approvals by name" />
+              </label>
+              <select className="form-select hz-approvals__sort" value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort approvals">
+                <option value="oldest">Oldest first</option>
+                <option value="newest">Newest first</option>
+              </select>
+              <span className="hz-approvals__total">{needle ? `${visibleItems.length} of ${inTab.length}` : `Total: ${inTab.length}`}</span>
+            </div>
+
+            {visibleItems.length > 0 && (
+              <div className="hz-approvals__bulkbar">
+                <label className="hz-approvals__select-all">
+                  <input
+                    type="checkbox"
+                    className="form-check-input m-0"
+                    checked={allVisibleSelected}
+                    onChange={toggleAllVisible}
+                    disabled={bulkRunning}
+                    aria-label="Select all visible requests"
+                  />
+                  {visibleSelected.length > 0 ? `${visibleSelected.length} selected` : 'Select all'}
+                </label>
+                {bulkRunning && (
+                  <div className="hz-approvals__progress" role="status" aria-live="polite">
+                    <span>Approving {Math.min(bulkProgress.done + 1, bulkProgress.total)} of {bulkProgress.total}…</span>
+                    <span className="hz-approvals__progress-track" aria-hidden="true">
+                      <span style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }} />
+                    </span>
+                  </div>
+                )}
+                <Button size="sm" icon={CheckCheck} onClick={approveSelected} loading={bulkRunning} disabled={visibleSelected.length === 0}>
+                  Approve selected{visibleSelected.length > 0 ? ` (${visibleSelected.length})` : ''}
+                </Button>
+              </div>
+            )}
+
+            {loadingInTab && visibleItems.length === 0 ? (
+              <ul className="hz-approvals__skeleton" aria-busy="true" aria-label="Loading approvals">
                 {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="d-flex align-items-center gap-3 p-3" style={{ borderBottom: '1px solid var(--hz-border)' }}>
-                    <Skeleton width={36} height={36} radius="50%" />
-                    <div className="flex-grow-1 d-flex flex-column gap-2">
+                  <li key={i}>
+                    <Skeleton width={34} height={34} radius="50%" />
+                    <div>
                       <Skeleton height={12} width="35%" />
                       <Skeleton height={10} width="60%" />
                     </div>
                     <Skeleton width={150} height={30} radius={8} />
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : visibleItems.length === 0 ? (
-              <EmptyState
-                icon={CheckCheck}
-                title="You're all caught up"
-                description={filter === 'all' ? 'Nothing is waiting on your decision right now.' : `No pending ${tabs.find((t) => t.key === filter)?.label.toLowerCase()} requests.`}
-              />
-            ) : (
-              <>
-                <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2" style={{ borderBottom: '1px solid var(--hz-border)', background: 'var(--hz-surface-muted, transparent)' }}>
-                  <label className="d-inline-flex align-items-center gap-2 mb-0" style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>
-                    <input
-                      type="checkbox"
-                      className="form-check-input m-0"
-                      checked={allVisibleSelected}
-                      onChange={toggleAllVisible}
-                      aria-label="Select all visible requests"
-                    />
-                    {visibleSelected.length > 0 ? `${visibleSelected.length} selected` : 'Select all'}
-                  </label>
-                  <Button size="sm" icon={CheckCheck} onClick={approveSelected} loading={bulkRunning} disabled={visibleSelected.length === 0}>
-                    Approve selected{visibleSelected.length > 0 ? ` (${visibleSelected.length})` : ''}
-                  </Button>
+              needle && inTab.length > 0 ? (
+                <EmptyState
+                  icon={Search}
+                  title="No requests match this search"
+                  description={`Nobody in ${filter === 'all' ? 'the inbox' : activeTab?.label.toLowerCase()} matches "${query.trim()}".`}
+                  action={<Button variant="secondary" size="sm" onClick={() => setQuery('')}>Clear search</Button>}
+                />
+              ) : failedInTab.length > 0 ? (
+                <div className="hz-state hz-state--error" role="alert">
+                  <div className="hz-state__icon-wrap" aria-hidden="true"><AlertTriangle size={26} aria-hidden="true" /></div>
+                  <h2 className="hz-state__title">Couldn't load {failedInTab.map((s) => s.source.label.toLowerCase()).join(', ')}</h2>
+                  <p className="hz-state__description">These requests are still waiting; they just couldn't be fetched.</p>
+                  <Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => failedInTab.forEach((s) => s.result.refetch?.())}>Try again</Button>
                 </div>
-                <ul className="list-unstyled mb-0" aria-label="Pending approvals">
-                  {visibleItems.map((item) => (
-                    <ApprovalRow
-                      key={item.uid}
-                      item={item}
-                      checked={selected.has(item.uid)}
-                      busy={busy.has(item.uid)}
-                      onToggle={() => toggle(item.uid)}
-                      onApprove={() => approveOne(item)}
-                      onReject={() => { setRejecting(item); setRejectNote(''); }}
-                    />
-                  ))}
-                </ul>
-              </>
+              ) : (
+                <EmptyState
+                  icon={CheckCheck}
+                  title="You're all caught up"
+                  description={filter === 'all' ? 'Nothing is waiting on your decision right now.' : `No pending ${activeTab?.label.toLowerCase()} requests.`}
+                />
+              )
+            ) : (
+              <div className="hz-approvals__table-wrap">
+                <table className="hz-approvals__table" aria-label="Pending approvals">
+                  <thead>
+                    <tr>
+                      <th className="hz-approvals__check-col"><span className="visually-hidden">Select</span></th>
+                      <th>Employee</th>
+                      <th>Request</th>
+                      <th>Details</th>
+                      <th>Reason</th>
+                      <th>Pending since</th>
+                      <th><span className="visually-hidden">Actions</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleItems.map((item) => (
+                      <ApprovalRow
+                        key={item.uid}
+                        item={item}
+                        checked={selected.has(item.uid)}
+                        busy={busy.has(item.uid)}
+                        locked={bulkRunning}
+                        onToggle={() => toggle(item.uid)}
+                        onApprove={() => approveOne(item)}
+                        onReject={() => { setRejecting(item); setRejectNote(''); }}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </Card>
+          </section>
         </>
       )}
 
@@ -662,44 +836,50 @@ export default function Approvals() {
   );
 }
 
-function ApprovalRow({ item, checked, busy, onToggle, onApprove, onReject }) {
+function ApprovalRow({ item, checked, busy, locked, onToggle, onApprove, onReject }) {
   const who = item.employeeName || 'Employee';
   const what = item.title.toLowerCase();
+  const stale = item.age !== null && item.age >= STALE_AFTER_DAYS;
   return (
-    <li className="d-flex flex-column flex-md-row align-items-md-center gap-3 p-3" style={{ borderBottom: '1px solid var(--hz-border)' }}>
-      <div className="d-flex align-items-start gap-3 flex-grow-1 min-w-0">
+    <tr className={checked ? 'is-selected' : undefined}>
+      <td className="hz-approvals__check-col">
         <input
           type="checkbox"
-          className="form-check-input mt-2 flex-shrink-0"
+          className="form-check-input m-0"
           checked={checked}
           onChange={onToggle}
-          disabled={busy}
+          disabled={busy || locked}
           aria-label={`Select ${who}'s ${what}`}
         />
+      </td>
+      <td className="hz-approvals__who">
         <Avatar name={who} size="sm" />
-        <div className="min-w-0 flex-grow-1">
-          <div className="d-flex align-items-center flex-wrap gap-2">
-            {item.employeeId ? (
-              <Link to={`/employees/${item.employeeId}`} className="text-decoration-none" style={{ fontWeight: 600, color: 'var(--hz-text-primary)', fontSize: 'var(--hz-text-sm)' }}>{who}</Link>
-            ) : (
-              <span style={{ fontWeight: 600, fontSize: 'var(--hz-text-sm)' }}>{who}</span>
-            )}
-            <Badge variant={item.source.variant}>{item.title}</Badge>
-          </div>
-          {item.subtitle && <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>{item.subtitle}</div>}
-          <div style={{ fontSize: 'var(--hz-text-sm)', color: 'var(--hz-text-secondary)' }}>{item.details}</div>
-          {item.reason && (
-            <div className="text-truncate" style={{ fontSize: 12, color: 'var(--hz-text-muted)', maxWidth: 560 }} title={item.reason}>{item.reason}</div>
+        <div>
+          {item.employeeId ? (
+            <Link to={`/employees/${item.employeeId}`} className="hz-approvals__name">{who}</Link>
+          ) : (
+            <span className="hz-approvals__name">{who}</span>
           )}
-          {item.submittedAt && (
-            <div style={{ fontSize: 12, color: 'var(--hz-text-muted)' }}>Submitted {formatDateIST(item.submittedAt)}</div>
-          )}
+          {item.subtitle && <small>{item.subtitle}</small>}
         </div>
-      </div>
-      <div className="d-flex gap-2 justify-content-end flex-shrink-0">
-        <Button size="sm" variant="secondary" icon={XIcon} onClick={onReject} disabled={busy} aria-label={`Reject ${who}'s ${what}`}>Reject</Button>
-        <Button size="sm" icon={Check} onClick={onApprove} loading={busy} aria-label={`Approve ${who}'s ${what}`}>Approve</Button>
-      </div>
-    </li>
+      </td>
+      <td data-label="Request"><Badge variant={item.source.variant}>{item.title}</Badge></td>
+      <td data-label="Details" className="hz-approvals__details">{item.details || '—'}</td>
+      <td data-label="Reason" className="hz-approvals__reason"><span title={item.reason || undefined}>{item.reason || '—'}</span></td>
+      <td data-label="Pending since" className="hz-approvals__age">
+        {item.age === null ? (
+          <span title="This request type doesn't record when it was submitted">—</span>
+        ) : (
+          <>
+            <strong className={stale ? 'is-stale' : undefined}>{ageLabel(item.age)}</strong>
+            <small>{formatDateIST(item.submittedAt)}</small>
+          </>
+        )}
+      </td>
+      <td className="hz-approvals__actions">
+        <Button size="sm" variant="secondary" icon={XIcon} onClick={onReject} disabled={busy || locked} aria-label={`Reject ${who}'s ${what}`}>Reject</Button>
+        <Button size="sm" icon={Check} onClick={onApprove} loading={busy} disabled={locked} aria-label={`Approve ${who}'s ${what}`}>Approve</Button>
+      </td>
+    </tr>
   );
 }

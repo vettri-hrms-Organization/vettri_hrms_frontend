@@ -163,4 +163,100 @@ describe('Approvals inbox', () => {
     expect(mocks.overtimeApi.list).toHaveBeenCalledWith('PENDING', expect.any(String), expect.any(String));
     expect(screen.getByTestId('approvals-total').textContent).toBe('0 pending');
   });
+
+  const rowNames = () => within(screen.getByRole('table', { name: 'Pending approvals' }))
+    .getAllByRole('row').slice(1).map((row) => row.querySelector('.hz-approvals__name')?.textContent);
+  const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString();
+
+  it('shows how long each request has waited and sorts oldest or newest first', async () => {
+    mocks.leaveRequestsApi.teamList.mockResolvedValue([{ ...LEAVE, requestedAt: daysAgo(5) }]);
+    mocks.expensesApi.managerQueue.mockResolvedValue([{ ...CLAIM, submittedAt: daysAgo(1) }]);
+    // WFH has no submitted time: it sorts by its own date and shows no age.
+    mocks.attendanceApi.teamWfh.mockResolvedValue([{ ...WFH, workDate: '2099-01-01' }]);
+    renderPage();
+
+    await screen.findByText('Asha Rao');
+    expect(rowNames()).toEqual(['Asha Rao', 'Meena Iyer', 'Ravi Kumar']);
+    expect(screen.getByText('5 days')).toBeTruthy();
+    expect(screen.getByText('1 day')).toBeTruthy();
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sort approvals' }), { target: { value: 'newest' } });
+    expect(rowNames()).toEqual(['Ravi Kumar', 'Meena Iyer', 'Asha Rao']);
+  });
+
+  it('searches by name and offers to clear a search with no matches', async () => {
+    renderPage();
+    await screen.findByText('Asha Rao');
+
+    const search = screen.getByRole('searchbox', { name: 'Search approvals by name' });
+    fireEvent.change(search, { target: { value: 'meena' } });
+    expect(rowNames()).toEqual(['Meena Iyer']);
+    expect(screen.getByText('1 of 3')).toBeTruthy();
+
+    fireEvent.change(search, { target: { value: 'nobody' } });
+    expect(screen.getByText('No requests match this search')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(rowNames()).toHaveLength(3);
+  });
+
+  it('bulk-approves one request at a time with progress and lists failures with the reason', async () => {
+    let finishLeave;
+    mocks.leaveRequestsApi.approve.mockImplementation(() => new Promise((resolve) => { finishLeave = resolve; }));
+    mocks.attendanceApi.approveWfh.mockRejectedValue(Object.assign(new Error('x'), { response: { status: 400, data: { message: 'Date is locked' } } }));
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('checkbox', { name: "Select Asha Rao's casual leave" }));
+    fireEvent.click(screen.getByRole('checkbox', { name: "Select Ravi Kumar's work from home" }));
+    fireEvent.click(screen.getByRole('button', { name: /Approve selected \(2\)/ }));
+
+    expect(await screen.findByText('Approving 1 of 2…')).toBeTruthy();
+    // The second request waits until the first has finished.
+    expect(mocks.leaveRequestsApi.approve).toHaveBeenCalledTimes(1);
+    expect(mocks.attendanceApi.approveWfh).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: "Approve Meena Iyer's expense claim" }).disabled).toBe(true);
+
+    finishLeave({ ...LEAVE, status: 'APPROVED' });
+    expect(await screen.findByText('Approved 1, 1 failed. Failed requests are still in the list.')).toBeTruthy();
+    expect(mocks.attendanceApi.approveWfh).toHaveBeenCalledWith(21, undefined);
+    expect(screen.getByText('Ravi Kumar · Work from home: Date is locked')).toBeTruthy();
+    expect(screen.queryByText(/Approving \d of/)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss approval failures' }));
+    expect(screen.queryByText('Ravi Kumar · Work from home: Date is locked')).toBeNull();
+  });
+
+  it('keeps other sources visible when one fails and retries just that source', async () => {
+    mocks.expensesApi.managerQueue.mockRejectedValue(Object.assign(new Error('boom'), { response: { status: 500 } }));
+    renderPage();
+
+    expect(await screen.findByText('Asha Rao')).toBeTruthy();
+    expect(await screen.findByText(/Couldn't load Expenses/)).toBeTruthy();
+    const tabs = screen.getByRole('tablist', { name: 'Filter approvals by type' });
+    expect(within(tabs).getByRole('tab', { name: /Expenses couldn't load/ })).toBeTruthy();
+
+    fireEvent.click(within(tabs).getByRole('tab', { name: /Expenses/ }));
+    expect(screen.getByText("Couldn't load expenses")).toBeTruthy();
+    expect(screen.queryByText("You're all caught up")).toBeNull();
+
+    mocks.expensesApi.managerQueue.mockResolvedValue([CLAIM]);
+    const leaveCalls = mocks.leaveRequestsApi.teamList.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Expenses' }));
+    expect(await screen.findByText('Meena Iyer')).toBeTruthy();
+    expect(mocks.leaveRequestsApi.teamList.mock.calls.length).toBe(leaveCalls);
+  });
+
+  it('moves between type chips with the arrow keys', async () => {
+    renderPage();
+    await screen.findByText('Asha Rao');
+    const tabs = screen.getByRole('tablist', { name: 'Filter approvals by type' });
+    const all = within(tabs).getByRole('tab', { name: /^All/ });
+    all.focus();
+    fireEvent.keyDown(all, { key: 'ArrowRight' });
+    const leave = within(tabs).getByRole('tab', { name: /^Leave/ });
+    expect(leave.getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(leave);
+    expect(screen.queryByText('Ravi Kumar')).toBeNull();
+    fireEvent.keyDown(leave, { key: 'End' });
+    expect(within(tabs).getAllByRole('tab').at(-1).getAttribute('aria-selected')).toBe('true');
+  });
 });

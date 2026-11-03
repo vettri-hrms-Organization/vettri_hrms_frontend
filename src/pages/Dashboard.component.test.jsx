@@ -13,6 +13,12 @@ const mocks = vi.hoisted(() => ({
   holidaysApi: { list: vi.fn() },
   documentsApi: { expiringSoon: vi.fn(), byEmployee: vi.fn() },
   notificationsApi: { inbox: vi.fn() },
+  employeesApi: { getById: vi.fn() },
+  attendanceApi: { byEmployee: vi.fn(), today: vi.fn() },
+  dailyAttendanceApi: { mine: vi.fn() },
+  employeeSalaryApi: { getDetail: vi.fn() },
+  homeApi: { todos: vi.fn(), today: vi.fn(), setup: vi.fn() },
+  announcementsApi: { feed: vi.fn() },
 }));
 
 vi.mock('../hooks/useAuth', () => ({ useAuth: () => mocks.auth }));
@@ -21,19 +27,13 @@ vi.mock('../api/endpoints/dashboard', () => ({ dashboardApi: mocks.dashboardApi 
 vi.mock('../api/endpoints/leave', () => ({ leaveRequestsApi: mocks.leaveRequestsApi, holidaysApi: mocks.holidaysApi }));
 vi.mock('../api/endpoints/documents', () => ({ documentsApi: mocks.documentsApi }));
 vi.mock('../api/endpoints/notifications', () => ({ notificationsApi: mocks.notificationsApi }));
-vi.mock('../api/endpoints/employees', () => ({ employeesApi: { getById: vi.fn() } }));
-vi.mock('../api/endpoints/attendance', () => ({ attendanceApi: { byEmployee: vi.fn() } }));
-vi.mock('../api/endpoints/salary', () => ({ employeeSalaryApi: { getDetail: vi.fn() } }));
+vi.mock('../api/endpoints/employees', () => ({ employeesApi: mocks.employeesApi }));
+vi.mock('../api/endpoints/attendance', () => ({ attendanceApi: mocks.attendanceApi }));
+vi.mock('../api/endpoints/shifts', () => ({ dailyAttendanceApi: mocks.dailyAttendanceApi }));
+vi.mock('../api/endpoints/salary', () => ({ employeeSalaryApi: mocks.employeeSalaryApi }));
 vi.mock('../api/endpoints/selfService', () => ({ selfServiceApi: { notifications: vi.fn() } }));
-vi.mock('../api/endpoints/home', () => ({
-  homeApi: {
-    todos: vi.fn().mockResolvedValue([]),
-    today: vi.fn().mockResolvedValue({ outToday: [], birthdays: [], anniversaries: [], it: null }),
-    setup: vi.fn().mockResolvedValue({ visible: false, done: 0, total: 0, steps: [] }),
-  },
-  askVettri: vi.fn(),
-}));
-vi.mock('../api/endpoints/announcements', () => ({ announcementsApi: { feed: vi.fn().mockResolvedValue([]) } }));
+vi.mock('../api/endpoints/home', () => ({ homeApi: mocks.homeApi, askVettri: vi.fn() }));
+vi.mock('../api/endpoints/announcements', () => ({ announcementsApi: mocks.announcementsApi }));
 
 const SUMMARY = {
   totalEmployees: 42,
@@ -56,9 +56,16 @@ const PENDING = [
   { id: 101, employeeName: 'Meena Iyer', leaveTypeName: 'Casual Leave', startDate: '2026-11-03', endDate: '2026-11-04', days: 2 },
 ];
 
-function setAuth(permissions, roles = []) {
+beforeEach(() => {
+  mocks.homeApi.todos.mockReset().mockResolvedValue([]);
+  mocks.homeApi.today.mockReset().mockResolvedValue({ outToday: [], birthdays: [], anniversaries: [], it: null });
+  mocks.announcementsApi.feed.mockReset().mockResolvedValue([]);
+  mocks.homeApi.setup.mockReset().mockResolvedValue({ visible: false, done: 0, total: 0, steps: [] });
+});
+
+function setAuth(permissions, roles = [], extraUser = {}) {
   mocks.auth = {
-    user: { fullName: 'Lakshmi Nair', roles },
+    user: { fullName: 'Lakshmi Nair', roles, ...extraUser },
     hasPermission: (permission) => permissions.includes(permission),
     hasRole: (role) => roles.includes(role),
     hasAnyRole: (list) => list.some((role) => roles.includes(role)),
@@ -146,5 +153,60 @@ describe('Dashboard (admin)', () => {
     expect(await screen.findByText('Workforce metrics could not be loaded.')).toBeTruthy();
     await user.click(screen.getAllByRole('button', { name: 'Retry' })[0]);
     await waitFor(() => expect(mocks.dashboardApi.summary).toHaveBeenCalledTimes(2));
+  });
+});
+
+
+describe('Dashboard (employee)', () => {
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+
+  beforeEach(() => {
+    mocks.employeesApi.getById.mockReset().mockResolvedValue({ id: 5, fullName: 'Lakshmi Nair', designationTitle: 'Designer', departmentName: 'Product' });
+    mocks.attendanceApi.byEmployee.mockReset().mockResolvedValue([]);
+    mocks.attendanceApi.today.mockReset().mockResolvedValue(null);
+    mocks.dailyAttendanceApi.mine.mockReset().mockResolvedValue([
+      { date: today, shiftName: 'General', shiftStart: '10:00', shiftEnd: '18:30', status: 'ABSENT', workedMinutes: 0, late: false },
+    ]);
+    mocks.leaveRequestsApi.balance.mockReset().mockResolvedValue([
+      { leaveTypeId: 1, leaveTypeName: 'Casual Leave', remainingDays: 7, allocatedDays: 12, carriedForwardDays: 0 },
+    ]);
+    mocks.leaveRequestsApi.byEmployee.mockReset().mockResolvedValue([]);
+    mocks.employeeSalaryApi.getDetail.mockReset().mockResolvedValue({ currentStructure: null, payrollHistory: [{ id: 3, periodLabel: 'Oct 2026', netSalary: 48250, paymentDate: '2026-10-31' }] });
+    mocks.holidaysApi.list.mockReset().mockResolvedValue([{ id: 1, name: 'Year End', date: '2999-12-31' }]);
+    mocks.dashboardApi.summary.mockReset();
+  });
+
+  afterEach(() => cleanup());
+
+  it("greets the employee with today's shift, check-in status and key cards", async () => {
+    setAuth(['SELF_PAYSLIP_VIEW', 'SELF_LEAVE_VIEW', 'SELF_ATTENDANCE_VIEW'], ['EMPLOYEE'], { employeeId: 5 });
+    renderDashboard();
+
+    expect(await screen.findByText(/General · 10:00 AM – 6:30 PM/)).toBeTruthy();
+    expect(screen.getByText('Not checked in')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Check in on My Attendance' }).getAttribute('href')).toBe('/my-attendance');
+    expect(await screen.findByText('Designer · Product')).toBeTruthy();
+    const leave = screen.getByRole('region', { name: /Leave available/ });
+    await waitFor(() => expect(within(leave).getAllByText('7').length).toBeGreaterThan(0));
+    expect(await screen.findByText('Net pay · Oct 2026')).toBeTruthy();
+    expect(screen.getByText('Paid 31 Oct 2026')).toBeTruthy();
+    expect(await screen.findByText('Year End')).toBeTruthy();
+    expect(mocks.dailyAttendanceApi.mine).toHaveBeenCalled();
+    expect(mocks.dashboardApi.summary).not.toHaveBeenCalled();
+    // No approval permissions: no approvals card.
+    expect(screen.queryByRole('region', { name: 'Pending approvals' })).toBeNull();
+  });
+
+  it('hides pay without payslip access and shows approvals to approvers', async () => {
+    setAuth(['TIMESHEET_APPROVE'], ['EMPLOYEE'], { employeeId: 5 });
+    mocks.homeApi.todos.mockResolvedValue([{ key: 'timesheets', title: 'Timesheets to approve', detail: '2 waiting', count: 2, link: '/approvals', tone: 'action' }]);
+    mocks.attendanceApi.today.mockResolvedValue({ status: 'CHECKED_IN', checkInTime: new Date().toISOString() });
+    renderDashboard();
+
+    const approvals = await screen.findByRole('region', { name: 'Pending approvals' });
+    await waitFor(() => expect(within(approvals).getAllByText('2').length).toBeGreaterThan(0));
+    expect(await screen.findByText('Checked in')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Latest payslip' })).toBeNull();
+    expect(mocks.employeeSalaryApi.getDetail).not.toHaveBeenCalled();
   });
 });
