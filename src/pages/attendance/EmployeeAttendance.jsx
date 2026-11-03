@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Home, LogIn, LogOut, MapPin, RefreshCw } from 'lucide-react';
+import { CalendarDays, Clock3, FileText, Home, LogIn, LogOut, MapPin, RefreshCw } from 'lucide-react';
 import { attendanceApi } from '../../api/endpoints/attendance';
 import { dailyAttendanceApi } from '../../api/endpoints/shifts';
 import Dialog from '../../components/ui/Dialog';
@@ -16,6 +16,8 @@ import { SkeletonText } from '../../components/ui/Skeleton';
 import { formatDateIST, formatTimeIST } from '../../utils/formatDateTime';
 import { useAuth } from '../../hooks/useAuth';
 import MyShiftOvertime from './MyShiftOvertime';
+import { AttendanceCalendar, AttendanceLog, AttendancePolicyDialog, AttendanceStats, LiveClock, WeekTimings, logPeriods } from './MyAttendanceParts';
+import './my-attendance.css';
 import { timesheetsApi } from '../../api/endpoints/timesheets';
 import LogWorkDialog from '../timesheets/LogWorkDialog';
 
@@ -167,53 +169,23 @@ function localDate(daysFromToday = 0) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-function currentMonthInIST() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kolkata',
-    year: 'numeric',
-    month: '2-digit',
-  }).formatToParts(new Date());
-  const year = parts.find((part) => part.type === 'year')?.value;
-  const month = parts.find((part) => part.type === 'month')?.value;
-  return `${year}-${month}`;
-}
-
-function shiftMonth(month, offset) {
-  const [year, monthNumber] = month.split('-').map(Number);
-  const shifted = new Date(Date.UTC(year, monthNumber - 1 + offset, 1));
-  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
-function monthRange(month) {
-  const [year, monthNumber] = month.split('-').map(Number);
-  const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
-  return {
-    from: `${month}-01`,
-    to: `${month}-${String(daysInMonth).padStart(2, '0')}`,
-  };
-}
-
-function monthLabel(month) {
-  const [year, monthNumber] = month.split('-').map(Number);
-  return new Intl.DateTimeFormat('en-IN', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'Asia/Kolkata',
-  }).format(new Date(Date.UTC(year, monthNumber - 1, 1, 12)));
-}
-
-function formatDuration(minutes) {
-  if (minutes == null) return '—';
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return hours ? `${hours}h ${remainingMinutes}m` : `${remainingMinutes}m`;
-}
-
 export default function EmployeeAttendance() {
   const { hasPermission } = useAuth();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState('OFFICE');
-  const [historyMonth, setHistoryMonth] = useState(currentMonthInIST);
+  const [logTab, setLogTab] = useState('log');
+  const [logPeriodKey, setLogPeriodKey] = useState('30');
+  const [wfhOpen, setWfhOpen] = useState(false);
+  const [regularizeOpen, setRegularizeOpen] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  // Clock format is a per-person display preference, remembered on this device.
+  const [use24h, setUse24hState] = useState(() => {
+    try { return localStorage.getItem('vettri.attendance.24h') === '1'; } catch { return false; }
+  });
+  const setUse24h = (value) => {
+    setUse24hState(value);
+    try { localStorage.setItem('vettri.attendance.24h', value ? '1' : '0'); } catch { /* storage unavailable */ }
+  };
   const [workDate, setWorkDate] = useState(localDate(1));
   const [reason, setReason] = useState('');
   const [regularizationDate, setRegularizationDate] = useState(localDate());
@@ -236,10 +208,12 @@ export default function EmployeeAttendance() {
   });
 
   const today = useQuery({ queryKey: ['attendance-today'], queryFn: attendanceApi.today });
-  const historyRange = monthRange(historyMonth);
+  const periods = logPeriods(todayIst);
+  const logPeriod = periods.find((option) => option.key === logPeriodKey) || periods[0];
+  // Check-in sessions for the log period: they add where the day was worked from (e.g. WFH).
   const history = useQuery({
-    queryKey: ['attendance-history', historyRange.from, historyRange.to],
-    queryFn: () => attendanceApi.myHistory(historyRange.from, historyRange.to),
+    queryKey: ['attendance-history', logPeriod.from, logPeriod.to],
+    queryFn: () => attendanceApi.myHistory(logPeriod.from, logPeriod.to),
   });
   const context = useQuery({ queryKey: ['attendance-context'], queryFn: attendanceApi.context });
   const policy = useQuery({ queryKey: ['attendance-policy'], queryFn: attendanceApi.policy });
@@ -285,6 +259,7 @@ export default function EmployeeAttendance() {
       setMessage({ type: 'success', text: 'You are checked in.' });
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-daily-me'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
     },
     onError: (error) => {
@@ -315,6 +290,7 @@ export default function EmployeeAttendance() {
       if (timesheetSettings.data?.enabled && timesheetSettings.data?.promptOnCheckout) setLogWork(true);
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-daily-me'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
     },
     onError: (error) => setMessage({ type: 'error', text: error.response?.data?.message || error.message || 'Check-out could not be completed.' }),
@@ -339,6 +315,7 @@ export default function EmployeeAttendance() {
       queryClient.invalidateQueries({ queryKey: ['attendance-regularizations-mine'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-history'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-daily-me'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-context'] });
     },
     onError: (error) => setMessage({ type: 'error', text: error.response?.data?.message || 'Attendance regularization could not be submitted.' }),
@@ -399,8 +376,20 @@ export default function EmployeeAttendance() {
     return code || 'Check-in could not be completed.';
   }
 
+  const sessionsByDate = new Map((history.data || []).map((record) => [record.attendanceDate, record]));
+  const calendarMonth = logPeriod.key === '30' ? todayIst.slice(0, 7) : logPeriod.key;
+  const statusTitle = session ? (session.status === 'CHECKED_OUT' ? 'Checked out' : 'Checked in') : context.data?.latestBiometricPunchType ? 'Biometric punch received' : context.data?.requiresBiometric ? 'Awaiting biometric' : 'Not checked in';
+  const statusDetail = session
+    ? `${session.checkInTime ? `In ${formatTimeIST(session.checkInTime)}` : ''}${session.checkOutTime ? ` · Out ${formatTimeIST(session.checkOutTime)}` : ''}${[session.locationType, session.source].filter(Boolean).length ? ` · ${[session.locationType, session.source].filter(Boolean).map(formatStatusLabel).join(' · ')}` : ''}`
+    : context.data?.latestBiometricPunchType ? `${formatStatusLabel(context.data.latestBiometricPunchType)} · ${formatTimeIST(context.data.latestBiometricPunchTime)}` : context.data?.requiresBiometric ? 'Please use your assigned biometric device.' : 'Check in when you are ready.';
+
+  function openRegularize(date) {
+    setRegularizationDate(date || localDate());
+    setRegularizeOpen(true);
+  }
+
   return (
-    <div className="hz-module-page d-flex flex-column gap-4">
+    <div className="hz-my-att">
       {logWork && <LogWorkDialog onClose={() => setLogWork(false)} />}
       <Dialog
         open={selfieOpen}
@@ -419,136 +408,122 @@ export default function EmployeeAttendance() {
         {selfieOpen && message?.code === 'SELFIE' && <div className="alert alert-danger mt-3 mb-0" role="alert">{message.text}</div>}
       </Dialog>
 
-      <PageHeader eyebrow="Self service" title="My Attendance" description="Check in when your organization’s attendance policy allows, request WFH, and see your attendance history." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); history.refetch(); context.refetch(); policy.refetch(); wfhRequests.refetch(); regularizations.refetch(); }}>Refresh</Button>} />
+      <PageHeader eyebrow="Self service" title="My Attendance" description="Check in, see how your week is going, and keep your attendance record right." actions={<Button variant="secondary" size="sm" icon={RefreshCw} onClick={() => { today.refetch(); history.refetch(); context.refetch(); policy.refetch(); wfhRequests.refetch(); regularizations.refetch(); queryClient.invalidateQueries({ queryKey: ['attendance-daily-me'] }); }}>Refresh</Button>} />
 
       {message && <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'} mb-0`} role="status">{message.text}{message.type === 'error' && (message.code?.startsWith('LOCATION_') || message.code === 'SELFIE') && <button type="button" className="btn btn-link p-0 ms-2" onClick={retryCheckIn}>Try again</button>}</div>}
 
-      <div className="row g-3">
-        <div className="col-12 col-lg-7">
-          <Card title="Today" subtitle={new Date(`${context.data?.date || session?.attendanceDate || localDate()}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}>
-            {(today.isLoading || context.isLoading) && <SkeletonText lines={3} />}
-            {(today.isError || context.isError) && <ErrorState description={checkIn.isSuccess ? 'Check-in succeeded, but today’s attendance could not be refreshed.' : 'Couldn’t load today’s attendance policy.'} onRetry={() => { today.refetch(); context.refetch(); }} />}
-            {!today.isLoading && !context.isLoading && !today.isError && !context.isError && (
-              <div className="d-flex flex-column gap-4">
-                <div className="d-flex flex-wrap gap-2">
-                  <StatusBadge status={context.data.workMode === 'WFH' ? 'WFH_APPROVED' : 'OFFICE'} variant={context.data.workMode === 'WFH' ? 'info' : 'neutral'} dot={false}>
-                    {context.data.workMode === 'WFH' ? 'WFH · Approved' : 'Office'}
-                  </StatusBadge>
-                  <StatusBadge status={context.data.attendanceMethod} variant="neutral" dot={false}>
-                    {context.data.attendanceMethod?.replaceAll('_', ' ')}
-                  </StatusBadge>
-                </div>
-                <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                  <div className="d-flex align-items-center gap-3"><div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: 48, height: 48, background: session || context.data.latestBiometricPunchType ? 'var(--hz-success-50)' : 'var(--hz-gray-100)', color: session || context.data.latestBiometricPunchType ? 'var(--hz-success-600)' : 'var(--hz-text-secondary)' }}><Clock3 size={22} /></div><div><div style={{ fontWeight: 700, fontSize: 18 }}>{session ? (session.status === 'CHECKED_OUT' ? 'Checked out' : 'Checked in') : context.data.latestBiometricPunchType ? 'Biometric punch received' : context.data.requiresBiometric ? 'Awaiting biometric' : 'Not marked'}</div><div className="text-muted-hz" style={{ fontSize: 13 }}>{session ? ([session.locationType, session.source].filter(Boolean).map(formatStatusLabel).join(' · ') || 'Recorded today') : context.data.latestBiometricPunchType ? `${formatStatusLabel(context.data.latestBiometricPunchType)} · ${formatTimeIST(context.data.latestBiometricPunchTime)}` : context.data.requiresBiometric ? 'Please use your assigned biometric device.' : 'Use Check in when you are ready.'}</div></div></div>
-                  {session && <StatusBadge status={session.status} variant={session.status === 'CHECKED_IN' ? 'success' : 'info'} dot>{formatStatusLabel(session.status)}</StatusBadge>}
-                </div>
-                <div className="row g-3"><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check in</div><strong>{session?.checkInTime ? formatTimeIST(session.checkInTime) : '--:--'}</strong></div><div className="col-6"><div className="text-muted-hz" style={{ fontSize: 12 }}>Check out</div><strong>{session?.checkOutTime ? formatTimeIST(session.checkOutTime) : '--:--'}</strong></div></div>
-                {shiftToday?.shiftName && (
-                  <div className="hz-today-shift">
-                    Today’s shift: <strong>{shiftToday.shiftName}</strong>{shiftToday.shiftStart ? ` · ${shiftToday.shiftStart}–${shiftToday.shiftEnd}` : ''}
-                  </div>
-                )}
-                {canWebCheckIn && requireSelfie && !session && <div className="hz-today-shift">A selfie is required when you check in.</div>}
-                <div className="hz-punch-actions">
-                  {canWebCheckIn && <Button icon={LogIn} onClick={startCheckIn} loading={checkIn.isPending} disabled={!!session || busy || context.data.attendanceStatus === 'BIOMETRIC_PUNCHED'}>
-                    {checkIn.isPending ? (locationStatus === 'locating' ? 'Getting your location…' : locationStatus === 'improving' ? 'Improving location accuracy…' : 'Verifying location…') : 'Check in'}
-                  </Button>}
-                  {canSelfCheckOut && <Button variant="secondary" icon={LogOut} onClick={() => checkOut.mutate()} loading={checkOut.isPending} disabled={!session || busy}>Check out</Button>}
-                </div>
-                {!context.data.allowedWebCheckIn && context.data.requiresBiometric && <div className="alert alert-info mb-0" role="status">Biometric attendance required. Please mark attendance using your assigned biometric device.</div>}
-              </div>
-            )}
-          </Card>
+      <section className="hz-my-att__top">
+        <div>
+          <h2 className="hz-my-att__heading">Attendance stats</h2>
+          <AttendanceStats />
         </div>
-        <div className="col-12 col-lg-5"><Card title="Work location" subtitle="Your check-in options follow your organization’s attendance policy."><div className="btn-group w-100 mb-3" role="group"><button type="button" className={`btn ${mode === 'OFFICE' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setMode('OFFICE')}><MapPin size={16} className="me-2" />Office</button><button type="button" className={`btn ${mode === 'WFH' ? 'btn-primary' : 'btn-outline-secondary'}`} disabled={context.data?.wfhStatus !== 'APPROVED' || !context.data?.allowedWebCheckIn} onClick={() => setMode('WFH')}><Home size={16} className="me-2" />WFH</button></div><div className="text-muted-hz" style={{ fontSize: 13 }}>{mode === 'OFFICE' ? `${locations.data?.length || 0} active office location(s) available.` : 'Approved WFH is required before remote check-in.'}</div></Card></div>
-      </div>
+        <div>
+          <h2 className="hz-my-att__heading">Timings</h2>
+          <WeekTimings shiftToday={shiftToday} use24h={use24h} />
+        </div>
+        <div>
+          <h2 className="hz-my-att__heading">Actions</h2>
+          <div className="hz-my-att__panel hz-my-att__actions">
+            <div className="hz-my-att__actions-main">
+              <LiveClock use24h={use24h} />
+              {(today.isLoading || context.isLoading) && <SkeletonText lines={2} />}
+              {(today.isError || context.isError) && <ErrorState description={checkIn.isSuccess ? 'Check-in succeeded, but today’s attendance could not be refreshed.' : 'Couldn’t load today’s attendance policy.'} onRetry={() => { today.refetch(); context.refetch(); }} />}
+              {!today.isLoading && !context.isLoading && !today.isError && !context.isError && (
+                <div className="hz-my-att__punch">
+                  <div className={`hz-my-att__punch-state${session?.status === 'CHECKED_IN' || context.data.latestBiometricPunchType ? ' is-in' : ''}`}>
+                    <Clock3 size={18} aria-hidden="true" />
+                    <div><strong>{statusTitle}</strong><span>{statusDetail}</span></div>
+                  </div>
+                  {canWebCheckIn && requireSelfie && !session && <div className="hz-my-att__muted">A selfie is required when you check in.</div>}
+                  <div className="hz-my-att__punch-buttons">
+                    {canWebCheckIn && <Button icon={LogIn} onClick={startCheckIn} loading={checkIn.isPending} disabled={!!session || busy || context.data.attendanceStatus === 'BIOMETRIC_PUNCHED'}>
+                      {checkIn.isPending ? (locationStatus === 'locating' ? 'Getting your location…' : locationStatus === 'improving' ? 'Improving location accuracy…' : 'Verifying location…') : 'Check in'}
+                    </Button>}
+                    {canSelfCheckOut && <Button variant="secondary" icon={LogOut} onClick={() => checkOut.mutate()} loading={checkOut.isPending} disabled={!session || busy}>Check out</Button>}
+                  </div>
+                  {context.data.wfhStatus === 'APPROVED' && context.data.allowedWebCheckIn && !session && (
+                    <div className="hz-my-att__mode" role="group" aria-label="Where are you working today">
+                      <button type="button" className={mode === 'OFFICE' ? 'is-active' : ''} onClick={() => setMode('OFFICE')}><MapPin size={14} aria-hidden="true" /> Office</button>
+                      <button type="button" className={mode === 'WFH' ? 'is-active' : ''} onClick={() => setMode('WFH')}><Home size={14} aria-hidden="true" /> Work from home</button>
+                    </div>
+                  )}
+                  {!context.data.allowedWebCheckIn && context.data.requiresBiometric && <div className="hz-my-att__muted">Biometric attendance required. Mark attendance on your assigned device.</div>}
+                </div>
+              )}
+            </div>
+            <div className="hz-my-att__links">
+              <button type="button" className="hz-my-att__link" onClick={() => setWfhOpen(true)}><Home size={15} aria-hidden="true" /> Request work from home</button>
+              {policy.data?.manualRegularizationEnabled && <button type="button" className="hz-my-att__link" onClick={() => openRegularize(localDate())}><Clock3 size={15} aria-hidden="true" /> Regularize attendance</button>}
+              <button type="button" className="hz-my-att__link" onClick={() => setPolicyOpen(true)}><FileText size={15} aria-hidden="true" /> Attendance policy</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <Card
-        title="Attendance history"
-        subtitle={monthLabel(historyMonth)}
-        actions={(
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={ChevronLeft}
-              aria-label="Previous month"
-              onClick={() => setHistoryMonth((month) => shiftMonth(month, -1))}
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={ChevronRight}
-              aria-label="Next month"
-              disabled={historyMonth >= currentMonthInIST()}
-              onClick={() => setHistoryMonth((month) => shiftMonth(month, 1))}
-            />
-          </>
-        )}
-      >
-        {history.isLoading && <SkeletonText lines={4} />}
-        {history.isError && <ErrorState description="Couldn’t load your attendance history." onRetry={() => history.refetch()} />}
-        {!history.isLoading && !history.isError && history.data?.length === 0 && (
-          <EmptyState icon={CalendarDays} title="No attendance records" description={`No check-in or check-out records were found for ${monthLabel(historyMonth)}.`} />
-        )}
-        {!history.isLoading && !history.isError && history.data?.length > 0 && (
-          <div className="table-responsive">
-            <table className="table align-middle mb-0">
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Check-in</th>
-                  <th scope="col">Check-out</th>
-                  <th scope="col">Working hours</th>
-                  <th scope="col">Source</th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.data.map((record) => (
-                  <tr key={record.id}>
-                    <td>{formatDateIST(`${record.attendanceDate}T12:00:00Z`)}</td>
-                    <td>{record.checkInTime ? formatTimeIST(record.checkInTime) : '—'}</td>
-                    <td>{record.checkOutTime ? formatTimeIST(record.checkOutTime) : '—'}</td>
-                    <td>{formatDuration(record.durationMinutes)}</td>
-                    <td>{record.wfh ? `WFH · ${record.source || '—'}` : record.source || '—'}</td>
-                    <td>
-                      <StatusBadge status={record.status} variant={record.status === 'CHECKED_OUT' ? 'success' : 'info'} dot>
-                        {formatStatusLabel(record.status)}
-                      </StatusBadge>
-                    </td>
-                  </tr>
+      <section aria-labelledby="att-logs">
+        <div className="hz-my-att__logs-head">
+          <h2 id="att-logs" className="hz-my-att__heading">Logs &amp; requests</h2>
+          <label className="hz-my-att__toggle">
+            <input type="checkbox" role="switch" checked={use24h} onChange={(event) => setUse24h(event.target.checked)} />
+            <span aria-hidden="true" />
+            24 hour format
+          </label>
+        </div>
+        <div className="hz-my-att__tabs" role="tablist" aria-label="Logs and requests">
+          {[['log', 'Attendance log'], ['calendar', 'Calendar'], ['requests', 'Attendance requests']].map(([key, label]) => (
+            <button key={key} type="button" role="tab" aria-selected={logTab === key} className={logTab === key ? 'is-active' : ''} onClick={() => setLogTab(key)}>{label}</button>
+          ))}
+        </div>
+
+        {logTab !== 'requests' && (
+          <div className="hz-my-att__panel hz-my-att__log">
+            <div className="hz-my-att__log-head">
+              <h3>{logPeriod.key === '30' ? (logTab === 'calendar' ? new Date(`${calendarMonth}-01T12:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : 'Last 30 days') : new Date(`${logPeriod.from}T12:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</h3>
+              <div className="hz-my-att__periods" role="group" aria-label="Period">
+                {periods.map((option) => (
+                  <button key={option.key} type="button" className={logPeriod.key === option.key ? 'is-active' : ''} aria-pressed={logPeriod.key === option.key} onClick={() => setLogPeriodKey(option.key)}>{option.label}</button>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+            {logTab === 'log' && <AttendanceLog period={logPeriod} use24h={use24h} sessionsByDate={sessionsByDate} onRegularize={openRegularize} canRegularize={!!policy.data?.manualRegularizationEnabled} />}
+            {logTab === 'calendar' && <AttendanceCalendar month={calendarMonth} />}
           </div>
         )}
-      </Card>
+        {logTab === 'log' && <div className="mt-4"><MyShiftOvertime from={logPeriod.from} to={logPeriod.to} /></div>}
 
-      <MyShiftOvertime from={historyRange.from} to={historyRange.to} />
+        {logTab === 'requests' && (
+          <div className="d-flex flex-column gap-4">
+            <Card title="Work from home requests" actions={<Button size="sm" variant="secondary" icon={CalendarDays} onClick={() => setWfhOpen(true)}>Request</Button>}><div className="table-responsive">{wfhRequests.isLoading && <SkeletonText lines={3} />}{!wfhRequests.isLoading && (!wfhRequests.data || wfhRequests.data.length === 0) && <EmptyState icon={CalendarDays} title="No WFH requests" description="Approved requests will appear here." />}{wfhRequests.data?.length > 0 && <table className="table mb-0 align-middle"><thead><tr><th>Date</th><th>Reason</th><th>Status</th><th>Manager note</th></tr></thead><tbody>{wfhRequests.data.map((request) => <tr key={request.id}><td>{formatDateIST(`${request.workDate}T12:00:00Z`)}</td><td>{request.reason || '—'}</td><td><StatusBadge status={request.status} variant={request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'} dot={false}>{formatStatusLabel(request.status)}</StatusBadge></td><td>{request.managerNote || '—'}</td></tr>)}</tbody></table>}</div></Card>
+            {policy.data?.manualRegularizationEnabled && (
+              <Card title="Regularization requests" actions={<Button size="sm" variant="secondary" icon={Clock3} onClick={() => openRegularize(localDate())}>Request</Button>}>
+                {regularizations.isLoading && <SkeletonText lines={2} />}
+                {regularizations.data?.length === 0 && <EmptyState icon={CalendarDays} title="No regularization requests" description="Requests you submit will appear here." />}
+                {regularizations.data?.length > 0 && <div className="table-responsive"><table className="table mb-0 align-middle"><thead><tr><th>Date</th><th>Requested time</th><th>Reason</th><th>Status</th><th>Review note</th></tr></thead><tbody>{regularizations.data.map((request) => <tr key={request.id}><td>{formatDateIST(`${request.attendanceDate}T12:00:00Z`)}</td><td>{request.requestedCheckIn}{request.requestedCheckOut ? ` – ${request.requestedCheckOut}` : ''}</td><td>{request.reason}</td><td><StatusBadge status={request.status} variant={request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'} dot={false}>{formatStatusLabel(request.status)}</StatusBadge></td><td>{request.reviewNote || '—'}</td></tr>)}</tbody></table></div>}
+              </Card>
+            )}
+          </div>
+        )}
+      </section>
 
-      <Card title="Request work from home" subtitle="Submit a future-date request for manager approval."><div className="row g-3 align-items-end"><div className="col-12 col-md-3"><label className="form-label" htmlFor="wfh-date">Work date</label><input id="wfh-date" className="form-control" type="date" min={localDate(1)} value={workDate} onChange={(event) => setWorkDate(event.target.value)} /></div><div className="col-12 col-md-6"><label className="form-label" htmlFor="wfh-reason">Reason</label><input id="wfh-reason" className="form-control" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Optional reason" maxLength={500} /></div><div className="col-12 col-md-3"><Button className="w-100" icon={CalendarDays} onClick={() => requestWfh.mutate()} loading={requestWfh.isPending} disabled={!workDate}>Request approval</Button></div></div></Card>
+      <Dialog open={wfhOpen} onClose={() => setWfhOpen(false)} title="Request work from home" description="For a future date; your manager approves it." size="sm">
+        <form className="d-flex flex-column gap-3" onSubmit={(event) => { event.preventDefault(); requestWfh.mutate(undefined, { onSuccess: () => setWfhOpen(false) }); }}>
+          <div><label className="form-label" htmlFor="wfh-date">Work date</label><input id="wfh-date" className="form-control" type="date" min={localDate(1)} value={workDate} onChange={(event) => setWorkDate(event.target.value)} required /></div>
+          <div><label className="form-label" htmlFor="wfh-reason">Reason</label><input id="wfh-reason" className="form-control" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Optional reason" maxLength={500} /></div>
+          <div className="d-flex justify-content-end gap-2"><Button type="button" variant="secondary" onClick={() => setWfhOpen(false)}>Cancel</Button><Button type="submit" icon={CalendarDays} loading={requestWfh.isPending} disabled={!workDate}>Request approval</Button></div>
+        </form>
+      </Dialog>
 
-      <Card title="My WFH requests"><div className="table-responsive">{wfhRequests.isLoading && <SkeletonText lines={3} />}{!wfhRequests.isLoading && (!wfhRequests.data || wfhRequests.data.length === 0) && <EmptyState icon={CalendarDays} title="No WFH requests" description="Approved requests will appear here." />}{wfhRequests.data?.length > 0 && <table className="table mb-0 align-middle"><thead><tr><th>Date</th><th>Reason</th><th>Status</th><th>Manager note</th></tr></thead><tbody>{wfhRequests.data.map((request) => <tr key={request.id}><td>{request.workDate}</td><td>{request.reason || '—'}</td><td><StatusBadge status={request.status} variant={request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'} dot={false}>{request.status}</StatusBadge></td><td>{request.managerNote || '—'}</td></tr>)}</tbody></table>}</div></Card>
+      <Dialog open={regularizeOpen} onClose={() => setRegularizeOpen(false)} title="Regularize attendance" description="For genuine exceptions such as a biometric, device or network failure. This does not create a normal check-in.">
+        <form className="row g-3" onSubmit={(event) => { event.preventDefault(); requestRegularization.mutate(undefined, { onSuccess: () => setRegularizeOpen(false) }); }}>
+          <div className="col-12"><label className="form-label" htmlFor="regularization-date">Attendance date</label><input id="regularization-date" className="form-control" type="date" max={localDate()} value={regularizationDate} onChange={(event) => setRegularizationDate(event.target.value)} required /></div>
+          <div className="col-6"><label className="form-label" htmlFor="regularization-check-in">Check in</label><input id="regularization-check-in" className="form-control" type="time" value={regularizationCheckIn} onChange={(event) => setRegularizationCheckIn(event.target.value)} required /></div>
+          <div className="col-6"><label className="form-label" htmlFor="regularization-check-out">Check out</label><input id="regularization-check-out" className="form-control" type="time" value={regularizationCheckOut} onChange={(event) => setRegularizationCheckOut(event.target.value)} /></div>
+          <div className="col-12"><label className="form-label" htmlFor="regularization-reason">Reason</label><input id="regularization-reason" className="form-control" value={regularizationReason} onChange={(event) => setRegularizationReason(event.target.value)} maxLength={500} required /></div>
+          <div className="col-12 d-flex justify-content-end gap-2"><Button type="button" variant="secondary" onClick={() => setRegularizeOpen(false)}>Cancel</Button><Button type="submit" loading={requestRegularization.isPending} disabled={!regularizationCheckIn || !regularizationReason.trim()}>Submit request</Button></div>
+        </form>
+      </Dialog>
 
-      {policy.data?.manualRegularizationEnabled && (
-        <>
-          <Card title="Request attendance regularization" subtitle="Use this for genuine exceptions such as a biometric, device, or network failure. This does not create a normal check-in.">
-            <form className="row g-3 align-items-end" onSubmit={(event) => { event.preventDefault(); requestRegularization.mutate(); }}>
-              <div className="col-12 col-md-3"><label className="form-label" htmlFor="regularization-date">Attendance date</label><input id="regularization-date" className="form-control" type="date" max={localDate()} value={regularizationDate} onChange={(event) => setRegularizationDate(event.target.value)} required /></div>
-              <div className="col-6 col-md-2"><label className="form-label" htmlFor="regularization-check-in">Check in</label><input id="regularization-check-in" className="form-control" type="time" value={regularizationCheckIn} onChange={(event) => setRegularizationCheckIn(event.target.value)} required /></div>
-              <div className="col-6 col-md-2"><label className="form-label" htmlFor="regularization-check-out">Check out</label><input id="regularization-check-out" className="form-control" type="time" value={regularizationCheckOut} onChange={(event) => setRegularizationCheckOut(event.target.value)} /></div>
-              <div className="col-12 col-md-3"><label className="form-label" htmlFor="regularization-reason">Reason</label><input id="regularization-reason" className="form-control" value={regularizationReason} onChange={(event) => setRegularizationReason(event.target.value)} maxLength={500} required /></div>
-              <div className="col-12 col-md-2"><Button type="submit" className="w-100" loading={requestRegularization.isPending} disabled={!regularizationCheckIn || !regularizationReason.trim()}>Submit request</Button></div>
-            </form>
-          </Card>
-          <Card title="My regularization requests">
-            {regularizations.isLoading && <SkeletonText lines={2} />}
-            {regularizations.data?.length === 0 && <EmptyState icon={CalendarDays} title="No regularization requests" description="Requests you submit will appear here." />}
-            {regularizations.data?.length > 0 && <div className="table-responsive"><table className="table mb-0 align-middle"><thead><tr><th>Date</th><th>Requested time</th><th>Reason</th><th>Status</th><th>Review note</th></tr></thead><tbody>{regularizations.data.map((request) => <tr key={request.id}><td>{request.attendanceDate}</td><td>{request.requestedCheckIn}{request.requestedCheckOut ? ` – ${request.requestedCheckOut}` : ''}</td><td>{request.reason}</td><td><StatusBadge status={request.status} variant={request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'} dot={false}>{request.status}</StatusBadge></td><td>{request.reviewNote || '—'}</td></tr>)}</tbody></table></div>}
-          </Card>
-        </>
-      )}
+      <AttendancePolicyDialog open={policyOpen} onClose={() => setPolicyOpen(false)} policy={policy.data} shiftToday={shiftToday} use24h={use24h} />
     </div>
   );
 }
