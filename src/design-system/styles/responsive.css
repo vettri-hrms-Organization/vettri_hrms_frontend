@@ -1,0 +1,111 @@
+/* Phone and tablet layout layer.
+   Imported last in main.jsx: the theme layers before it (vettri-ui, aurora,
+   clarity) use !important desktop rules, so the small-screen contract has to
+   be restated here to win. Only layout lives here - colours stay in tokens. */
+
+@media (max-width: 991.98px) {
+  /* Drawer: the desktop collapse handle has no meaning in the phone drawer. */
+  .vettri-sidebar-handle { display: none !important; }
+
+  /* Items scrolling under the workspace card fade out instead of being cut. */
+  .vettri-sidebar-nav {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+    padding-top: 6px !important;
+  }
+
+  /* Settings: one column, sub-navigation becomes a swipeable chip row. */
+  .vettri-app-shell .hz-admin-settings-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+  .vettri-app-shell .hz-admin-settings-nav {
+    position: static !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 6px !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .vettri-app-shell .hz-admin-settings-nav::-webkit-scrollbar { display: none; }
+  .vettri-app-shell .hz-admin-settings-nav__title { display: none !important; }
+  .vettri-app-shell .hz-admin-settings-nav__item {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    min-height: 36px !important;
+    padding: 7px 12px !important;
+    white-space: nowrap;
+    text-align: left;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* Top bar: search and Ask Vettri as matching square icon buttons. */
+  .vettri-command-trigger,
+  .vettri-ask-trigger {
+    flex: 0 0 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+  }
+  .vettri-command-trigger span,
+  .vettri-command-trigger kbd,
+  .vettri-ask-trigger span { display: none !important; }
+
+  /* Page header: a compact title block instead of a desktop banner. */
+  .hz-page-header {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 16px 16px 14px !important;
+    border-radius: 16px !important;
+    gap: 12px !important;
+  }
+  .hz-page-header__eyebrow { margin-bottom: 4px !important; font-size: 10.5px !important; }
+  .hz-page-header__title { font-size: 22px !important; line-height: 1.2 !important; }
+  .hz-page-header__title::after { width: 40px; height: 3px; margin-top: 8px; }
+  .hz-page-header__description { margin-top: 6px !important; font-size: 13.5px !important; line-height: 1.5 !important; }
+  .hz-page-header__actions {
+    display: flex !important;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px !important;
+  }
+  .hz-page-header__actions > div { display: flex; flex-wrap: wrap; width: 100%; gap: 8px; }
+  .hz-page-header__actions > .btn,
+  .hz-page-header__actions > a.btn,
+  .hz-page-header__actions > div > .btn,
+  .hz-page-header__actions > div > a.btn { flex: 1 1 calc(50% - 4px); justify-content: center; white-space: nowrap; }
+
+  /* Stat tiles: two per row; a lone last tile takes the full row. */
+  .row > [class*='col-']:has(> .hz-stat-card) { flex: 0 0 auto; width: 50%; }
+  .row > [class*='col-']:has(> .hz-stat-card):last-child:nth-child(odd) { width: 100%; }
+  .hz-stat-card { min-height: 0 !important; padding: 14px !important; }
+  .hz-stat-card > .hz-card__body { padding: 0 !important; }
+  .hz-stat-card__topline { align-items: flex-start !important; gap: 8px !important; }
+  .hz-stat-card__label { flex: 1 1 auto; min-width: 0; line-height: 1.35; }
+  .hz-stat-card__icon { flex: 0 0 30px; width: 30px !important; height: 30px !important; }
+  .hz-stat-card__value { font-size: 24px !important; }
+  .hz-stat-card__label { font-size: 12px !important; }
+  .hz-inline-summary { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+  /* Card headers: actions drop under a long title instead of squeezing it. */
+  .hz-card__header { flex-wrap: wrap; row-gap: 10px; }
+  .hz-card__header > div:first-child { flex: 1 1 12rem; min-width: 0; }
+  .hz-card__actions { flex-wrap: wrap; }
+
+  /* Tab rows scroll sideways rather than clipping the last tab. */
+  .hz-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .hz-tabs::-webkit-scrollbar { display: none; }
+  .hz-tabs > * { flex: 0 0 auto; white-space: nowrap; }
+}

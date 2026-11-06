@@ -94,8 +94,8 @@ export default function OvertimeApprovals() {
             <input id="ot-to" type="date" className="form-control" value={to} min={from} onChange={(e) => setTo(e.target.value)} />
           </div>
           {hasPermission('ATTENDANCE_MANAGE') && (
-            <div className="col-6 col-md-3 d-flex gap-2 align-items-end">
-              <div className="flex-grow-1">
+            <div className="col-12 col-md-3 d-flex gap-2 align-items-end">
+              <div className="flex-grow-1 min-w-0">
                 <label className="form-label" htmlFor="ot-generate">Recalculate day</label>
                 <input id="ot-generate" type="date" className="form-control" value={generateDate} max={istToday()} onChange={(e) => setGenerateDate(e.target.value)} />
               </div>

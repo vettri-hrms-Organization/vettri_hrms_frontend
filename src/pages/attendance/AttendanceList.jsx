@@ -189,7 +189,7 @@ function MonthlyMusterExport() {
         onChange={(event) => setMonth(event.target.value)}
       />
       <Button variant="secondary" size="sm" icon={Download} onClick={download} loading={downloading} disabled={!month}>
-        Export monthly muster
+        Export muster
       </Button>
     </div>
   );

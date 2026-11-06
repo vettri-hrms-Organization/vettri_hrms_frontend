@@ -3330,11 +3330,11 @@ body {
     min-width: 0;
   }
 
-  .hz-page-header > div:last-child {
+  .hz-page-header__actions {
     width: 100%;
   }
 
-  .hz-page-header > div:last-child > * {
+  .hz-page-header__actions > * {
     max-width: 100%;
   }
 
@@ -3596,12 +3596,12 @@ body {
     font-size: 1.5rem;
   }
 
-  .hz-page-header > div:last-child {
+  .hz-page-header__actions {
     display: flex;
     width: 100%;
   }
 
-  .hz-page-header > div:last-child .btn {
+  .hz-page-header__actions .btn {
     flex: 1 1 auto;
   }
 
