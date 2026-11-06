@@ -12,7 +12,7 @@ import { BreadcrumbProvider } from './BreadcrumbContext';
 import { useAuth } from '../../hooks/useAuth';
 import { NAV_SECTIONS, PLATFORM_ONLY_PATHS } from './navConfig';
 import OfflineBanner from '../../pwa/OfflineBanner';
-import { SetupProgressBanner, isOpenDuringSetup, useWorkspaceSetup } from './SetupGate';
+import { SetupPrompt, useWorkspaceSetup } from './SetupGate';
 
 export default function MainLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -22,12 +22,11 @@ export default function MainLayout() {
   const needsWorkspace = platformOnly && !PLATFORM_ONLY_PATHS.includes(location.pathname);
   // Platform staff land on their own home (customers & billing), not an empty company dashboard.
   const sendToPlatform = platformOnly && ['/', '/dashboard'].includes(location.pathname);
-  const { setup, locked: setupLocked, refetch: refetchSetup } = useWorkspaceSetup();
-  const setupBlocksPage = setupLocked && !isOpenDuringSetup(location.pathname, setup);
+  const { setup, incomplete: setupIncomplete, refetch: refetchSetup } = useWorkspaceSetup();
 
-  // Steps are finished on other pages, so re-check progress on every navigation while locked.
+  // Steps are finished on other pages, so re-check progress on every navigation until setup is done.
   useEffect(() => {
-    if (setupLocked) refetchSetup();
+    if (setupIncomplete) refetchSetup();
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Below the lg breakpoint the sidebar is an overlay drawer, not part of
@@ -53,11 +52,11 @@ export default function MainLayout() {
           <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
               <Breadcrumbs />
-              {setupLocked && !setupBlocksPage && location.pathname !== '/onboarding' && <SetupProgressBanner setup={setup} />}
-              {setupBlocksPage ? <Navigate to="/onboarding" replace /> : sendToPlatform ? <Navigate to="/settings/platform" replace /> : needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) && !platformOnly ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
+              {sendToPlatform ? <Navigate to="/settings/platform" replace /> : needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) && !platformOnly ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
             </BreadcrumbProvider>
           </main>
         </div>
+        {setupIncomplete && location.pathname !== '/onboarding' && <SetupPrompt setup={setup} userId={user?.id} />}
         <MobileTabBar onOpenMore={() => setMobileNavOpen(true)} moreOpen={mobileNavOpen} />
       </div>
     </NavMemoryProvider>

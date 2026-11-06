@@ -1,17 +1,16 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Check, Lock, Rocket } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Check, Rocket } from 'lucide-react';
 import { homeApi } from '../../api/endpoints/home';
 import { useAuth } from '../../hooks/useAuth';
+import Dialog from '../ui/Dialog';
+import Button from '../ui/Button';
 import './setup-gate.css';
 
-// While required workspace setup is open (GET /api/home/setup -> locked), admins
-// can only reach the pages that finish it plus their own account pages.
-const ALWAYS_OPEN_PATHS = [
-  '/onboarding', '/settings/organization', '/organization/structure', '/settings/leave', '/settings/users',
-  '/settings/shifts', '/attendance/devices', '/my-profile', '/account/security', '/settings/preferences',
-  '/settings/sign-in', '/billing', '/billing/invoices', '/privacy', '/privacy/accept', '/notifications', '/support',
-];
+// Required workspace setup comes from GET /api/home/setup (locked = a required step is still open).
+// Admins are reminded once per sign-in with a popup they can skip; nothing is blocked.
+const SKIP_KEY = 'vettri.setupPrompt.skipped';
 
 export function useWorkspaceSetup() {
   const { user, selectedCompanyId } = useAuth();
@@ -23,23 +22,25 @@ export function useWorkspaceSetup() {
     staleTime: 15_000,
   });
   const setup = query.data;
-  const locked = !platformStaff && setup?.locked === true;
-  return { setup, locked, refetch: query.refetch };
+  const incomplete = !platformStaff && setup?.locked === true;
+  return { setup, incomplete, refetch: query.refetch };
 }
 
-export function isOpenDuringSetup(path, setup) {
-  const pathname = String(path || '').split('?')[0];
-  const stepLinks = (setup?.steps || []).filter((step) => step.required).map((step) => String(step.link || '').split('?')[0]);
-  return [...ALWAYS_OPEN_PATHS, ...stepLinks].some((open) => pathname === open || pathname.startsWith(`${open}/`));
+function readSkipped(userId) {
+  try { return sessionStorage.getItem(SKIP_KEY) === String(userId); } catch { return false; }
+}
+
+function rememberSkipped(userId) {
+  try { sessionStorage.setItem(SKIP_KEY, String(userId)); } catch { /* storage blocked: the popup just shows again */ }
 }
 
 function requiredSteps(setup) {
   return (setup?.steps || []).filter((step) => step.required);
 }
 
-function ProgressRing({ percent }) {
+function ProgressRing({ percent, small = false }) {
   return (
-    <div className="hz-setup-ring" style={{ '--hz-setup-pct': `${percent * 3.6}deg` }} role="img" aria-label={`${percent}% of required setup complete`}>
+    <div className={`hz-setup-ring${small ? ' hz-setup-ring--sm' : ''}`} style={{ '--hz-setup-pct': `${percent * 3.6}deg` }} role="img" aria-label={`${percent}% of required setup complete`}>
       <div className="hz-setup-ring__inner">
         <strong>{percent}%</strong>
         <span>complete</span>
@@ -48,8 +49,60 @@ function ProgressRing({ percent }) {
   );
 }
 
-/** Shown instead of a locked page until every required setup step is done. */
-export function SetupLockedScreen({ setup }) {
+/** Popup shown after sign-in while required setup is incomplete. "Skip for now" hides it until the next sign-in. */
+export function SetupPrompt({ setup, userId }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(() => !readSkipped(userId));
+  const steps = requiredSteps(setup);
+  const left = steps.filter((step) => !step.done);
+
+  function skip() {
+    rememberSkipped(userId);
+    setOpen(false);
+  }
+
+  function setUpNow() {
+    rememberSkipped(userId);
+    setOpen(false);
+    navigate('/onboarding');
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={skip}
+      title="Complete your workspace details"
+      description={`Finish setting up ${user?.companyName || 'your company'} so your HR team and managers can start using Vettri.`}
+      size="md"
+      footer={(
+        <div className="d-flex justify-content-end gap-2 w-100">
+          <Button variant="secondary" onClick={skip}>Skip for now</Button>
+          <Button icon={ArrowRight} onClick={setUpNow}>Set up now</Button>
+        </div>
+      )}
+    >
+      <div className="hz-setup-prompt">
+        <ProgressRing percent={setup?.percent ?? 0} small />
+        <div className="hz-setup-prompt__body">
+          <strong>{left.length === 1 ? '1 step left' : `${left.length} steps left`}</strong>
+          <ul>
+            {steps.map((step) => (
+              <li key={step.key} className={step.done ? 'is-done' : ''}>
+                <span className="hz-setup-prompt__tick" aria-hidden="true">{step.done && <Check size={12} strokeWidth={3} />}</span>
+                {step.title}
+                {step.done && <span className="visually-hidden"> (done)</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </Dialog>
+  );
+}
+
+/** Workspace Setup page while required steps are open: progress ring, the required steps and what comes after. */
+export function SetupProgressScreen({ setup }) {
   const { user } = useAuth();
   const steps = requiredSteps(setup);
   const next = steps.find((step) => !step.done);
@@ -61,11 +114,11 @@ export function SetupLockedScreen({ setup }) {
       <div className="hz-setup-lock__hero">
         <ProgressRing percent={setup?.percent ?? 0} />
         <div className="hz-setup-lock__intro">
-          <p className="hz-setup-lock__eyebrow"><Lock size={13} aria-hidden="true" /> Finish setup to unlock</p>
+          <p className="hz-setup-lock__eyebrow"><Rocket size={13} aria-hidden="true" /> Workspace setup</p>
           <h1 id="hz-setup-lock-title">Set up {user?.companyName || 'your workspace'}</h1>
           <p>
-            Complete {left === 1 ? 'the last required step' : `the ${left} required steps`} below. Attendance, leave, payroll
-            and every other section unlock as soon as setup reaches 100%.
+            Complete {left === 1 ? 'the last step' : `the ${left} steps`} below. Once your company details, structure and
+            HR team are in place, HR and managers take care of employees, attendance, leave and payroll.
           </p>
           {next && (
             <Link to={next.link} className="btn btn-primary d-inline-flex align-items-center gap-2">
@@ -92,31 +145,9 @@ export function SetupLockedScreen({ setup }) {
 
       {later.length > 0 && (
         <p className="hz-setup-lock__later">
-          After unlocking: {later.map((step) => step.title.toLowerCase()).join(', ')}.
+          Later, usually by HR: {later.map((step) => step.title.toLowerCase()).join(', ')}.
         </p>
       )}
     </section>
-  );
-}
-
-/** Slim progress strip on the pages that stay open during setup. */
-export function SetupProgressBanner({ setup }) {
-  const steps = requiredSteps(setup);
-  const left = steps.length - steps.filter((step) => step.done).length;
-  const percent = setup?.percent ?? 0;
-  return (
-    <div className="hz-setup-banner" role="status">
-      <Rocket size={16} aria-hidden="true" className="hz-setup-banner__icon" />
-      <div className="hz-setup-banner__body">
-        <div className="hz-setup-banner__text">
-          <strong>Workspace setup {percent}%</strong>
-          <span>{left === 1 ? '1 required step left' : `${left} required steps left`} to unlock every section</span>
-        </div>
-        <div className="hz-setup-banner__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Required setup progress">
-          <span style={{ width: `${percent}%` }} />
-        </div>
-      </div>
-      <Link to="/onboarding" className="hz-setup-banner__link">View steps</Link>
-    </div>
   );
 }

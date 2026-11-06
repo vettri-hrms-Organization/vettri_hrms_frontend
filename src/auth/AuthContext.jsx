@@ -134,6 +134,8 @@ export function AuthProvider({ children }) {
     queryClient.clear();
     clearQueue();
     tenantStorage.clear();
+    // The workspace-setup reminder is skipped per sign-in, so the next sign-in shows it again.
+    try { sessionStorage.removeItem('vettri.setupPrompt.skipped'); } catch { /* storage blocked */ }
     resetSessionExpirationHandling();
     setSelectedCompanyIdState(null);
     setUser(null);

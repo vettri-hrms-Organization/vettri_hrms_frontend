@@ -7,7 +7,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { SkeletonText } from '../components/ui/Skeleton';
 import { homeApi } from '../api/endpoints/home';
-import { SetupLockedScreen, useWorkspaceSetup } from '../components/layout/SetupGate';
+import { SetupProgressScreen, useWorkspaceSetup } from '../components/layout/SetupGate';
 
 // Progress comes from the server (GET /api/home/setup) so this page and the home checklist always agree.
 const ICONS = {
@@ -17,7 +17,7 @@ const ICONS = {
 
 export default function Onboarding() {
   const { data, isLoading } = useQuery({ queryKey: ['home-setup'], queryFn: homeApi.setup });
-  const { locked } = useWorkspaceSetup();
+  const { incomplete } = useWorkspaceSetup();
   const steps = data?.steps || [];
   const [activeStep, setActiveStep] = useState(0);
 
@@ -28,8 +28,8 @@ export default function Onboarding() {
   }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) return <Card><SkeletonText lines={6} /></Card>;
-  // Until required setup is 100%, every locked page redirects here.
-  if (locked) return <SetupLockedScreen setup={data} />;
+  // Until the required steps are done, lead with them.
+  if (incomplete) return <SetupProgressScreen setup={data} />;
   if (!steps.length) {
     return (
       <div className="hz-onboarding d-flex flex-column gap-4">
@@ -50,7 +50,7 @@ export default function Onboarding() {
         description={done === steps.length
           ? 'Every setup step is complete. You can come back here any time.'
           : data?.locked
-            ? `Required setup is ${data.percent}% done. Finish the steps marked Required to unlock every section.`
+            ? `Required setup is ${data.percent}% done. Finish the steps marked Required first.`
             : `${done} of ${steps.length} steps done. Each one takes a few minutes.`}
       />
 

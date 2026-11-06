@@ -1,8 +1,7 @@
 import { useT } from '../../i18n/LanguageContext';
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronsLeft, Lock, LogOut, Plus, Settings2, ShieldCheck, UserCircle, X } from 'lucide-react';
-import { isOpenDuringSetup, useWorkspaceSetup } from './SetupGate';
+import { ChevronDown, ChevronsLeft, LogOut, Plus, Settings2, ShieldCheck, UserCircle, X } from 'lucide-react';
 import Logo from '../brand/Logo';
 import Avatar from '../ui/Avatar';
 import { visibleNavSections, findNavItemByPath, PLATFORM_NAV_SECTIONS } from './navConfig';
@@ -90,7 +89,6 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
   const workspaceName = user?.companyName || 'Vettri Workspace';
 
   const t = useT();
-  const { setup, locked: setupLocked } = useWorkspaceSetup();
   return (
     <>
       {mobileOpen && <div className="vettri-sidebar-backdrop d-lg-none" onClick={onCloseMobile} aria-hidden="true" />}
@@ -160,13 +158,12 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                       {section.items.map((item) => {
                         const Icon = item.icon;
                         const active = itemIsActive(item, location);
-                        const lockedBySetup = setupLocked && !isOpenDuringSetup(item.to, setup);
                         return (
                           <NavLink
                             key={`${section.id}-${item.to}`}
                             to={item.to}
                             end={item.end}
-                            className={() => `vettri-nav-item ${active ? 'is-active' : ''}${lockedBySetup ? ' is-setup-locked' : ''}`}
+                            className={() => `vettri-nav-item ${active ? 'is-active' : ''}`}
                             aria-current={active ? 'page' : undefined}
                             aria-label={isCollapsed ? t(item.label) : undefined}
                             onClick={() => {
@@ -177,7 +174,6 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
                           >
                             <span className="vettri-nav-icon"><Icon size={17} strokeWidth={1.8} /></span>
                             {!isCollapsed && <span className="vettri-nav-label">{t(item.label)}</span>}
-                            {!isCollapsed && lockedBySetup && <Lock size={13} className='vettri-nav-lock' aria-label='Locked until setup is complete' />}
                             {!isCollapsed && item.badge && <span className="vettri-nav-badge">{item.badge.value > 99 ? '99+' : item.badge.value}</span>}
                             {isCollapsed && <span className="vettri-nav-tooltip" aria-hidden="true">{t(item.label)}</span>}
                           </NavLink>
