@@ -16,13 +16,28 @@ function find(sections, to) {
 }
 
 describe('visibleNavSections', () => {
+  it('gives a Company Admin only organisation and employee administration', () => {
+    const sections = sidebar('ALL', ['COMPANY_ADMIN']);
+    expect(sections.map((section) => section.label)).toEqual(['Home', 'Organization', 'Employees', 'Settings', 'Billing & Security']);
+    expect(find(sections, '/settings/organization')).toEqual({ section: 'Organization', label: 'Departments & Locations' });
+    expect(find(sections, '/employees')).toEqual({ section: 'Employees', label: 'Employees' });
+    for (const hidden of ['/my-profile', '/my-payslip', '/my-leave', '/performance', '/leave', '/salary/payroll-processing']) {
+      expect(find(sections, hidden)).toBeNull();
+    }
+  });
+
+  it('keeps the full menu for a Company Admin who is also HR', () => {
+    const sections = sidebar('ALL', ['COMPANY_ADMIN', 'HR_ADMIN']);
+    expect(find(sections, '/leave')).toEqual({ section: 'Time & Leave', label: 'Leave Management' });
+  });
+
   it('shows each page once', () => {
-    const paths = sidebar('ALL', ['COMPANY_ADMIN']).flatMap((section) => section.items.map((item) => item.to));
+    const paths = sidebar('ALL', ['HR_ADMIN']).flatMap((section) => section.items.map((item) => item.to));
     expect(new Set(paths).size).toBe(paths.length);
   });
 
   it('gives admins the company-wide names for pages that are also self-service links', () => {
-    const sections = sidebar('ALL', ['COMPANY_ADMIN']);
+    const sections = sidebar('ALL', ['HR_ADMIN']);
     expect(find(sections, '/leave')).toEqual({ section: 'Time & Leave', label: 'Leave Management' });
     expect(find(sections, '/performance')).toEqual({ section: 'People', label: 'Performance' });
     expect(find(sections, '/performance/reviews')).toEqual({ section: 'People', label: 'Review Cycles' });

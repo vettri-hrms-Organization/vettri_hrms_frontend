@@ -418,11 +418,84 @@ export function findNavItemByPath(path) {
   return NAV_INDEX.find((item) => item.to === path);
 }
 
+/**
+ * The organisation owner (Company Admin) sets the company up and manages its people records; HR and
+ * managers run day-to-day attendance, leave, payroll and talent. So a Company Admin who holds no HR or
+ * platform role gets this focused menu instead of the employee self-service and HR operations menus.
+ */
+export const COMPANY_ADMIN_NAV_SECTIONS = [
+  {
+    id: 'company-home',
+    label: 'Home',
+    items: [{ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true }],
+  },
+  {
+    id: 'company-organization',
+    label: 'Organization',
+    description: 'Company details, structure and access',
+    collapsible: true,
+    items: [
+      { to: '/onboarding', icon: ClipboardList, label: 'Workspace Setup' },
+      { to: '/settings/organization', icon: Building2, label: 'Departments & Locations', permissionsAny: ['ORG_VIEW', 'ORG_MANAGE', 'OFFICE_LOCATION_VIEW'] },
+      { to: '/organization/structure', icon: Network, label: 'Organization Structure', permission: 'ORG_VIEW' },
+      { to: '/settings/users', icon: ShieldCheck, label: 'Users & Roles', permission: 'USER_VIEW' },
+    ],
+  },
+  {
+    id: 'company-people',
+    label: 'Employees',
+    description: 'Employee records',
+    collapsible: true,
+    items: [
+      { to: '/employees', icon: Users, label: 'Employees', permission: 'EMPLOYEE_VIEW' },
+      { to: '/employees/import', icon: FileSpreadsheet, label: 'Import Employees', permission: 'EMPLOYEE_IMPORT' },
+    ],
+  },
+  {
+    id: 'company-settings',
+    label: 'Settings',
+    description: 'Workspace configuration',
+    collapsible: true,
+    items: [
+      { to: '/settings/custom-fields', icon: ListChecks, label: 'Custom Fields', permission: 'EMPLOYEE_MANAGE' },
+      { to: '/settings/integrations', icon: Plug, label: 'Integrations', permission: 'EMPLOYEE_MANAGE' },
+      { to: '/settings/sign-in', icon: KeyRound, label: 'Sign-in & WhatsApp' },
+    ],
+  },
+  {
+    id: 'company-account',
+    label: 'Billing & Security',
+    description: 'Subscription, audit logs and data privacy',
+    collapsible: true,
+    items: [
+      { to: '/billing', icon: Wallet, label: 'Billing & Subscription' },
+      { to: '/settings/audit', icon: ScrollText, label: 'Audit Logs', permission: 'AUDIT_VIEW' },
+      { to: '/settings/privacy', icon: ShieldCheck, label: 'Privacy & Data', permission: 'PRIVACY_MANAGE' },
+    ],
+  },
+];
+
+/** True for the organisation owner who is not also HR, a manager or platform staff. */
+export function isCompanyAdminOnly(hasRole) {
+  return hasRole('COMPANY_ADMIN') && !['HR_ADMIN', 'MANAGER', 'SUPER_ADMIN'].some((role) => hasRole(role));
+}
+
 /** Filters sections/items down to what a user with the given `hasPermission`
  *  check can actually reach. An item/section with no `permission` tag is
  *  assumed open to any authenticated user (matches today's backend reality
  *  for modules that haven't had permission codes carved out yet). */
 export function visibleNavSections(hasPermission, hasRole = () => false) {
+  if (isCompanyAdminOnly(hasRole)) {
+    return COMPANY_ADMIN_NAV_SECTIONS
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => (item.permissionsAny
+          ? item.permissionsAny.some((permission) => hasPermission(permission))
+          : (!item.permission || hasPermission(item.permission)))),
+      }))
+      .filter((section) => section.items.length > 0);
+  }
+
   const hasAccessRole = (item) =>
     (!item.role && !item.roles) ||
     (item.role && hasRole(item.role)) ||

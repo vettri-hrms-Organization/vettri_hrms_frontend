@@ -2,6 +2,7 @@ import { useT } from '../../i18n/LanguageContext';
 import { NavLink, useLocation } from 'react-router-dom';
 import { CalendarDays, Clock, Home, Menu, Wallet } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { isCompanyAdminOnly } from './navConfig';
 
 /**
  * Employee bottom tab bar, shown only below 768px (see .hz-tabbar in mobile.css).
@@ -14,6 +15,8 @@ export default function MobileTabBar({ onOpenMore, moreOpen = false }) {
   if (!hasPermission('SELF_PROFILE_VIEW')) return null;
   // Platform staff outside a company have no employee pages (attendance, leave, pay) to jump to.
   if (hasRole('SUPER_ADMIN') && !selectedCompanyId) return null;
+  // The organisation owner has no self-service tabs; their menu lives in the drawer.
+  if (isCompanyAdminOnly(hasRole)) return null;
 
   const tabs = [
     { to: '/dashboard', label: 'Home', icon: Home, end: true },
