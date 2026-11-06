@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -13,6 +14,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { NAV_SECTIONS, PLATFORM_ONLY_PATHS } from './navConfig';
 import OfflineBanner from '../../pwa/OfflineBanner';
 import { SetupPrompt, useWorkspaceSetup } from './SetupGate';
+import WelcomeDialog from './WelcomeDialog';
+import DemoBanner, { DemoEndedScreen } from './DemoBanner';
+import { demoSandboxApi } from '../../api/endpoints/demoSandbox';
 
 export default function MainLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -23,6 +27,12 @@ export default function MainLayout() {
   // Platform staff land on their own home (customers & billing), not an empty company dashboard.
   const sendToPlatform = platformOnly && ['/', '/dashboard'].includes(location.pathname);
   const { setup, incomplete: setupIncomplete, refetch: refetchSetup } = useWorkspaceSetup();
+  // Demo workspace: the banner shows inside one; admins of a real company are asked once how to start.
+  const demoCurrent = useQuery({ queryKey: ['demo-current', user?.id], queryFn: demoSandboxApi.current, enabled: !!user && !platformOnly, staleTime: 60_000 });
+  const inDemo = demoCurrent.data?.demo === true;
+  const isAdmin = hasRole('COMPANY_ADMIN') || hasRole('HR_ADMIN');
+  const sandbox = useQuery({ queryKey: ['demo-sandbox', user?.id], queryFn: demoSandboxApi.status, enabled: !!user && isAdmin && !platformOnly && demoCurrent.isSuccess && !inDemo, staleTime: 60_000 });
+  const askHowToStart = !inDemo && setupIncomplete && sandbox.isSuccess && !sandbox.data?.choice;
 
   // Steps are finished on other pages, so re-check progress on every navigation until setup is done.
   useEffect(() => {
@@ -51,12 +61,16 @@ export default function MainLayout() {
           <OfflineBanner />
           <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
+              {inDemo && <DemoBanner demo={demoCurrent.data} />}
               <Breadcrumbs />
-              {sendToPlatform ? <Navigate to="/settings/platform" replace /> : needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) && !platformOnly ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
+              {inDemo && demoCurrent.data.expired ? <DemoEndedScreen /> : sendToPlatform ? <Navigate to="/settings/platform" replace /> : needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) && !platformOnly ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
             </BreadcrumbProvider>
           </main>
         </div>
-        {setupIncomplete && location.pathname !== '/onboarding' && <SetupPrompt setup={setup} userId={user?.id} />}
+        {askHowToStart && <WelcomeDialog companyName={user?.companyName} />}
+        {!askHowToStart && !inDemo && setupIncomplete && sandbox.isFetched && location.pathname !== '/onboarding' && (
+          <SetupPrompt setup={setup} userId={user?.id} demoAvailable={sandbox.data?.state === 'ACTIVE'} />
+        )}
         <MobileTabBar onOpenMore={() => setMobileNavOpen(true)} moreOpen={mobileNavOpen} />
       </div>
     </NavMemoryProvider>

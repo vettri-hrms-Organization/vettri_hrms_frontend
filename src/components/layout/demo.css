@@ -1,0 +1,97 @@
+/* Welcome choice, demo generation progress, Demo Mode banner and demo-ended screen. Tokens only. */
+.hz-welcome-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.hz-welcome-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px;
+  border: 1px solid var(--hz-border);
+  border-radius: var(--hz-radius-lg);
+  background: var(--hz-bg-surface);
+  color: var(--hz-text-primary);
+  text-align: left;
+  transition: border-color var(--hz-transition-fast, .15s), box-shadow var(--hz-transition-fast, .15s);
+}
+.hz-welcome-choice:hover:not(:disabled),
+.hz-welcome-choice:focus-visible { border-color: var(--hz-primary-600); box-shadow: 0 10px 24px -18px rgba(var(--hz-primary-rgb, 65, 105, 225), .7); outline: none; }
+.hz-welcome-choice strong { font-size: 15.5px; }
+.hz-welcome-choice > span:last-child { color: var(--hz-text-secondary); font-size: 13px; line-height: 1.5; }
+.hz-welcome-choice__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 6px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--hz-primary-50);
+  color: var(--hz-primary-600);
+}
+.hz-welcome-choice--demo .hz-welcome-choice__icon { background: var(--hz-warning-50); color: var(--hz-warning-600); }
+
+.hz-demo-progress { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 4px 0; list-style: none; }
+.hz-demo-progress li { display: flex; align-items: center; gap: 11px; color: var(--hz-text-muted); font-size: 14px; }
+.hz-demo-progress li.is-active { color: var(--hz-text-primary); font-weight: 650; }
+.hz-demo-progress li.is-done { color: var(--hz-text-secondary); }
+.hz-demo-progress__icon {
+  display: grid;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1.5px solid var(--hz-border);
+  border-radius: 50%;
+  color: var(--hz-primary-600);
+}
+.hz-demo-progress li.is-done .hz-demo-progress__icon { border-color: transparent; background: var(--hz-success-600); color: var(--hz-bg-surface); }
+.hz-demo-spin { animation: hz-demo-spin 1s linear infinite; }
+@keyframes hz-demo-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hz-demo-spin { animation: none; } }
+
+.hz-demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 16px;
+  padding: 9px 14px;
+  border: 1px solid var(--hz-warning-500, var(--hz-border));
+  border-radius: var(--hz-radius-md);
+  background: var(--hz-warning-50);
+}
+.hz-demo-banner__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--hz-warning-600);
+  color: var(--hz-bg-surface);
+  font-size: 12px;
+  font-weight: 700;
+}
+.hz-demo-banner__text { flex: 1 1 200px; margin: 0; color: var(--hz-text-primary); font-size: 13px; }
+.hz-demo-banner__view { display: inline-flex; align-items: center; gap: 8px; margin: 0; color: var(--hz-text-secondary); font-size: 12.5px; font-weight: 600; }
+.hz-demo-banner__view .form-select { width: auto; min-height: 32px; font-size: 13px; }
+.hz-demo-banner__actions { display: inline-flex; gap: 8px; }
+.hz-demo-banner__error { flex-basis: 100%; margin: 0; color: var(--hz-danger-600); font-size: 12.5px; }
+
+.hz-demo-ended {
+  max-width: 520px;
+  margin: 48px auto;
+  padding: 32px 28px;
+  border: 1px solid var(--hz-border);
+  border-radius: var(--hz-radius-lg);
+  background: var(--hz-bg-surface);
+  text-align: center;
+}
+.hz-demo-ended__icon { display: inline-grid; width: 52px; height: 52px; margin-bottom: 14px; place-items: center; border-radius: 16px; background: var(--hz-warning-50); color: var(--hz-warning-600); }
+.hz-demo-ended h1 { margin: 0 0 8px; color: var(--hz-text-primary); font-size: 22px; font-weight: 750; }
+.hz-demo-ended p { margin: 0 0 18px; color: var(--hz-text-secondary); font-size: 14px; }
+
+@media (max-width: 767.98px) {
+  .hz-welcome-choices { grid-template-columns: minmax(0, 1fr); }
+  .hz-demo-banner__view, .hz-demo-banner__actions { flex: 1 1 100%; }
+  .hz-demo-banner__actions .btn { flex: 1 1 0; justify-content: center; }
+  .hz-demo-banner__view .form-select { flex: 1 1 auto; }
+}

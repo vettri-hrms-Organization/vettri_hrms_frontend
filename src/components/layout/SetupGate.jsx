@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, Rocket } from 'lucide-react';
 import { homeApi } from '../../api/endpoints/home';
+import { useDemoSession } from './demoSession';
 import { useAuth } from '../../hooks/useAuth';
 import Dialog from '../ui/Dialog';
 import Button from '../ui/Button';
@@ -50,9 +51,12 @@ function ProgressRing({ percent, small = false }) {
 }
 
 /** Popup shown after sign-in while required setup is incomplete. "Skip for now" hides it until the next sign-in. */
-export function SetupPrompt({ setup, userId }) {
+export function SetupPrompt({ setup, userId, demoAvailable = false }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { enterDemo } = useDemoSession();
+  const [openingDemo, setOpeningDemo] = useState(false);
+  const [demoError, setDemoError] = useState(null);
   const [open, setOpen] = useState(() => !readSkipped(userId));
   const steps = requiredSteps(setup);
   const left = steps.filter((step) => !step.done);
@@ -68,6 +72,21 @@ export function SetupPrompt({ setup, userId }) {
     navigate('/onboarding');
   }
 
+  async function openDemo() {
+    setOpeningDemo(true);
+    setDemoError(null);
+    try {
+      await enterDemo('ADMIN');
+      rememberSkipped(userId);
+      setOpen(false);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setDemoError(err?.response?.data?.message || 'Couldn’t open the demo workspace. Please try again.');
+    } finally {
+      setOpeningDemo(false);
+    }
+  }
+
   return (
     <Dialog
       open={open}
@@ -77,6 +96,7 @@ export function SetupPrompt({ setup, userId }) {
       size="md"
       footer={(
         <div className="d-flex justify-content-end gap-2 w-100">
+          {demoAvailable && <Button variant="ghost" className="me-auto" onClick={openDemo} loading={openingDemo}>Open demo workspace</Button>}
           <Button variant="secondary" onClick={skip}>Skip for now</Button>
           <Button icon={ArrowRight} onClick={setUpNow}>Set up now</Button>
         </div>
@@ -97,6 +117,7 @@ export function SetupPrompt({ setup, userId }) {
           </ul>
         </div>
       </div>
+      {demoError && <div className="alert alert-danger mt-3 mb-0" role="alert">{demoError}</div>}
     </Dialog>
   );
 }
