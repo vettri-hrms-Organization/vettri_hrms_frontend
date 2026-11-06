@@ -12,6 +12,7 @@ import { BreadcrumbProvider } from './BreadcrumbContext';
 import { useAuth } from '../../hooks/useAuth';
 import { NAV_SECTIONS, PLATFORM_ONLY_PATHS } from './navConfig';
 import OfflineBanner from '../../pwa/OfflineBanner';
+import { SetupLockedScreen, SetupProgressBanner, isOpenDuringSetup, useWorkspaceSetup } from './SetupGate';
 
 export default function MainLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -21,6 +22,13 @@ export default function MainLayout() {
   const needsWorkspace = platformOnly && !PLATFORM_ONLY_PATHS.includes(location.pathname);
   // Platform staff land on their own home (customers & billing), not an empty company dashboard.
   const sendToPlatform = platformOnly && ['/', '/dashboard'].includes(location.pathname);
+  const { setup, locked: setupLocked, refetch: refetchSetup } = useWorkspaceSetup();
+  const setupBlocksPage = setupLocked && !isOpenDuringSetup(location.pathname, setup);
+
+  // Steps are finished on other pages, so re-check progress on every navigation while locked.
+  useEffect(() => {
+    if (setupLocked) refetchSetup();
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Below the lg breakpoint the sidebar is an overlay drawer, not part of
   // the flex layout (see hz-sidebar-mobile-* in components.css) - close it
@@ -45,7 +53,8 @@ export default function MainLayout() {
           <main className="hz-main-content hz-page-transition">
             <BreadcrumbProvider>
               <Breadcrumbs />
-              {sendToPlatform ? <Navigate to="/settings/platform" replace /> : needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) && !platformOnly ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
+              {setupLocked && !setupBlocksPage && <SetupProgressBanner setup={setup} />}
+              {setupBlocksPage ? <SetupLockedScreen setup={setup} /> : sendToPlatform ? <Navigate to="/settings/platform" replace /> : needsWorkspace ? <WorkspaceRequired /> : isSettingsRoute(location.pathname) && !platformOnly ? <SettingsWorkspace hasPermission={hasPermission} hasRole={hasRole} /> : <Outlet />}
             </BreadcrumbProvider>
           </main>
         </div>

@@ -45,7 +45,9 @@ export default function Onboarding() {
         title={done === steps.length ? 'Your workspace is ready' : 'Set up your Vettri workspace'}
         description={done === steps.length
           ? 'Every setup step is complete. You can come back here any time.'
-          : `${done} of ${steps.length} steps done. Each one takes a few minutes.`}
+          : data?.locked
+            ? `Required setup is ${data.percent}% done. Finish the steps marked Required to unlock every section.`
+            : `${done} of ${steps.length} steps done. Each one takes a few minutes.`}
       />
 
       <div className="row g-4 align-items-start">
@@ -64,6 +66,7 @@ export default function Onboarding() {
                     <span className="hz-onboarding-step__number">{item.done ? <Check size={13} strokeWidth={2.5} aria-label="Completed" /> : index + 1}</span>
                     <Icon size={16} />
                     <span>{item.title}</span>
+                    {item.required && !item.done && <span className="hz-onboarding-step__required">Required</span>}
                   </button>
                 );
               })}

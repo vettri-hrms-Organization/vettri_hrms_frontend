@@ -6,7 +6,7 @@ import { leaveRequestsApi } from '../../api/endpoints/leave';
 import { attendanceApi } from '../../api/endpoints/attendance';
 import { documentsApi, DOCUMENT_TYPE_LABEL, MANDATORY_DOCUMENTS, DOCUMENT_TYPE_METADATA } from '../../api/endpoints/documents';
 import { canReviewDocuments, canUploadOwnDocuments, getExpiryPresentation } from '../../api/documentPolicy';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, Users, ChevronDown, Fingerprint, Pencil, Check, X, CalendarDays, Clock, FileText, Plus, Trash2, AlertTriangle, Network, ClipboardList, Search, Send, UserX, CheckCircle2, Download } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Mail, Phone, MapPin, Calendar, Briefcase, Users, ChevronDown, Fingerprint, Pencil, Check, X, CalendarDays, Clock, FileText, Plus, Trash2, AlertTriangle, Network, ClipboardList, Search, Send, UserX, CheckCircle2, Download } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -57,6 +57,9 @@ const OWN_TABS = [
 const VALID_TAB_KEYS = TABS.map((tab) => tab.key);
 const EMPLOYEE_TAB_KEYS = ['overview', 'job', 'attendance', 'leave', 'documents', 'letters', 'onboarding'];
 const OWN_TAB_KEYS = OWN_TABS.map((tab) => tab.key);
+
+import CreateOwnProfile from './CreateOwnProfile';
+import './my-profile.css';
 
 const OwnSignatures = lazy(() => import('../esign/Signatures'));
 const OwnResignation = lazy(() => import('../exit/MyResignation'));
@@ -121,6 +124,9 @@ export default function EmployeeProfile() {
     changeStatus.mutate(key);
   }
 
+  // My Profile for an admin whose login has no employee record yet.
+  if (!employeeId) return <CreateOwnProfile />;
+
   if (isLoading) {
     return (
       <Card>
@@ -137,9 +143,9 @@ export default function EmployeeProfile() {
 
   return (
     <div className="hz-profile d-flex flex-column gap-4">
-      <Link to="/employees" className="d-inline-flex align-items-center gap-1 text-decoration-none" style={{ color: 'var(--hz-text-secondary)', fontSize: 'var(--hz-text-sm)', width: 'fit-content' }}>
+      {id && <Link to="/employees" className="d-inline-flex align-items-center gap-1 text-decoration-none" style={{ color: 'var(--hz-text-secondary)', fontSize: 'var(--hz-text-sm)', width: 'fit-content' }}>
         <ArrowLeft size={15} /> Back to Employees
-      </Link>
+      </Link>}
 
       <section className="hz-profile-hero" aria-labelledby="profile-name">
         <div className="hz-profile-hero__cover" aria-hidden="true" />
@@ -157,11 +163,6 @@ export default function EmployeeProfile() {
               </div>
               <p className="hz-profile-hero__role">
                 {employee.designationTitle || 'No designation set'}{employee.departmentName ? ` · ${employee.departmentName}` : ''}
-              </p>
-              <p className="hz-profile-hero__meta">
-                <span>{employee.employeeCode}</span>
-                <span>{EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType || 'Employment type not set'}</span>
-                {employee.reportingManagerName && <span>Reports to {employee.reportingManagerName}</span>}
               </p>
             </div>
           </div>
@@ -206,28 +207,19 @@ export default function EmployeeProfile() {
           </div>
         </div>
 
-        <dl className="hz-profile-hero__facts">
-          <ProfileSummary
-            label="Joined"
-            value={employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'}
-            detail={formatTenure(employee.dateOfJoining)}
-          />
-          <ProfileSummary label="Direct reports" value={employee.directReports?.length || 0} />
-          <ProfileSummary label="Employment" value={EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType || 'Not set'} />
-          <ProfileSummary label="Department" value={employee.departmentName || 'Not set'} />
-          {employee.lastWorkingDate && (
-            <ProfileSummary label="Last working day" value={formatDateIST(employee.lastWorkingDate)} />
-          )}
-        </dl>
-
-        <div className="hz-profile-contact-strip">
-          <ProfileContact icon={Mail} label="Email" value={employee.email} />
-          <ProfileContact icon={Phone} label="Phone" value={employee.phone} />
-          <ProfileContact icon={MapPin} label="Address" value={employee.address} />
-          <ProfileContact icon={Users} label="Manager" value={employee.reportingManagerName} />
-        </div>
+        <ul className="hz-myprofile-chips" aria-label="Key facts">
+          {employee.employeeCode && <li><BadgeCheck size={14} aria-hidden="true" /> {employee.employeeCode}</li>}
+          <li><Calendar size={14} aria-hidden="true" /> Joined {employee.dateOfJoining ? formatDateIST(employee.dateOfJoining) : 'date not set'}{formatTenure(employee.dateOfJoining) && <em>{formatTenure(employee.dateOfJoining)}</em>}</li>
+          <li><Briefcase size={14} aria-hidden="true" /> {EMPLOYMENT_TYPE_LABEL[employee.employmentType] || employee.employmentType || 'Employment type not set'}</li>
+          {employee.departmentName && <li><Network size={14} aria-hidden="true" /> {employee.departmentName}</li>}
+          {employee.reportingManagerName && <li><Users size={14} aria-hidden="true" /> Reports to {employee.reportingManagerName}</li>}
+          {employee.lastWorkingDate && <li className="is-warning"><CalendarDays size={14} aria-hidden="true" /> Last working day {formatDateIST(employee.lastWorkingDate)}</li>}
+        </ul>
       </section>
 
+      <div className="hz-myprofile-layout">
+        <ProfileAside employee={employee} />
+        <div className="hz-myprofile-main">
       <Tabs items={availableTabs} value={tab} onChange={changeTab} />
 
       {tab === 'overview' && <OverviewTab employee={employee} />}
@@ -252,6 +244,9 @@ export default function EmployeeProfile() {
         />
       )}
 
+        </div>
+      </div>
+
       {showApplyLeave && <ApplyLeaveModal defaultEmployeeId={employee.id} onClose={() => setShowApplyLeave(false)} />}
 
       <ExitStatusDialog
@@ -262,15 +257,6 @@ export default function EmployeeProfile() {
         onClose={() => setPendingExitStatus(null)}
         onConfirm={({ lastWorkingDate, reason }) => changeStatus.mutate({ status: pendingExitStatus, lastWorkingDate, reason })}
       />
-    </div>
-  );
-}
-
-function ProfileSummary({ label, value, detail }) {
-  return (
-    <div className="hz-profile-hero__fact">
-      <dt>{label}</dt>
-      <dd>{value}{detail && <small>{detail}</small>}</dd>
     </div>
   );
 }
@@ -292,11 +278,44 @@ function formatTenure(dateOfJoining) {
   return `${parts.join(' ')} tenure`;
 }
 
-function ProfileContact({ icon: Icon, label, value }) {
+/** Left column: how to reach the person and where they sit in the organisation. */
+function ProfileAside({ employee }) {
+  const reports = employee.directReports || [];
   return (
-    <div className="hz-profile-contact-strip__item">
+    <aside className="hz-myprofile-aside" aria-label="Contact and reporting">
+      <section className="hz-myprofile-panel">
+        <h2>Contact</h2>
+        <ProfileContact icon={Mail} label="Work email" value={employee.email} href={employee.email ? `mailto:${employee.email}` : null} />
+        <ProfileContact icon={Phone} label="Phone" value={employee.phone} href={employee.phone ? `tel:${employee.phone.replace(/s+/g, '')}` : null} />
+        <ProfileContact icon={MapPin} label="Address" value={employee.address} />
+      </section>
+      <section className="hz-myprofile-panel">
+        <h2>Reporting</h2>
+        <ProfileContact icon={Users} label="Reports to" value={employee.reportingManagerName} />
+        <div className="hz-myprofile-contact">
+          <Network size={15} aria-hidden="true" />
+          <span>
+            <small>Direct reports</small>
+            {reports.length === 0 ? <strong>None</strong> : (
+              <span className="hz-myprofile-people">
+                {reports.slice(0, 5).map((r) => (
+                  <Link key={r.id} to={`/employees/${r.id}`} title={r.fullName}><Avatar name={r.fullName} src={r.profilePhotoUrl} size="sm" /></Link>
+                ))}
+                {reports.length > 5 && <span className="hz-myprofile-people__more">+{reports.length - 5}</span>}
+              </span>
+            )}
+          </span>
+        </div>
+      </section>
+    </aside>
+  );
+}
+
+function ProfileContact({ icon: Icon, label, value, href }) {
+  return (
+    <div className="hz-myprofile-contact">
       <Icon size={15} aria-hidden="true" />
-      <span><small>{label}</small><strong>{value || 'Not set'}</strong></span>
+      <span><small>{label}</small>{value && href ? <a href={href}>{value}</a> : <strong className={value ? '' : 'is-empty'}>{value || 'Not set'}</strong>}</span>
     </div>
   );
 }
