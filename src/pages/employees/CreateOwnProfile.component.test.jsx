@@ -13,8 +13,9 @@ const { employeesApi, departmentsApi, designationsApi, refreshUser } = vi.hoiste
 
 vi.mock('../../api/endpoints/employees', () => ({ employeesApi }));
 vi.mock('../../api/endpoints/organization', () => ({ departmentsApi, designationsApi }));
+let mockUser;
 vi.mock('../../hooks/useAuth', () => ({
-  useAuth: () => ({ user: { fullName: 'Hariharan Selvarasu', email: 'hari@xenon.in' }, hasPermission: () => true, refreshUser }),
+  useAuth: () => ({ user: mockUser, hasPermission: () => true, refreshUser }),
 }));
 
 function renderForm() {
@@ -25,6 +26,7 @@ function renderForm() {
 describe('CreateOwnProfile', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUser = { fullName: 'Hariharan Selvarasu', email: 'hari@xenon.in' };
     departmentsApi.list.mockResolvedValue([{ id: 4, name: 'Engineering', active: true }]);
     designationsApi.list.mockResolvedValue([{ id: 9, title: 'CTO', active: true }]);
     employeesApi.create.mockResolvedValue({ id: 12 });
@@ -32,25 +34,33 @@ describe('CreateOwnProfile', () => {
   });
   afterEach(() => cleanup());
 
-  it('creates an employee record with the sign-in email and reloads the user', async () => {
+  it('creates the record from the sign-up details as soon as the page opens', async () => {
     renderForm();
-    expect(screen.getByLabelText('First name *').value).toBe('Hariharan');
-    expect(screen.getByLabelText('Last name *').value).toBe('Selvarasu');
-    await screen.findByText('Engineering');
-    await userEvent.selectOptions(screen.getByLabelText('Department'), '4');
-    await userEvent.click(screen.getByRole('button', { name: 'Create my profile' }));
-
+    expect(screen.getByRole('heading', { name: 'Setting up your profile' })).toBeTruthy();
     await waitFor(() => expect(refreshUser).toHaveBeenCalled());
+    expect(employeesApi.create).toHaveBeenCalledTimes(1);
     expect(employeesApi.create.mock.calls[0][0]).toMatchObject({
-      firstName: 'Hariharan', lastName: 'Selvarasu', email: 'hari@xenon.in', departmentId: 4, designationId: null,
+      firstName: 'Hariharan', lastName: 'Selvarasu', email: 'hari@xenon.in', employmentType: 'FULL_TIME', departmentId: null,
     });
   });
 
-  it('shows the server message when the record cannot be created', async () => {
-    employeesApi.create.mockRejectedValue({ response: { data: { message: 'An employee with email \'hari@xenon.in\' already exists' } } });
+  it('falls back to the form with the server message when it cannot be created', async () => {
+    employeesApi.create.mockRejectedValue({ response: { data: { message: 'Employee limit reached for your plan' } } });
     renderForm();
-    await userEvent.click(screen.getByRole('button', { name: 'Create my profile' }));
-    expect((await screen.findByRole('alert')).textContent).toContain('already exists');
+    expect((await screen.findByRole('alert')).textContent).toContain('Employee limit reached');
+    expect(screen.getByLabelText('First name *').value).toBe('Hariharan');
     expect(refreshUser).not.toHaveBeenCalled();
+  });
+
+  it('asks for the missing surname instead of guessing one', async () => {
+    mockUser = { fullName: 'Hariharan', email: 'hari@xenon.in' };
+    renderForm();
+    await screen.findByText('Engineering');
+    expect(employeesApi.create).not.toHaveBeenCalled();
+    await userEvent.type(screen.getByLabelText('Last name *'), 'S');
+    await userEvent.selectOptions(screen.getByLabelText('Department'), '4');
+    await userEvent.click(screen.getByRole('button', { name: 'Create my profile' }));
+    await waitFor(() => expect(refreshUser).toHaveBeenCalled());
+    expect(employeesApi.create.mock.calls[0][0]).toMatchObject({ lastName: 'S', departmentId: 4 });
   });
 });

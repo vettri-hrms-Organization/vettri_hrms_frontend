@@ -29,7 +29,7 @@ export function useWorkspaceSetup() {
 
 export function isOpenDuringSetup(path, setup) {
   const pathname = String(path || '').split('?')[0];
-  const stepLinks = (setup?.steps || []).filter((step) => step.required).map((step) => step.link);
+  const stepLinks = (setup?.steps || []).filter((step) => step.required).map((step) => String(step.link || '').split('?')[0]);
   return [...ALWAYS_OPEN_PATHS, ...stepLinks].some((open) => pathname === open || pathname.startsWith(`${open}/`));
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LocateFixed, MapPin, Pencil, Plus, Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { departmentsApi, designationsApi, teamsApi } from '../api/endpoints/organization';
 import { attendanceApi } from '../api/endpoints/attendance';
 import { useAuth } from '../hooks/useAuth';
@@ -24,7 +25,13 @@ const TABS = [
 ];
 
 export default function SettingsOrganization() {
-  const [tab, setTab] = useState('departments');
+  // Setup steps link straight to a tab (?tab=designations).
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => (TABS.some((item) => item.key === searchParams.get('tab')) ? searchParams.get('tab') : 'departments'));
+  useEffect(() => {
+    const requested = searchParams.get('tab');
+    if (requested && TABS.some((item) => item.key === requested)) setTab(requested);
+  }, [searchParams]);
   const { user, hasPermission, hasRole } = useAuth();
   const hasOrganizationPermission = (code) => hasRole('SUPER_ADMIN')
     || (hasPermission(code) && user?.scopes?.[code]?.includes('ORGANIZATION'));

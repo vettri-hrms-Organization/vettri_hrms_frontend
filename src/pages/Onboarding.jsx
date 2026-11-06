@@ -7,6 +7,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { SkeletonText } from '../components/ui/Skeleton';
 import { homeApi } from '../api/endpoints/home';
+import { SetupLockedScreen, useWorkspaceSetup } from '../components/layout/SetupGate';
 
 // Progress comes from the server (GET /api/home/setup) so this page and the home checklist always agree.
 const ICONS = {
@@ -16,6 +17,7 @@ const ICONS = {
 
 export default function Onboarding() {
   const { data, isLoading } = useQuery({ queryKey: ['home-setup'], queryFn: homeApi.setup });
+  const { locked } = useWorkspaceSetup();
   const steps = data?.steps || [];
   const [activeStep, setActiveStep] = useState(0);
 
@@ -26,6 +28,8 @@ export default function Onboarding() {
   }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) return <Card><SkeletonText lines={6} /></Card>;
+  // Until required setup is 100%, every locked page redirects here.
+  if (locked) return <SetupLockedScreen setup={data} />;
   if (!steps.length) {
     return (
       <div className="hz-onboarding d-flex flex-column gap-4">

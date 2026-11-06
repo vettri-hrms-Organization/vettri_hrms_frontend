@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BadgeCheck, CalendarCheck2, UserRound, WalletCards } from 'lucide-react';
 import Button from '../../components/ui/Button';
@@ -13,6 +13,9 @@ import './my-profile.css';
  * has nothing to show. Creating a record with the login's email links the two
  * (EmployeeService.createWithCode), and the admin then gets their own profile,
  * attendance, leave and payslips like everyone else.
+ *
+ * The record is created automatically from the sign-up details the first time
+ * the page opens; the form only shows when that is not possible or fails.
  */
 export default function CreateOwnProfile() {
   const { user, hasPermission, refreshUser } = useAuth();
@@ -44,12 +47,22 @@ export default function CreateOwnProfile() {
       designationId: form.designationId ? Number(form.designationId) : null,
     }),
     onSuccess: async () => {
-      await refreshUser();
+      const me = await refreshUser();
+      if (!me?.employeeId) setError('Your profile was created but isn’t linked to this login yet. Sign out and back in, or contact Vettri support.');
       queryClient.invalidateQueries({ queryKey: ['employees-paged'] });
       queryClient.invalidateQueries({ queryKey: ['home-setup'] });
     },
     onError: (err) => setError(err.response?.data?.message || 'Couldn’t create your profile. Please try again.'),
   });
+
+  const autoTried = useRef(false);
+  // Decided from the sign-up details only, so typing in the fallback form never submits it.
+  const canAutoCreate = canCreate && !!user?.email && !!first && rest.length > 0;
+  useEffect(() => {
+    if (!canAutoCreate || autoTried.current) return;
+    autoTried.current = true;
+    create.mutate();
+  }, [canAutoCreate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function set(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -63,6 +76,18 @@ export default function CreateOwnProfile() {
       return;
     }
     create.mutate();
+  }
+
+  if (create.isPending || (canAutoCreate && !autoTried.current) || (create.isSuccess && !error)) {
+    return (
+      <section className="hz-myprofile-setup hz-myprofile-setup--busy" aria-busy="true">
+        <div className="hz-myprofile-setup__intro">
+          <span className="hz-myprofile-setup__badge" aria-hidden="true"><UserRound size={22} /></span>
+          <h1>Setting up your profile</h1>
+          <p className="mb-0">Creating your employee profile from your company account details…</p>
+        </div>
+      </section>
+    );
   }
 
   return (

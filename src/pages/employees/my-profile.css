@@ -143,3 +143,7 @@
   .hz-myprofile-aside { grid-template-columns: minmax(0, 1fr); }
   .hz-myprofile-setup__intro, .hz-myprofile-setup__form { padding: 20px 18px; }
 }
+
+.hz-myprofile-setup--busy { grid-template-columns: minmax(0, 1fr); max-width: 560px; }
+.hz-myprofile-setup--busy .hz-myprofile-setup__intro { border-right: 0; text-align: center; }
+.hz-myprofile-setup--busy .hz-myprofile-setup__badge { margin-inline: auto; }
